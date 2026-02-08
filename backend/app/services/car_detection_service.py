@@ -15,11 +15,21 @@ import time
 import re
 from datetime import datetime
 from PIL import Image
-import torch
-from transformers import CLIPProcessor, CLIPModel
 import difflib
 
+try:
+    import torch
+    from transformers import CLIPProcessor, CLIPModel
+    ML_AVAILABLE = True
+except ImportError:
+    torch = None
+    CLIPProcessor = None
+    CLIPModel = None
+    ML_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
+if not ML_AVAILABLE:
+    logger.warning("torch/transformers not available - car detection will return not available")
 
 # Global model cache
 _clip_model = None
@@ -48,6 +58,8 @@ MAX_MODEL_LENGTH = 25  # Max model name length
 def _get_device():
     """Get device (cuda if available, else cpu)"""
     global _device
+    if not ML_AVAILABLE:
+        return "none"
     if _device is None:
         _device = "cuda" if torch.cuda.is_available() else "cpu"
         logger.info(f"Using device: {_device}")
@@ -61,6 +73,8 @@ def _load_clip_model():
     """
     global _clip_model, _clip_processor, _make_classifier, _finetuned_mappings, _is_finetuned
     
+    if not ML_AVAILABLE:
+        raise RuntimeError("Car detection is not available (torch/transformers not installed)")
     if _clip_model is not None and _clip_processor is not None:
         return _clip_model, _clip_processor
     
@@ -204,6 +218,9 @@ def warmup_clip_model():
     Warmup function to pre-load CLIP model and run a dummy inference
     Call this during server startup to avoid first-request delay
     """
+    if not ML_AVAILABLE:
+        logger.warning("CLIP warmup skipped (torch/transformers not installed)")
+        return
     try:
         logger.info("Warming up CLIP model...")
         
@@ -695,6 +712,22 @@ def detect_car_from_images(
         - meta: {confidence_level, num_images, image_hash, labels_version, runtime_ms, device, created_at, status}
     """
     start_time = time.time()
+    if not ML_AVAILABLE:
+        return {
+            "best": {},
+            "topk": {},
+            "meta": {
+                "confidence_level": "low",
+                "status": "not_available",
+                "error": "Car detection is not available (torch/transformers not installed)",
+                "num_images": len(image_paths),
+                "image_hash": get_image_hash(image_paths),
+                "labels_version": get_labels_version(),
+                "runtime_ms": 0,
+                "device": "none",
+                "created_at": datetime.utcnow().isoformat(),
+            },
+        }
     device = _get_device()
     debug_mode = os.getenv("AUTO_DETECT_DEBUG", "0") == "1"
     

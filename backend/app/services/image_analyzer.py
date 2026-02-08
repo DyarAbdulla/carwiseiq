@@ -36,6 +36,7 @@ try:
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
+    logger.warning("PyTorch not available - image analysis will be limited")
 
 
 class ImageAnalyzer:

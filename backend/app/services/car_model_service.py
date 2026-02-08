@@ -44,6 +44,7 @@ _LABEL_PATHS = [
 _model = None
 _label_maps = None
 _CONFIDENCE_THRESHOLD = 0.6
+_tensorflow_available: bool | None = None  # None = not checked yet, True/False after _load_model attempt
 
 
 def _resolve_paths() -> tuple[Path | None, Path | None]:
@@ -60,7 +61,7 @@ def _resolve_paths() -> tuple[Path | None, Path | None]:
 
 
 def _load_model() -> bool:
-    global _model, _label_maps
+    global _model, _label_maps, _tensorflow_available
     if _model is not None and _label_maps is not None:
         return True
 
@@ -70,8 +71,14 @@ def _load_model() -> bool:
         return False
 
     try:
-        import tensorflow as tf
+        import tensorflow as tf  # noqa: F401
+    except ImportError:
+        _tensorflow_available = False
+        logger.warning("TensorFlow not available - car make/model detection will return not available")
+        return False
 
+    _tensorflow_available = True
+    try:
         _model = tf.keras.models.load_model(str(model_path))
         with open(maps_path, encoding="utf-8") as f:
             _label_maps = json.load(f)
@@ -98,11 +105,12 @@ def detect_car_from_images(images: List[bytes]) -> dict:
         }
 
     if not _load_model():
+        err = "Car detection (make/model) is not available (tensorflow not installed)." if _tensorflow_available is False else "Car classifier model not loaded. Run training (03_train_model.py) first."
         return {
             "make": None,
             "model": None,
             "confidence": 0.0,
-            "error": "Car classifier model not loaded. Run training (03_train_model.py) first.",
+            "error": err,
         }
 
     try:
