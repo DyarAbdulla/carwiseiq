@@ -8,7 +8,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://carwiseiq.com; connect-src 'self' https://*.supabase.co https://api.carwiseiq.com; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://carwiseiq.com; connect-src 'self' https://*.supabase.co https://api.carwiseiq.com https://disturbed-shoshanna-carwiseiq-bfa577dd.koyeb.app; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';
 
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable
