@@ -6,11 +6,11 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y gcc libxml2-dev libxslt-dev
 
 # Copy and install Python dependencies
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy all backend files
-COPY . .
+COPY backend/ .
 
 EXPOSE 8000
 
