@@ -55,16 +55,21 @@ app = FastAPI(
 # Security middleware (path-specific rate limiting, HSTS, CSP)
 app.add_middleware(SecurityMiddleware)
 
-# CORS: production = carwiseiq.com only; development = localhost
+# CORS: production = carwiseiq.com only; development = localhost; always allow Cloudflare Pages
 _cors_origins = settings.get_cors_origins_list()
 if not _cors_origins:
     _cors_origins = [
         "http://localhost:3000", "http://localhost:3002",
         "http://127.0.0.1:3000", "http://127.0.0.1:3002",
     ]
+# Add Cloudflare Pages production and preview origins
+for _origin in ("https://carwiseiq.pages.dev",):
+    if _origin not in _cors_origins:
+        _cors_origins.append(_origin)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
+    allow_origin_regex=r"https://[a-zA-Z0-9-]+\.carwiseiq\.pages\.dev",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
