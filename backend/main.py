@@ -64,18 +64,12 @@ app = FastAPI(
 )
 
 # CORS middleware
-cors_origins = [o.strip() for o in os.getenv('CORS_ORIGINS', '*').split(',') if o.strip()]
-if cors_origins != ['*']:
-    for _origin in ("https://carwiseiq.pages.dev",):
-        if _origin not in cors_origins:
-            cors_origins.append(_origin)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins if cors_origins != ['*'] else ["*"],
-    allow_origin_regex=r"https://[a-zA-Z0-9-]+\.carwiseiq\.pages\.dev" if cors_origins != ['*'] else None,
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_credentials=True,
 )
 
 # Rate limiting middleware
