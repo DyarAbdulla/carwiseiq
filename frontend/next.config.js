@@ -7,6 +7,7 @@ const withNextIntl = require('next-intl/plugin')(
 const nextConfig = {
   reactStrictMode: true,
   trailingSlash: false,
+  swcMinify: true,
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
 
@@ -41,7 +42,7 @@ const nextConfig = {
       // External CDN for car images
       { protocol: 'https', hostname: 'cdn.iqcars.io', pathname: '/**' },
     ],
-    unoptimized: false,
+    unoptimized: false, // Keep optimized for production; Cloudflare uses @cloudflare/next-on-pages
   },
 
   // OPTIMIZED: Add caching and security headers (CSP, HSTS, etc.)
