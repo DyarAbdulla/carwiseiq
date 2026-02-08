@@ -35,8 +35,7 @@ requests>=2.31.0
 lxml>=4.9.0
 
 # Multi-modal model dependencies
-tensorflow>=2.13.0  # Use tensorflow-gpu>=2.13.0 for GPU support
-tensorflow-gpu>=2.13.0  # Optional: for GPU acceleration
+tensorflow-cpu>=2.15.0
 Pillow>=10.0.0  # Image processing
 catboost>=1.2.0  # CatBoost ensemble model
 tqdm>=4.66.0  # Progress bars
