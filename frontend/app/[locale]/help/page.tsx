@@ -1,6 +1,4 @@
 "use client"
-export const runtime = 'edge';
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { HelpCircle, Book, MessageSquare, Shield, TrendingUp, Car, Search } from 'lucide-react'

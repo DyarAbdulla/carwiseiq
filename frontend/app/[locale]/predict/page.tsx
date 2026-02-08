@@ -1,6 +1,4 @@
 "use client"
-export const runtime = 'edge';
-
 import { useState, useEffect, useRef, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'

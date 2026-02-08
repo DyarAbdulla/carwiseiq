@@ -20,6 +20,9 @@ const nextConfig = {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000',
   },
 
+  // Static export for Cloudflare Pages (no SSR)
+  output: 'export',
+
   // Cloudflare Pages: unoptimized required (no Node image optimizer at edge)
   images: {
     unoptimized: true,
@@ -99,9 +102,7 @@ const nextConfig = {
     return config
   },
 
-  // Experimental: reduce build concurrency to lower memory use (Cloudflare Pages)
   experimental: {
-    cpus: 1,
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-select',
@@ -110,9 +111,6 @@ const nextConfig = {
       'framer-motion',
     ],
   },
-
-  // Do not use standalone output (incompatible with Cloudflare Pages)
-  // output: 'standalone' must NOT be set
 
   // Compression
   compress: true,

@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, unstable_setRequestLocale } from 'next-intl/server';
 import dynamic from 'next/dynamic';
@@ -34,7 +33,7 @@ const CookieConsent = dynamic(
 );
 
 export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+  return [{ locale: 'en' }, { locale: 'ar' }, { locale: 'ku' }]
 }
 
 export default async function LocaleLayout({

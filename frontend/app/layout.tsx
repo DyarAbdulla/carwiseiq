@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 import type { Metadata, Viewport } from 'next'
 import dynamic from 'next/dynamic'
 import { inter } from '@/lib/fonts'
@@ -94,4 +93,3 @@ export default function RootLayout({
     </html>
   )
 }
-

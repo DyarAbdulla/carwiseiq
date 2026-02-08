@@ -1,38 +1,25 @@
-# Cloudflare Pages build configuration
+# Cloudflare Pages build configuration (static export)
 
-Use these settings in **Cloudflare Dashboard → your project → Settings → Build & deployments → Build configuration** and **Environment variables**.
-
-## Required: Node 20
-
-Build fails on Node 18 (heap OOM and EBADENGINE from Supabase/Vercel tooling). **You must set Node 20.**
-
-In **Settings → Environment variables** add (Production and Preview):
-
-| Variable | Value |
-|----------|--------|
-| **NODE_VERSION** | `20` |
-| **NODE_OPTIONS** | `--max-old-space-size=8192` |
-
-`NODE_OPTIONS=--max-old-space-size=8192` gives the Next.js build 8GB heap to avoid "JavaScript heap out of memory".
+The frontend uses **Next.js static export** (`output: 'export'`) so Cloudflare Pages serves plain HTML/JS/CSS with no SSR and no memory-heavy build.
 
 ## Build configuration
 
 | Setting | Value |
 |--------|--------|
 | **Framework preset** | None |
-| **Build command** | `NODE_OPTIONS=--max-old-space-size=8192 npx @cloudflare/next-on-pages@1` |
-| **Build output directory** | `.vercel/output/static` (relative to Root; if Root is `frontend`, path is under `frontend/`) |
+| **Build command** | `npm run build` or `next build` |
+| **Build output directory** | `out` (relative to Root; if Root is `frontend`, path is `frontend/out`) |
 | **Root directory** | `frontend` |
 
-## Other environment variables
+## Environment variables
 
-Add as needed for your app:
+In **Settings → Environment variables** (Production and Preview):
 
-- `NEXT_PUBLIC_SUPABASE_URL` = your Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` = your Supabase anon key (if used)
-- `NEXT_PUBLIC_API_BASE_URL` = your API URL (e.g. `https://api.carwiseiq.com` for production)
+| Variable | Value |
+|----------|--------|
+| **NODE_VERSION** | `20` (recommended) |
+| **NEXT_PUBLIC_SUPABASE_URL** | your Supabase project URL |
+| **NEXT_PUBLIC_SUPABASE_ANON_KEY** | your Supabase anon key (if used) |
+| **NEXT_PUBLIC_API_BASE_URL** | your API URL (e.g. `https://api.carwiseiq.com` for production) |
 
-## If build still runs out of memory
-
-1. Confirm **NODE_VERSION=20** and **NODE_OPTIONS=--max-old-space-size=8192** are set in Cloudflare (not only in build command; the env vars ensure the whole process uses them).
-2. Cloudflare Pages may have a hard memory cap; if 8GB still fails, consider building locally or in CI and deploying the `.vercel/output/static` artifact, or migrating to the OpenNext Cloudflare adapter (see [OpenNext Cloudflare](https://opennext.js.org/cloudflare)).
+No `NODE_OPTIONS` or `@cloudflare/next-on-pages` is needed for static export.

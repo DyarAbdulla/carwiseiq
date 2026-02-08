@@ -1,6 +1,4 @@
 "use client"
-export const runtime = 'edge';
-
 import { SellWizardProvider } from "@/context/SellWizardContext"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { usePathname } from "next/navigation"

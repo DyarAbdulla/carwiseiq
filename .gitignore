@@ -17,6 +17,7 @@ models_archive/
 data/
 backend/uploads/
 .next/
+frontend/out/
 dist/
 .DS_Store
 *.log

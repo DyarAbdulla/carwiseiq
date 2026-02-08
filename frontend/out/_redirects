@@ -1,0 +1,6 @@
+# Cloudflare Pages redirects
+# www -> non-www (or vice versa; adjust to your preference)
+
+https://www.carwiseiq.com/* https://carwiseiq.com/:splat 301
+http://www.carwiseiq.com/* https://carwiseiq.com/:splat 301
+http://carwiseiq.com/* https://carwiseiq.com/:splat 301
