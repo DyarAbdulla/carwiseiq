@@ -1,0 +1,759 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Design Tokens: CarWiseIQ ===== */
+:root {
+  /* Overlay z-index scale: dropdown/popover < modal < toast; header is z-50 */
+  --z-dropdown: 1000;
+  --z-modal: 1100;
+  --z-toast: 1200;
+  /* Radii: 20px for premium, friendly rounded feel */
+  --radius-card: 20px;
+  --radius-input: 16px;
+  --radius-badge: 12px;
+  /* Shadows: subtle 3D depth */
+  --shadow-soft: 0 4px 24px -4px rgba(0, 0, 0, 0.08), 0 8px 16px -6px rgba(0, 0, 0, 0.04);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  /* Glassmorphism: premium consumer look */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: 12px;
+  /* Soft Dark (default when .dark) */
+  --bg-page-dark: #0f172a;
+  --bg-elevated-dark: #1e293b;
+  --bg-card-dark: rgba(30, 41, 59, 0.6);
+  --border-dark: rgba(255, 255, 255, 0.08);
+  --text-primary-dark: #f8fafc;
+  --text-muted-dark: #94a3b8;
+  --accent-dark: #6366f1;
+  /* Clean Light */
+  --bg-page-light: #f8fafc;
+  --bg-elevated-light: #ffffff;
+  --bg-card-light: rgba(255, 255, 255, 0.9);
+  --border-light: rgba(15, 23, 42, 0.08);
+  --text-primary-light: #0f172a;
+  --text-muted-light: #64748b;
+  --accent-light: #4f46e5;
+}
+
+/* Full-screen, viewport-locked background: desktop (100vh) + mobile (100dvh). Smooth scroll for navigation. */
+html {
+  min-height: 100vh;
+  min-height: 100dvh;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  background-color: #f8fafc;
+  background-attachment: fixed;
+  min-height: 100vh;
+  min-height: 100dvh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark body {
+  background-color: #0f172a;
+}
+
+/* Profile page: single background (animated gradient); hide body bg to avoid duplicate */
+body.profile-single-bg {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Deep Mesh Gradient: #0f172a base + #1e293b + deep indigo */
+.bg-mesh-deep {
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 15% 15%, rgba(30, 41, 59, 0.7) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 85% 85%, rgba(30, 41, 59, 0.6) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(67, 56, 202, 0.12) 0%, transparent 55%);
+}
+
+.dark .bg-mesh-deep {
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 15% 15%, rgba(30, 41, 59, 0.7) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 85% 85%, rgba(30, 41, 59, 0.6) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(67, 56, 202, 0.15) 0%, transparent 55%);
+}
+
+/* When .dark is on html, apply deep mesh to body (avoids Tailwind dark: with custom class) */
+html.dark body,
+.dark body {
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(ellipse 90% 60% at 15% 15%, rgba(30, 41, 59, 0.7) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 85% 85%, rgba(30, 41, 59, 0.6) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 40% at 50% 50%, rgba(67, 56, 202, 0.12) 0%, transparent 55%);
+}
+
+/* Glassmorphism: rgba(255,255,255,0.03) bg, 12px blur, 1px rgba(255,255,255,0.1) border, 20px radius */
+@layer components {
+  .glass-header {
+    @apply backdrop-blur-xl border-b;
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(226, 232, 240, 0.8);
+    box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .dark .glass-header {
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04);
+  }
+
+  /* Glassmorphism V2: Smart Glass - works in both light and dark modes */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-top: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .dark .glass-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 0 20px rgba(99, 102, 241, 0.1);
+  }
+
+  .dark .glass-card:hover {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(99, 102, 241, 0.15);
+  }
+
+  /* Hover lift for data cards: 4px up, indigo border, shadow glow */
+  .hover-lift {
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    border-color: rgb(99 102 241);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(99, 102, 241, 0.15);
+  }
+
+  .glass-card-dark {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+  }
+
+  .heroVignette {
+    box-shadow: inset 0 0 120px 40px rgba(0, 0, 0, 0.5);
+  }
+
+  .glassCard {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-top: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  }
+
+  .dark .glassCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-glass);
+  }
+
+  .glassBorder {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+  }
+}
+
+/* Prevent double-tap zoom on buttons/links; removes 300ms tap delay on touch */
+button,
+[role="button"],
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+/* Remove tap highlight on mobile to prevent zoom and flash (e.g. hamburger, sheet triggers) */
+.tap-highlight-transparent {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== MOBILE-FIRST: base = mobile, enhance with min-width ===== */
+/* Touch targets: minimum 44px (Apple HIG / Material) */
+:root {
+  --touch-min: 44px;
+  --content-max-mobile: 100%;
+}
+
+/* Avoid layout shift (CLS): reserve space for images */
+img[width][height],
+.car-card-image-wrap {
+  aspect-ratio: 16 / 10;
+}
+
+.car-card-image-wrap:not(.loaded) {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+
+  0%,
+  100% {
+    background-position: 200% 0;
+  }
+
+  50% {
+    background-position: -200% 0;
+  }
+}
+
+/* Mobile: lighter shadows for performance */
+@media (max-width: 767px) {
+
+  .glass-card,
+  .glassCard,
+  .glass-card-dark {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* md and up: enhance (min-width, not max-width) */
+@media (min-width: 768px) {
+
+  .glass-card:hover,
+  .glassCard:hover {
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(99, 102, 241, 0.15);
+  }
+}
+
+/* Mobile-specific optimizations + iOS Safari zoom fixes */
+@media (max-width: 767px) {
+  * {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Container Padding: Reduce from px-8 to px-4 on mobile */
+  /* Note: This targets common container classes, but individual components may override */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Sharper glass borders on high-DPI mobile screens */
+  .glassCard,
+  .glassBorder {
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .glassCard {
+    border-top-color: rgba(255, 255, 255, 0.25) !important;
+  }
+
+  button,
+  [role="button"],
+  a[role="button"] {
+    font-size: 16px !important;
+    min-height: var(--touch-min);
+  }
+
+  /* Larger touch targets */
+  .mobile-button {
+    min-height: var(--touch-min);
+    padding: 12px 20px;
+  }
+
+  /* Touch targets: Ensure inputs and selects are h-12 (48px) on mobile. Textarea: min-height only. */
+  input,
+  select,
+  [role="combobox"],
+  [role="textbox"] {
+    font-size: 16px !important;
+    min-height: 48px !important;
+    height: 48px !important;
+  }
+
+  textarea {
+    font-size: 16px !important;
+    min-height: 48px !important;
+  }
+
+  /* Horizontal scroll for tables */
+  .similar-cars-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Sticky header for long results */
+  .results-header {
+    position: sticky;
+    top: 0;
+    background: rgba(17, 24, 39, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+  }
+
+  /* Bottom padding for fixed/sticky CTA */
+  .results-container,
+  .form-wizard-container {
+    padding-bottom: 88px;
+  }
+
+  /* Prevent iOS zoom on input focus: font-size < 16px triggers auto-zoom. */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Body min padding for safe-area on notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Reduce heavy animations on mobile for performance */
+@media (max-width: 767px) {
+  .car-3d-container:hover {
+    transform: none;
+  }
+
+  .animate-atmo-pulse {
+    animation-duration: 4s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-atmo-pulse,
+  .animate-pulse {
+    animation: none;
+  }
+}
+
+/* No overflow-hidden on form wizard / results so Select/Dropdown/Popover (portalled) are not clipped */
+.form-wizard-container,
+.results-container {
+  overflow: visible;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .glassCard,
+  .glassBorder {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+  }
+
+  body {
+    background: white !important;
+  }
+}
+
+/* Accordion animations */
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+
+  to {
+    height: 0;
+  }
+}
+
+.animate-accordion-down {
+  animation: accordion-down 0.2s ease-out;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 0.2s ease-out;
+}
+
+/* Hide scrollbar for horizontal scroll (chips, best deals) */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Accessibility improvements */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Focus visible styles */
+*:focus-visible {
+  outline: 2px solid #5B7FFF;
+  outline-offset: 2px;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Pulse animation for loading */
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Atmospheric blobs: slow pulse in size and opacity when predicting */
+@keyframes atmo-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.05;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 0.09;
+  }
+}
+
+.animate-atmo-pulse {
+  animation: atmo-pulse 3s ease-in-out infinite;
+}
+
+/* Typography: H1, H2 — tracking-tight so headlines stand out */
+h1,
+h2 {
+  letter-spacing: -0.025em;
+  @apply tracking-tight;
+}
+
+/* Mobile Typography Scaling */
+@media (max-width: 767px) {
+  h1 {
+    @apply text-3xl;
+  }
+
+  h2 {
+    @apply text-xl;
+  }
+}
+
+/* Paragraphs: muted so headlines stand out */
+@layer base {
+  p {
+    @apply text-slate-600 dark:text-slate-400;
+  }
+}
+
+/* ===== RTL (Arabic & Kurdish): dir is set on <html> by SetDirection. ===== */
+/* Use Tailwind rtl: variant for directional spacing (e.g. rtl:ml-4 rtl:mr-0). */
+/* Chevrons and arrows: use rtl:scale-x-[-1] to mirror. */
+
+/* RTL: text alignment */
+[dir="rtl"] p {
+  text-align: right;
+}
+
+[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+}
+
+/* RTL: margin auto swapping for flexbox */
+[dir="rtl"] .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir="rtl"] .mr-auto {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* RTL: header bar and nav order */
+[dir="rtl"] header>div {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] header nav {
+  flex-direction: row-reverse;
+}
+
+/* RTL: common padding/margin logical flip (add only where safe) */
+[dir="rtl"] .space-x-2>*+* {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+[dir="rtl"] .space-x-3>*+* {
+  margin-left: 0;
+  margin-right: 0.75rem;
+}
+
+[dir="rtl"] .space-x-4>*+* {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+/* ===== Premium 3D Car Preview Styles ===== */
+.car-3d-container {
+  transform-style: preserve-3d;
+  perspective: 1500px;
+  -webkit-perspective: 1500px;
+  will-change: transform;
+}
+
+.car-3d-container * {
+  transform-style: preserve-3d;
+}
+
+/* GPU Acceleration for 3D transforms */
+.car-3d-container img,
+.car-3d-container>div {
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Smooth 3D hover transitions */
+.car-3d-container:hover {
+  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Enhanced glassmorphism for car preview */
+.car-3d-container .glass-preview {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.4),
+    inset 0 0 40px rgba(255, 255, 255, 0.05),
+    0 0 80px rgba(59, 130, 246, 0.1);
+}
+
+/* 3D Wireframe Animation */
+@keyframes wireframe-rotate {
+  from {
+    transform: rotateY(0deg) translateZ(0);
+  }
+
+  to {
+    transform: rotateY(360deg) translateZ(0);
+  }
+}
+
+/* Floating Animation */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) translateZ(0);
+  }
+
+  50% {
+    transform: translateY(-8px) translateZ(0);
+  }
+}
+
+/* Studio Light Pulse */
+@keyframes studio-light {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+/* Rim Light Glow Effect */
+.car-rim-light {
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(ellipse 90% 80% at 50% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 60%);
+  filter: blur(20px);
+  z-index: -1;
+  pointer-events: none;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Reflection Effect */
+.car-reflection {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 33%;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  transform: scaleY(-1);
+  transform-origin: bottom;
+  mask-image: linear-gradient(to top, black 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, black 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Drop Shadow */
+.car-drop-shadow {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px) translateZ(-100px);
+  width: 60%;
+  height: 20%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.6) 0%, transparent 70%);
+  filter: blur(30px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Performance optimizations */
+.car-3d-container,
+.car-3d-container * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Mobile optimizations - reduce 3D effects for performance */
+@media (max-width: 768px) {
+  .car-3d-container {
+    perspective: 1000px;
+  }
+
+  .car-3d-container:hover {
+    transform: none;
+  }
+}
+
+/* ===== Services Coming Soon page background ===== */
+@keyframes coming-soon-gradient-shift {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translate(0%, 0%) scale(1);
+  }
+  33% {
+    opacity: 0.8;
+    transform: translate(5%, -5%) scale(1.05);
+  }
+  66% {
+    opacity: 0.7;
+    transform: translate(-3%, 3%) scale(0.98);
+  }
+}
+
+@keyframes coming-soon-blob-float {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(2%, 2%) scale(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coming-soon-bg-animate,
+  .coming-soon-blob {
+    animation: none !important;
+  }
+  .profile-page-bg-animate {
+    animation: none !important;
+  }
+}

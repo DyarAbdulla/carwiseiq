@@ -1,0 +1,8 @@
+import { Metadata } from 'next'
+import { defaultMetadata } from '@/app/metadata'
+
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: 'Car Price Predictor - AI-Powered Car Valuation & Marketplace',
+  description: 'Get accurate car price predictions using AI. Buy and sell cars with confidence. Compare prices, find deals, and make informed decisions.',
+}
