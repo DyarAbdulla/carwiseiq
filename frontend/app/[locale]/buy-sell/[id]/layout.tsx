@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import type { ReactNode } from 'react'
 import { Metadata } from 'next'
 import { generateListingMetadata } from '@/app/metadata'

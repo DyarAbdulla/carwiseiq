@@ -1,4 +1,5 @@
 "use client"
+export const runtime = 'edge';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'

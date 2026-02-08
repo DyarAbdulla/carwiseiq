@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, unstable_setRequestLocale } from 'next-intl/server';
 import dynamic from 'next/dynamic';
