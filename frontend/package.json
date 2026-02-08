@@ -2,6 +2,7 @@
   "name": "car-price-predictor-frontend",
   "version": "1.0.0",
   "private": true,
+  "engines": { "node": ">=20" },
   "scripts": {
     "clean": "if exist .next rmdir /s /q .next && if exist .next-cache rmdir /s /q .next-cache && if exist node_modules\\.cache rmdir /s /q node_modules\\.cache && if exist tsconfig.tsbuildinfo del /q tsconfig.tsbuildinfo && echo Cache cleared || echo No cache to clear",
     "clean:win": "powershell -Command \"if (Test-Path '.next') { Remove-Item -Recurse -Force '.next' }; if (Test-Path '.next-cache') { Remove-Item -Recurse -Force '.next-cache' }; if (Test-Path 'node_modules/.cache') { Remove-Item -Recurse -Force 'node_modules/.cache' }; if (Test-Path 'tsconfig.tsbuildinfo') { Remove-Item -Force 'tsconfig.tsbuildinfo' }; Write-Host 'Cache cleared'\"",

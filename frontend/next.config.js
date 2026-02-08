@@ -25,6 +25,9 @@ const nextConfig = {
     unoptimized: true,
   },
 
+  // Reduce memory during build (avoid heap OOM on Cloudflare)
+  productionBrowserSourceMaps: false,
+
   // OPTIMIZED: Add caching and security headers (CSP, HSTS, etc.)
   async headers() {
     const isProd = process.env.NODE_ENV === 'production';
@@ -88,38 +91,9 @@ const nextConfig = {
       };
     }
 
-    // Only apply custom splitChunks in production builds to avoid vendor-chunks errors in dev
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            // Vendor chunk for large libraries
-            recharts: {
-              name: 'recharts',
-              test: /[\\/]node_modules[\\/](recharts)[\\/]/,
-              priority: 20,
-              enforce: true,
-            },
-            radix: {
-              name: 'radix-ui',
-              test: /[\\/]node_modules[\\/](@radix-ui)[\\/]/,
-              priority: 15,
-              enforce: true,
-            },
-            // Shared chunk for common code
-            common: {
-              name: 'common',
-              minChunks: 2,
-              priority: 10,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-      }
+    // Production: deterministic module IDs (smaller cache, less memory churn)
+    if (!dev && config.optimization) {
+      config.optimization.moduleIds = 'deterministic'
     }
 
     return config
