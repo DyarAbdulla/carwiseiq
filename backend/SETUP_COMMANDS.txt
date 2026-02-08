@@ -1,0 +1,66 @@
+========================================
+BACKEND SETUP - EXACT COMMANDS TO RUN
+========================================
+
+STEP 1: STOP OLD BACKEND
+-------------------------
+Open Command Prompt and run these commands one by one:
+
+1. Check what's running on port 8000:
+   netstat -ano | findstr :8000
+
+2. Kill the processes (use the PID numbers from step 1):
+   taskkill /PID 4384 /F
+   taskkill /PID 5264 /F
+   taskkill /PID 28084 /F
+
+   (If any process doesn't exist, that's OK - just skip it)
+
+3. Verify port 8000 is free:
+   netstat -ano | findstr :8000
+   (Should show nothing or only TIME_WAIT connections)
+
+
+STEP 2: START NEW BACKEND
+--------------------------
+Open Command Prompt and run:
+
+   cd "C:\Car price prection program Local E\backend"
+   start.bat
+
+Keep this window open! The server runs here.
+
+
+STEP 3: TEST THE BACKEND
+-------------------------
+Open a NEW Command Prompt window and run:
+
+   cd "C:\Car price prection program Local E\backend"
+   quick_test.bat
+
+Wait for tests to complete. You should see [OK] for all tests.
+
+
+STEP 4: CONNECT FRONTEND
+-------------------------
+1. Make sure backend is running (Step 2 window is open)
+2. Open your browser: http://localhost:3002
+3. Try analyzing a car URL
+4. Check browser console (F12) for any errors
+
+
+TROUBLESHOOTING
+---------------
+If port 8000 is still in use after killing processes:
+- Close all Command Prompt windows
+- Restart your computer
+- Then run Step 2 again
+
+If you see "Module not found" errors:
+- Make sure virtual environment exists:
+  cd "C:\Car price prection program Local E\backend"
+  python -m venv venv
+  venv\Scripts\activate
+  pip install -r requirements.txt
+
+========================================

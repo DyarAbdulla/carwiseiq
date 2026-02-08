@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-01-18T19:50:38.118493",
+  "checks": {
+    "python": true,
+    "pytorch_cuda": true,
+    "packages": true,
+    "missing_packages": [],
+    "gpu": true,
+    "gpu_name": "NVIDIA GeForce RTX 4060",
+    "disk_space": true,
+    "images": true,
+    "image_count": 57312,
+    "csv": true,
+    "csv_file": "C:\\Car price prection program Local E\\data\\image_labels_cleaned_final.csv",
+    "image_readability": true,
+    "paths": true,
+    "training_dry_run": true
+  },
+  "all_passed": true,
+  "passed_count": 10,
+  "total_count": 10
+}

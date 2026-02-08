@@ -1,0 +1,110 @@
+╔══════════════════════════════════════════════════════════════╗
+║  Car Price Predictor Pro - Pre-Run Checklist                ║
+╚══════════════════════════════════════════════════════════════╝
+
+BEFORE RUNNING streamlit run app.py, CHECK THE FOLLOWING:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ 1. PYTHON INSTALLED
+   Run: python --version
+   Should show: Python 3.8 or higher
+   If not: Install from https://www.python.org/downloads/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ 2. DEPENDENCIES INSTALLED
+   Run: pip install -r requirements.txt
+   Or: Double-click INSTALL.bat (Windows)
+   Or: ./install.sh (Mac/Linux)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ 3. REQUIRED FILES EXIST
+   
+   Core Files:
+   □ app.py
+   □ predict_price.py
+   □ utils.py
+   □ translations.py
+   □ config.py
+   □ app/config.py
+   
+   Data Files:
+   □ data/cleaned_car_data.csv
+   
+   Model Files:
+   □ models/best_model_v2.pkl (REQUIRED)
+   □ models/make_encoder.pkl (recommended)
+   □ models/model_encoder.pkl (recommended)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ 4. VERIFY SETUP (OPTIONAL BUT RECOMMENDED)
+   Run: python verify_setup.py
+   Should show: ✓ ALL REQUIRED COMPONENTS ARE READY!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+□ 5. READY TO RUN!
+   
+   Windows (Easy):
+   → Double-click RUN_APP.bat
+   
+   Windows (Command Line):
+   → streamlit run app.py
+   
+   Mac/Linux:
+   → ./run_app.sh
+   OR
+   → streamlit run app.py
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QUICK COMMANDS REFERENCE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Install dependencies:
+   pip install -r requirements.txt
+
+Verify setup:
+   python verify_setup.py
+
+Run the app:
+   streamlit run app.py
+
+Stop the app:
+   Press Ctrl+C in the terminal
+
+Check if Streamlit is installed:
+   python -c "import streamlit; print('OK')"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TROUBLESHOOTING:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If "command not found":
+   → Use python instead of python3 (Windows)
+   → Use python3 instead of python (Mac/Linux)
+   → Try: py -m pip install -r requirements.txt (Windows)
+
+If "ModuleNotFoundError":
+   → Run: pip install -r requirements.txt
+
+If "Model file not found":
+   → Ensure models/best_model_v2.pkl exists
+   → If missing, run: python core/model_training.py
+
+If "Port already in use":
+   → Run: streamlit run app.py --server.port 8502
+
+For more help, see SETUP_GUIDE.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ ALL CHECKED? You're ready to run! 🚗💰
+
+
+
+

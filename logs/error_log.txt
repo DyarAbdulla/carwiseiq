@@ -1,0 +1,257 @@
+
+[2026-01-18 20:09:14] Training failed
+Error: cannot access local variable 'best_models' where it is not associated with a value
+Traceback (most recent call last):
+  File "c:\Car price prection program Local E\scripts\train_optimized.py", line 807, in <module>
+    train()
+    ~~~~~^^
+  File "c:\Car price prection program Local E\scripts\train_optimized.py", line 745, in train
+    best_models.append((val_metrics['accuracy'], epoch))
+    ^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'best_models' where it is not associated with a value
+
+================================================================================
+
+[2026-01-18 23:37:58] Training failed
+Error: Caught MemoryError in DataLoader worker process 1.
+Original Traceback (most recent call last):
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\torch\utils\data\_utils\worker.py", line 349, in _worker_loop
+    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\torch\utils\data\_utils\fetch.py", line 52, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+            ~~~~~~~~~~~~^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 141, in __getitem__
+    inputs = self.processor(
+        text=text,
+    ...<4 lines>...
+        max_length=77
+    )
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\transformers\processing_utils.py", line 594, in __call__
+    attribute_output = attribute(input_data, **kwargs[input_kwargs])
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\transformers\image_processing_utils.py", line 51, in __call__
+    return self.preprocess(images, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\transformers\models\clip\image_processing_clip.py", line 334, in preprocess
+    image = self.rescale(image=image, scale=rescale_factor, input_data_format=input_data_format)
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\transformers\image_processing_utils.py", line 86, in rescale
+    return rescale(image, scale=scale, data_format=data_format, input_data_format=input_data_format, **kwargs)
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\transformers\image_transforms.py", line 126, in rescale
+    rescaled_image = image.astype(np.float64) * scale  # Numpy type promotion has changed, so always upcast first
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~
+numpy._core._exceptions._ArrayMemoryError: Unable to allocate 1.15 MiB for an array with shape (224, 224, 3) and data type float64
+
+Traceback (most recent call last):
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 814, in <module>
+    train()
+    ~~~~~^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 666, in train
+    train_metrics = train_epoch(
+        model, train_loader, optimizer, scheduler, device, CONFIG, scaler)
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 334, in train_epoch
+    for batch_idx, batch in enumerate(progress):
+                            ~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\tqdm\std.py", line 1181, in __iter__
+    for obj in iterable:
+               ^^^^^^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\torch\utils\data\dataloader.py", line 708, in __next__
+    data = self._next_data()
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\torch\utils\data\dataloader.py", line 1455, in _next_data
+    return self._process_data(data)
+           ~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\torch\utils\data\dataloader.py", line 1505, in _process_data
+    data.reraise()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\torch\_utils.py", line 732, in reraise
+    raise RuntimeError(msg) from None
+RuntimeError: Caught MemoryError in DataLoader worker process 1.
+Original Traceback (most recent call last):
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\torch\utils\data\_utils\worker.py", line 349, in _worker_loop
+    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\torch\utils\data\_utils\fetch.py", line 52, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+            ~~~~~~~~~~~~^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 141, in __getitem__
+    inputs = self.processor(
+        text=text,
+    ...<4 lines>...
+        max_length=77
+    )
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\transformers\processing_utils.py", line 594, in __call__
+    attribute_output = attribute(input_data, **kwargs[input_kwargs])
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\transformers\image_processing_utils.py", line 51, in __call__
+    return self.preprocess(images, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\transformers\models\clip\image_processing_clip.py", line 334, in preprocess
+    image = self.rescale(image=image, scale=rescale_factor, input_data_format=input_data_format)
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\transformers\image_processing_utils.py", line 86, in rescale
+    return rescale(image, scale=scale, data_format=data_format, input_data_format=input_data_format, **kwargs)
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\transformers\image_transforms.py", line 126, in rescale
+    rescaled_image = image.astype(np.float64) * scale  # Numpy type promotion has changed, so always upcast first
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~
+numpy._core._exceptions._ArrayMemoryError: Unable to allocate 1.15 MiB for an array with shape (224, 224, 3) and data type float64
+
+
+================================================================================
+
+[2026-01-19 00:40:29] Training failed
+Error: 'input_ids'
+Traceback (most recent call last):
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 700, in <module>
+    train()
+    ~~~~~^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 546, in train
+    optimal_batch_size = find_optimal_batch_size(model, train_loader, device, CONFIG, start_size=CONFIG['batch_size'])
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 460, in find_optimal_batch_size
+    test_input_ids = sample_batch['input_ids'][:bs].to(
+                     ~~~~~~~~~~~~^^^^^^^^^^^^^
+KeyError: 'input_ids'
+
+================================================================================
+
+[2026-01-19 01:20:50] Training failed
+Error: 'Series' object has no attribute 'exists'
+Traceback (most recent call last):
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 780, in <module>
+    train()
+    ~~~~~^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 616, in train
+    train_loader, val_loader, mappings, processor = prepare_data(CONFIG)
+                                                    ~~~~~~~~~~~~^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 242, in prepare_data
+    exists = image_path.exists()
+             ^^^^^^^^^^^^^^^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\generic.py", line 6321, in __getattr__
+    return object.__getattribute__(self, name)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+AttributeError: 'Series' object has no attribute 'exists'
+
+================================================================================
+
+[2026-01-19 01:24:06] Training failed
+Error: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'Series'
+Traceback (most recent call last):
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 750, in <module>
+    train(dry_run=args.dry_run)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 572, in train
+    train_loader, val_loader, mappings, processor = prepare_data(CONFIG)
+                                                    ~~~~~~~~~~~~^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 240, in prepare_data
+    full_paths = img_series.apply(to_full)
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\frame.py", line 10401, in apply
+    return op.apply().__finalize__(self, method="apply")
+           ~~~~~~~~^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\apply.py", line 916, in apply
+    return self.apply_standard()
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\apply.py", line 1063, in apply_standard
+    results, res_index = self.apply_series_generator()
+                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\apply.py", line 1081, in apply_series_generator
+    results[i] = self.func(v, *self.args, **self.kwargs)
+                 ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 238, in to_full
+    p = Path(p)
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\pathlib\_local.py", line 503, in __init__
+    super().__init__(*args)
+    ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\pathlib\_local.py", line 132, in __init__
+    raise TypeError(
+    ...<2 lines>...
+        f"not {type(path).__name__!r}")
+TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'Series'
+
+================================================================================
+
+[2026-01-19 01:26:18] Training failed
+Error: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().
+Traceback (most recent call last):
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 755, in <module>
+    train(dry_run=args.dry_run)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 577, in train
+    train_loader, val_loader, mappings, processor = prepare_data(CONFIG)
+                                                    ~~~~~~~~~~~~^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 245, in prepare_data
+    full_paths = img_series.apply(to_full)
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\frame.py", line 10401, in apply
+    return op.apply().__finalize__(self, method="apply")
+           ~~~~~~~~^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\apply.py", line 916, in apply
+    return self.apply_standard()
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\apply.py", line 1063, in apply_standard
+    results, res_index = self.apply_series_generator()
+                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\apply.py", line 1081, in apply_series_generator
+    results[i] = self.func(v, *self.args, **self.kwargs)
+                 ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 239, in to_full
+    if pd.isna(p):
+       ~~~~~~~^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\generic.py", line 1580, in __nonzero__
+    raise ValueError(
+    ...<2 lines>...
+    )
+ValueError: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().
+
+================================================================================
+
+[2026-01-19 01:28:44] Training failed
+Error: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().
+Traceback (most recent call last):
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 755, in <module>
+    train(dry_run=args.dry_run)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 577, in train
+    train_loader, val_loader, mappings, processor = prepare_data(CONFIG)
+                                                    ~~~~~~~~~~~~^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 245, in prepare_data
+    full_paths = img_series.apply(to_full)
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\frame.py", line 10401, in apply
+    return op.apply().__finalize__(self, method="apply")
+           ~~~~~~~~^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\apply.py", line 916, in apply
+    return self.apply_standard()
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\apply.py", line 1063, in apply_standard
+    results, res_index = self.apply_series_generator()
+                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\apply.py", line 1081, in apply_series_generator
+    results[i] = self.func(v, *self.args, **self.kwargs)
+                 ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 239, in to_full
+    if pd.isna(p):
+       ~~~~~~~^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\generic.py", line 1580, in __nonzero__
+    raise ValueError(
+    ...<2 lines>...
+    )
+ValueError: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().
+
+================================================================================
+
+[2026-01-19 01:30:47] Training failed
+Error: Unalignable boolean Series provided as indexer (index of the boolean Series and of the indexed object do not match).
+Traceback (most recent call last):
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 784, in <module>
+    train(dry_run=args.dry_run)
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 606, in train
+    train_loader, val_loader, mappings, processor = prepare_data(CONFIG)
+                                                    ~~~~~~~~~~~~^^^^^^^^
+  File "C:\Car price prection program Local E\scripts\train_optimized.py", line 261, in prepare_data
+    labels_df = labels_df[valid_mask].copy()
+                ~~~~~~~~~^^^^^^^^^^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\frame.py", line 4104, in __getitem__
+    return self._getitem_bool_array(key)
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\frame.py", line 4160, in _getitem_bool_array
+    key = check_bool_indexer(self.index, key)
+  File "C:\Users\Darin Game\AppData\Local\Programs\Python\Python313\Lib\site-packages\pandas\core\indexing.py", line 2698, in check_bool_indexer
+    raise IndexingError(
+    ...<3 lines>...
+    )
+pandas.errors.IndexingError: Unalignable boolean Series provided as indexer (index of the boolean Series and of the indexed object do not match).
+
+================================================================================

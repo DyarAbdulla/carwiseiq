@@ -1,0 +1,669 @@
+/* CarWiseIQ Modern Professional PDF Stylesheet */
+/* xhtml2pdf Compatible - Modern Design */
+
+@page {
+    size: A4;
+    margin: 0.75in 0.5in;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #1F2937;
+    background: #FFFFFF;
+    line-height: 1.5;
+    font-size: 10pt;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.page {
+    width: 100%;
+    min-height: auto;
+    padding: 0;
+    position: relative;
+    page-break-after: auto;
+    background: #FFFFFF;
+}
+
+.page-2 {
+    padding-top: 0;
+}
+
+/* ============================================
+   HEADER SECTION
+   ============================================ */
+.report-header {
+    margin-bottom: 4mm;
+    padding-bottom: 4mm;
+    border-bottom: 2px solid #3B82F6;
+}
+
+.header-top {
+    display: table;
+    width: 100%;
+    margin-bottom: 3mm;
+}
+
+.logo-section {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+}
+
+.logo {
+    font-size: 18pt;
+    font-weight: bold;
+    color: #1E3A8A;
+    margin-bottom: 1mm;
+    letter-spacing: -0.3px;
+}
+
+.logo-tagline {
+    font-size: 9pt;
+    color: #6B7280;
+    font-weight: normal;
+}
+
+.header-info {
+    display: table-cell;
+    width: 50%;
+    text-align: right;
+    vertical-align: top;
+}
+
+.cert-badge {
+    margin-bottom: 2mm;
+    padding: 3mm;
+    background: #F3F4F6;
+    border-left: 3px solid #3B82F6;
+}
+
+.cert-label {
+    font-size: 8pt;
+    color: #6B7280;
+    margin-bottom: 0.5mm;
+}
+
+.cert-number {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #1E3A8A;
+}
+
+.date-info {
+    text-align: right;
+}
+
+.date-label {
+    font-size: 8pt;
+    color: #6B7280;
+    margin-bottom: 0.5mm;
+}
+
+.date-value {
+    font-size: 9pt;
+    font-weight: bold;
+    color: #1F2937;
+    margin-bottom: 0.5mm;
+}
+
+.time-value {
+    font-size: 8pt;
+    color: #6B7280;
+}
+
+.header-title {
+    text-align: center;
+    position: relative;
+}
+
+.report-title {
+    font-size: 18pt;
+    font-weight: bold;
+    color: #1E3A8A;
+    margin: 0;
+    margin-bottom: 2mm;
+}
+
+.verify-badge {
+    display: inline-block;
+    padding: 1.5mm 4mm;
+    background: #10B981;
+    color: #FFFFFF;
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+/* ============================================
+   VEHICLE SUMMARY CARD
+   ============================================ */
+.vehicle-summary-card {
+    margin-bottom: 4mm;
+    padding: 3mm;
+    background: #F9FAFB;
+    border-left: 4px solid #3B82F6;
+    border-top: 1px solid #E5E7EB;
+    border-right: 1px solid #E5E7EB;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.section-title {
+    font-size: 18pt;
+    font-weight: bold;
+    color: #1E3A8A;
+    margin-bottom: 3mm;
+}
+
+.title-icon {
+    font-size: 16pt;
+    margin-right: 2mm;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.summary-grid {
+    width: 100%;
+}
+
+.summary-row {
+    display: table;
+    width: 100%;
+    margin-bottom: 2mm;
+    border-collapse: separate;
+    border-spacing: 3mm 0;
+}
+
+.summary-item {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+    padding: 3mm;
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+}
+
+.item-icon {
+    font-size: 14pt;
+    display: inline-block;
+    margin-right: 2mm;
+    vertical-align: middle;
+}
+
+.item-content {
+    display: inline-block;
+    vertical-align: middle;
+    width: 70%;
+}
+
+.item-label {
+    font-size: 9pt;
+    color: #6B7280;
+    margin-bottom: 0.5mm;
+    font-weight: bold;
+}
+
+.item-value {
+    font-size: 10pt;
+    color: #1F2937;
+    font-weight: bold;
+}
+
+.condition-badge {
+    display: inline-block;
+    padding: 1mm 2mm;
+    font-size: 9pt;
+    font-weight: bold;
+}
+
+.condition-badge.condition-excellent {
+    background: #10B981;
+    color: #FFFFFF;
+}
+
+.condition-badge.condition-good {
+    background: #F59E0B;
+    color: #FFFFFF;
+}
+
+.condition-badge.condition-fair,
+.condition-badge.condition-poor {
+    background: #EF4444;
+    color: #FFFFFF;
+}
+
+/* ============================================
+   VEHICLE IMAGE
+   ============================================ */
+.vehicle-image-section {
+    text-align: center;
+    margin: 4mm 0;
+    padding: 3mm;
+    background: #F9FAFB;
+}
+
+.vehicle-image {
+    max-width: 100%;
+    max-height: 50mm;
+    width: auto;
+    height: auto;
+}
+
+/* ============================================
+   VALUATION SECTION (PROMINENT)
+   ============================================ */
+.valuation-section {
+    margin-bottom: 4mm;
+    padding: 6mm;
+    background: #1E3A8A;
+    text-align: center;
+}
+
+.valuation-header {
+    margin-bottom: 3mm;
+}
+
+.valuation-label {
+    font-size: 10pt;
+    color: #FFFFFF;
+    margin-bottom: 2mm;
+    font-weight: bold;
+}
+
+.confidence-indicator {
+    margin-top: 2mm;
+}
+
+.confidence-bar-container {
+    width: 100%;
+    height: 4mm;
+    background: rgba(255, 255, 255, 0.2);
+    margin-bottom: 1mm;
+}
+
+.confidence-bar {
+    height: 100%;
+    background: #10B981;
+}
+
+.confidence-text {
+    font-size: 9pt;
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+.valuation-price-container {
+    text-align: center;
+}
+
+.valuation-price {
+    font-size: 28pt;
+    font-weight: bold;
+    color: #FFFFFF;
+    line-height: 1.1;
+    margin-bottom: 2mm;
+}
+
+.valuation-range {
+    font-size: 9pt;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.valuation-range strong {
+    color: #FFFFFF;
+    font-weight: bold;
+}
+
+/* ============================================
+   MARKET COMPARISON VISUAL
+   ============================================ */
+.market-comparison-section {
+    margin-bottom: 4mm;
+    padding: 3mm;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+}
+
+.section-subtitle {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #1E3A8A;
+    margin-bottom: 3mm;
+}
+
+.comparison-visual {
+    margin-bottom: 3mm;
+}
+
+.comparison-item {
+    margin-bottom: 2mm;
+}
+
+.comparison-label {
+    font-size: 9pt;
+    color: #6B7280;
+    margin-bottom: 1mm;
+    font-weight: bold;
+}
+
+.comparison-bar-container {
+    width: 100%;
+    height: 5mm;
+    background: #E5E7EB;
+    margin-bottom: 1mm;
+    position: relative;
+}
+
+.comparison-bar {
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.comparison-bar.market-avg {
+    background: #6B7280;
+}
+
+.comparison-bar.your-car {
+    background: #3B82F6;
+}
+
+.comparison-value {
+    font-size: 10pt;
+    font-weight: bold;
+    color: #1F2937;
+}
+
+.comparison-value.highlight {
+    color: #3B82F6;
+    font-size: 10pt;
+}
+
+.comparison-difference {
+    margin-top: 3mm;
+    padding: 3mm;
+    background: #FFFFFF;
+    text-align: center;
+    border: 1px solid #E5E7EB;
+}
+
+.difference-label {
+    font-size: 9pt;
+    color: #6B7280;
+    margin-bottom: 1mm;
+}
+
+.difference-value {
+    font-size: 14pt;
+    font-weight: bold;
+}
+
+.difference-value.positive {
+    color: #10B981;
+}
+
+.difference-value.negative {
+    color: #EF4444;
+}
+
+.difference-value.neutral {
+    color: #6B7280;
+}
+
+.deal-rating-section {
+    text-align: center;
+    margin-top: 3mm;
+    padding-top: 3mm;
+    border-top: 1px solid #E5E7EB;
+}
+
+.deal-label {
+    font-size: 9pt;
+    color: #6B7280;
+    margin-bottom: 2mm;
+    font-weight: bold;
+}
+
+.deal-badge {
+    display: inline-block;
+    padding: 2mm 8mm;
+    font-size: 10pt;
+    font-weight: bold;
+    color: #FFFFFF;
+    letter-spacing: 0.3px;
+}
+
+.deal-badge.deal-excellent,
+.deal-badge.deal-good {
+    background: #10B981;
+}
+
+.deal-badge.deal-fair {
+    background: #F59E0B;
+}
+
+.deal-badge.deal-poor {
+    background: #EF4444;
+}
+
+/* ============================================
+   MARKET ANALYSIS GRID
+   ============================================ */
+.market-analysis-section {
+    margin-bottom: 4mm;
+}
+
+.analysis-grid {
+    width: 100%;
+}
+
+.analysis-row {
+    display: table;
+    width: 100%;
+    margin-bottom: 3mm;
+    border-collapse: separate;
+    border-spacing: 3mm 0;
+}
+
+.analysis-card {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+    padding: 3mm;
+    background: #FFFFFF;
+    border-left: 4px solid #3B82F6;
+    border-top: 1px solid #E5E7EB;
+    border-right: 1px solid #E5E7EB;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.card-icon {
+    font-size: 18pt;
+    display: inline-block;
+    margin-right: 2mm;
+    vertical-align: top;
+}
+
+.card-content {
+    display: inline-block;
+    vertical-align: top;
+    width: 75%;
+}
+
+.card-label {
+    font-size: 9pt;
+    color: #6B7280;
+    margin-bottom: 1mm;
+    font-weight: bold;
+}
+
+.card-value {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-bottom: 1mm;
+}
+
+.card-value.positive {
+    color: #10B981;
+}
+
+.card-value.negative {
+    color: #EF4444;
+}
+
+.card-value.neutral {
+    color: #6B7280;
+}
+
+.card-desc {
+    font-size: 9pt;
+    color: #6B7280;
+}
+
+/* ============================================
+   PRO TIPS SECTION
+   ============================================ */
+.pro-tips-section {
+    margin-bottom: 4mm;
+    padding: 3mm;
+    background: #FEF3C7;
+    border-left: 4px solid #F59E0B;
+    border-top: 1px solid #FCD34D;
+    border-right: 1px solid #FCD34D;
+    border-bottom: 1px solid #FCD34D;
+}
+
+.tips-title {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #92400E;
+    margin-bottom: 3mm;
+}
+
+.tips-icon {
+    font-size: 14pt;
+    margin-right: 2mm;
+}
+
+.tips-content {
+    width: 100%;
+}
+
+.tip-item {
+    display: table;
+    width: 100%;
+    margin-bottom: 2mm;
+}
+
+.tip-bullet {
+    display: table-cell;
+    width: 15px;
+    color: #F59E0B;
+    font-weight: bold;
+    font-size: 10pt;
+    vertical-align: top;
+}
+
+.tip-text {
+    display: table-cell;
+    font-size: 10pt;
+    color: #78350F;
+    line-height: 1.5;
+    vertical-align: top;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.report-footer {
+    margin-top: 4mm;
+    padding-top: 3mm;
+    border-top: 1px solid #E5E7EB;
+}
+
+.footer-content {
+    display: table;
+    width: 100%;
+    margin-bottom: 3mm;
+}
+
+.footer-brand {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+}
+
+.footer-logo {
+    font-size: 12pt;
+    font-weight: bold;
+    color: #1E3A8A;
+    margin-bottom: 1mm;
+}
+
+.footer-tagline {
+    font-size: 9pt;
+    color: #6B7280;
+}
+
+.footer-info {
+    display: table-cell;
+    width: 50%;
+    text-align: right;
+    vertical-align: top;
+}
+
+.footer-links {
+    margin-bottom: 2mm;
+}
+
+.footer-links div {
+    font-size: 9pt;
+    color: #6B7280;
+    margin-bottom: 0.5mm;
+}
+
+.footer-timestamp {
+    font-size: 8pt;
+    color: #9CA3AF;
+}
+
+.footer-disclaimer {
+    font-size: 8pt;
+    color: #9CA3AF;
+    line-height: 1.4;
+    text-align: center;
+    padding-top: 2mm;
+    border-top: 1px solid #E5E7EB;
+}
+
+.footer-disclaimer p {
+    margin: 0;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .page {
+        width: 100%;
+        min-height: auto;
+        page-break-after: auto;
+    }
+
+    .page-2 {
+        page-break-after: auto;
+    }
+}

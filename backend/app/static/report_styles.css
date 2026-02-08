@@ -1,0 +1,570 @@
+/* CarWiseIQ Clean Professional Valuation Report */
+/* Clean, friendly, print-friendly design */
+
+@page {
+    size: A4 portrait;
+    margin: 0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', 'Roboto', Arial, sans-serif;
+    color: #1F2937;
+    background: #FFFFFF;
+    line-height: 1.5;
+    font-size: 11px;
+    width: 210mm;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 18mm 20mm;
+    position: relative;
+    page-break-after: always;
+}
+
+.page-2 {
+    padding-top: 18mm;
+}
+
+/* ============================================
+   HEADER BAR
+   ============================================ */
+.report-header {
+    display: table;
+    width: 100%;
+    padding-bottom: 10mm;
+    border-bottom: 1px solid #8B5CF6;
+    margin-bottom: 12mm;
+}
+
+.header-left {
+    display: table-cell;
+    width: 25%;
+    vertical-align: top;
+}
+
+.logo {
+    font-size: 16px;
+    font-weight: 700;
+    color: #8B5CF6;
+    letter-spacing: -0.3px;
+}
+
+.header-center {
+    display: table-cell;
+    width: 50%;
+    text-align: center;
+    padding: 0 10mm;
+    vertical-align: top;
+}
+
+.report-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0;
+    letter-spacing: -0.1px;
+}
+
+.header-right {
+    display: table-cell;
+    width: 25%;
+    text-align: right;
+    vertical-align: top;
+}
+
+.cert-info {
+    margin-bottom: 3mm;
+}
+
+.cert-number {
+    font-size: 9px;
+    font-weight: 600;
+    color: #6B7280;
+    margin-bottom: 2mm;
+}
+
+.cert-date {
+    font-size: 9px;
+    color: #6B7280;
+    line-height: 1.4;
+}
+
+.verify-line {
+    font-size: 8px;
+    color: #8B5CF6;
+    font-weight: 500;
+}
+
+/* ============================================
+   VEHICLE SUMMARY
+   ============================================ */
+.vehicle-summary {
+    margin-bottom: 12mm;
+}
+
+.section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 6mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.summary-grid {
+    display: table;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 10mm 0;
+}
+
+.summary-column {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+}
+
+.summary-item {
+    display: table;
+    width: 100%;
+    margin-bottom: 3mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.summary-label {
+    display: table-cell;
+    width: 40%;
+    font-size: 10px;
+    font-weight: 500;
+    color: #6B7280;
+    padding-right: 3mm;
+}
+
+.summary-value {
+    display: table-cell;
+    width: 60%;
+    text-align: right;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1F2937;
+}
+
+.summary-value.condition-excellent {
+    color: #10B981;
+}
+
+.summary-value.condition-good {
+    color: #F59E0B;
+}
+
+.summary-value.condition-fair,
+.summary-value.condition-poor {
+    color: #EF4444;
+}
+
+/* ============================================
+   VEHICLE IMAGE
+   ============================================ */
+.vehicle-image-section {
+    text-align: center;
+    margin: 12mm 0;
+    padding: 6mm;
+    background: #F9FAFB;
+    border-radius: 6px;
+}
+
+.vehicle-image {
+    max-width: 100%;
+    max-height: 70mm;
+    width: auto;
+    height: auto;
+    border-radius: 4px;
+    object-fit: contain;
+}
+
+/* ============================================
+   VALUATION HIGHLIGHT
+   ============================================ */
+.valuation-highlight {
+    display: table;
+    width: 100%;
+    padding: 10mm;
+    background: #F9FAFB;
+    border-radius: 6px;
+    border-left: 3px solid #8B5CF6;
+    margin-bottom: 10mm;
+}
+
+.valuation-left {
+    display: table-cell;
+    width: 70%;
+    vertical-align: middle;
+}
+
+.valuation-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4mm;
+}
+
+.valuation-price {
+    font-size: 38px;
+    font-weight: 700;
+    color: #8B5CF6;
+    line-height: 1.1;
+    margin: 3mm 0;
+}
+
+.valuation-range {
+    font-size: 11px;
+    color: #6B7280;
+    margin-top: 4mm;
+}
+
+.valuation-right {
+    display: table-cell;
+    width: 30%;
+    text-align: center;
+    vertical-align: middle;
+    padding-left: 8mm;
+}
+
+.confidence-badge {
+    background: #FFFFFF;
+    border: 2px solid #8B5CF6;
+    border-radius: 4px;
+    padding: 6mm 8mm;
+}
+
+.confidence-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3mm;
+}
+
+.confidence-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #8B5CF6;
+    line-height: 1;
+}
+
+/* ============================================
+   MARKET POSITION
+   ============================================ */
+.market-position {
+    display: table;
+    width: 100%;
+    padding: 6mm;
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    margin-bottom: 0;
+}
+
+.market-item {
+    display: table-cell;
+    width: 25%;
+    text-align: center;
+    padding: 0 4mm;
+    border-right: 1px solid #E5E7EB;
+}
+
+.market-label {
+    display: block;
+    font-size: 9px;
+    font-weight: 500;
+    color: #6B7280;
+    margin-bottom: 2mm;
+}
+
+.market-value {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1F2937;
+}
+
+.market-value.positive {
+    color: #10B981;
+}
+
+.market-value.negative {
+    color: #EF4444;
+}
+
+.market-value.neutral {
+    color: #6B7280;
+}
+
+.deal-rating {
+    display: table-cell;
+    width: 25%;
+    padding-left: 8mm;
+    border-left: 1px solid #E5E7EB;
+    border-right: none;
+    text-align: center;
+}
+
+.deal-label {
+    display: block;
+    font-size: 9px;
+    font-weight: 500;
+    color: #6B7280;
+    margin-bottom: 2mm;
+}
+
+.deal-badge {
+    display: inline-block;
+    padding: 3mm 8mm;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.deal-badge.deal-excellent,
+.deal-badge.deal-good {
+    background: #10B981;
+    color: #FFFFFF;
+}
+
+.deal-badge.deal-fair {
+    background: #F59E0B;
+    color: #FFFFFF;
+}
+
+.deal-badge.deal-poor {
+    background: #EF4444;
+    color: #FFFFFF;
+}
+
+/* ============================================
+   MARKET ANALYSIS (PAGE 2)
+   ============================================ */
+.market-analysis {
+    margin-bottom: 15mm;
+}
+
+.analysis-grid {
+    width: 100%;
+}
+
+.analysis-row {
+    display: table;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 6mm 0;
+    margin-bottom: 6mm;
+}
+
+.analysis-row-bottom {
+    margin-bottom: 0;
+}
+
+.analysis-item {
+    display: table-cell;
+    width: 50%;
+    vertical-align: top;
+    padding: 5mm;
+    padding-right: 3mm;
+    background: #F9FAFB;
+    border-radius: 4px;
+    border-left: 2px solid #8B5CF6;
+}
+
+.analysis-icon {
+    font-size: 18px;
+    display: inline-block;
+    margin-right: 5mm;
+    vertical-align: top;
+}
+
+.analysis-content {
+    display: inline-block;
+    vertical-align: top;
+    width: 70%;
+}
+
+.analysis-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-bottom: 2mm;
+}
+
+.analysis-value {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 2mm;
+}
+
+.analysis-value.positive {
+    color: #10B981;
+}
+
+.analysis-value.negative {
+    color: #EF4444;
+}
+
+.analysis-value.neutral {
+    color: #6B7280;
+}
+
+.analysis-desc {
+    font-size: 10px;
+    color: #6B7280;
+}
+
+/* ============================================
+   PRO TIPS
+   ============================================ */
+.pro-tips {
+    margin-bottom: 15mm;
+    padding: 6mm;
+    background: #FEF3C7;
+    border-radius: 4px;
+    border-left: 2px solid #F59E0B;
+}
+
+.tips-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #92400E;
+    margin-bottom: 4mm;
+}
+
+.tips-list {
+    list-style: none;
+    padding: 0;
+}
+
+.tips-list li {
+    font-size: 10px;
+    color: #78350F;
+    line-height: 1.5;
+    margin-bottom: 3mm;
+    list-style: none;
+}
+
+.tip-bullet {
+    color: #F59E0B;
+    font-weight: 700;
+    margin-right: 3mm;
+}
+
+/* Removed :last-child selector - xhtml2pdf incompatible */
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.report-footer {
+    margin-top: auto;
+    padding-top: 12mm;
+    border-top: 1px solid #E5E7EB;
+}
+
+.footer-branding {
+    display: table;
+    width: 100%;
+    margin-bottom: 4mm;
+}
+
+.footer-left {
+    display: table-cell;
+    width: 33%;
+    vertical-align: middle;
+}
+
+.footer-center {
+    display: table-cell;
+    width: 34%;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.footer-right {
+    display: table-cell;
+    width: 33%;
+    text-align: right;
+    vertical-align: middle;
+}
+
+.footer-logo {
+    font-size: 12px;
+    font-weight: 700;
+    color: #8B5CF6;
+}
+
+.footer-links {
+    font-size: 9px;
+    color: #6B7280;
+}
+
+/* Removed :not(:last-child) selector - xhtml2pdf incompatible */
+.footer-links span {
+    margin-right: 3mm;
+}
+
+/* Removed :after pseudo-element - xhtml2pdf incompatible */
+
+.footer-timestamp {
+    font-size: 9px;
+    color: #9CA3AF;
+    text-align: center;
+    margin-bottom: 4mm;
+}
+
+.footer-disclaimer {
+    font-size: 8px;
+    color: #9CA3AF;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.footer-disclaimer p {
+    margin: 0;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    body {
+        width: 210mm;
+        margin: 0;
+        padding: 0;
+    }
+
+    .page {
+        width: 210mm;
+        min-height: 297mm;
+        page-break-after: always;
+    }
+
+    .page-2 {
+        page-break-after: auto;
+    }
+}

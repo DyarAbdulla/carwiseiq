@@ -1,0 +1,3 @@
+http://localhost:3002/en/auth/callback
+http://localhost:3002/ar/auth/callback
+http://localhost:3002/ku/auth/callback

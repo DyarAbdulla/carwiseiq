@@ -1,0 +1,386 @@
+{
+  "overall_accuracy": {
+    "top1": 0.07389347336834208,
+    "top3": 0.22074268567141786,
+    "top5": 0.37134283570892723,
+    "top10": 0.6989872468117029
+  },
+  "brand_accuracies": [
+    {
+      "make": "Dodge",
+      "samples": 400,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.105,
+      "top10": 1.0
+    },
+    {
+      "make": "Nissan",
+      "samples": 400,
+      "top1": 0.09,
+      "top3": 0.93,
+      "top5": 1.0,
+      "top10": 1.0
+    },
+    {
+      "make": "Hyundai",
+      "samples": 400,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0025,
+      "top10": 1.0
+    },
+    {
+      "make": "Jeep",
+      "samples": 400,
+      "top1": 0.03,
+      "top3": 0.285,
+      "top5": 0.9975,
+      "top10": 1.0
+    },
+    {
+      "make": "Toyota",
+      "samples": 400,
+      "top1": 0.72,
+      "top3": 0.9975,
+      "top5": 1.0,
+      "top10": 1.0
+    },
+    {
+      "make": "Kia",
+      "samples": 400,
+      "top1": 0.0,
+      "top3": 0.005,
+      "top5": 0.845,
+      "top10": 1.0
+    },
+    {
+      "make": "Chevrolet",
+      "samples": 400,
+      "top1": 0.145,
+      "top3": 0.725,
+      "top5": 1.0,
+      "top10": 1.0
+    },
+    {
+      "make": "Ford",
+      "samples": 347,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 1.0
+    },
+    {
+      "make": "BMW",
+      "samples": 305,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 1.0
+    },
+    {
+      "make": "Volkswagen",
+      "samples": 275,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 1.0
+    },
+    {
+      "make": "Mercedes-Benz",
+      "samples": 227,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Chrysler",
+      "samples": 195,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "GMC",
+      "samples": 143,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Mitsubishi",
+      "samples": 124,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Land Rover",
+      "samples": 93,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Chery",
+      "samples": 82,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Lexus",
+      "samples": 81,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "MG",
+      "samples": 63,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Peugeot",
+      "samples": 58,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Ram",
+      "samples": 57,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "BYD",
+      "samples": 48,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Honda",
+      "samples": 47,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Renault",
+      "samples": 46,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Genesis",
+      "samples": 43,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Saipa",
+      "samples": 39,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Cadillac",
+      "samples": 35,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Mazda",
+      "samples": 34,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Jetour",
+      "samples": 31,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Geely",
+      "samples": 30,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Iran Khodro",
+      "samples": 29,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Tesla",
+      "samples": 28,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Changan",
+      "samples": 28,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Opel",
+      "samples": 23,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    },
+    {
+      "make": "Suzuki",
+      "samples": 21,
+      "top1": 0.0,
+      "top3": 0.0,
+      "top5": 0.0,
+      "top10": 0.0
+    }
+  ],
+  "test_set_size": 5332,
+  "num_brands": 34,
+  "top_confusions": [
+    {
+      "true": "Kia",
+      "pred": "Toyota",
+      "count": 304
+    },
+    {
+      "true": "Nissan",
+      "pred": "Toyota",
+      "count": 301
+    },
+    {
+      "true": "Dodge",
+      "pred": "Toyota",
+      "count": 300
+    },
+    {
+      "true": "Chevrolet",
+      "pred": "Toyota",
+      "count": 294
+    },
+    {
+      "true": "Hyundai",
+      "pred": "Toyota",
+      "count": 290
+    },
+    {
+      "true": "Jeep",
+      "pred": "Toyota",
+      "count": 284
+    },
+    {
+      "true": "Ford",
+      "pred": "Toyota",
+      "count": 266
+    },
+    {
+      "true": "BMW",
+      "pred": "Toyota",
+      "count": 229
+    },
+    {
+      "true": "Volkswagen",
+      "pred": "Toyota",
+      "count": 195
+    },
+    {
+      "true": "Mercedes-Benz",
+      "pred": "Toyota",
+      "count": 169
+    },
+    {
+      "true": "Chrysler",
+      "pred": "Toyota",
+      "count": 144
+    },
+    {
+      "true": "GMC",
+      "pred": "Toyota",
+      "count": 103
+    },
+    {
+      "true": "Mitsubishi",
+      "pred": "Toyota",
+      "count": 102
+    },
+    {
+      "true": "Land Rover",
+      "pred": "Toyota",
+      "count": 72
+    },
+    {
+      "true": "Jeep",
+      "pred": "Chevrolet",
+      "count": 64
+    },
+    {
+      "true": "Lexus",
+      "pred": "Toyota",
+      "count": 62
+    },
+    {
+      "true": "Chery",
+      "pred": "Toyota",
+      "count": 60
+    },
+    {
+      "true": "Hyundai",
+      "pred": "Chevrolet",
+      "count": 57
+    },
+    {
+      "true": "Nissan",
+      "pred": "Chevrolet",
+      "count": 52
+    },
+    {
+      "true": "Dodge",
+      "pred": "Chevrolet",
+      "count": 51
+    }
+  ]
+}

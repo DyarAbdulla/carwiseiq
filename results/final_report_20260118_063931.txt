@@ -1,0 +1,266 @@
+================================================================================
+FINAL MODEL EVALUATION REPORT
+================================================================================
+Generated: 2026-01-18 06:39:31
+Test Set Size: 9739 images
+Number of Brands: 41
+
+OVERALL ACCURACY METRICS
+--------------------------------------------------------------------------------
+TOP1: 0.12%
+TOP3: 0.37%
+TOP5: 0.67%
+TOP10: 1.78%
+
+PER-BRAND ACCURACY BREAKDOWN
+--------------------------------------------------------------------------------
+
+Kia (1642 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Hyundai (1540 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Toyota (1443 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Nissan (743 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Chevrolet (653 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Dodge (558 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Jeep (528 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Ford (347 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+BMW (305 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Volkswagen (275 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Mercedes-Benz (227 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Chrysler (195 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+GMC (142 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Mitsubishi (124 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Land Rover (93 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Chery (82 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Lexus (81 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+MG (63 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Peugeot (58 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Ram (57 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+BYD (48 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Honda (47 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Renault (46 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Genesis (43 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Saipa (39 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Cadillac (35 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Mazda (34 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Jetour (31 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Geely (30 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Iran Khodro (29 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Changan (28 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+Tesla (28 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 100.00%
+
+Opel (23 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 100.00%
+
+Suzuki (21 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 100.00%
+
+Audi (18 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 100.00%
+
+Infiniti (18 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 100.00%
+
+Haval (15 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  100.00%
+  Top-10: 100.00%
+
+Jaguar (14 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  100.00%
+  Top-10: 100.00%
+
+Lifan (13 samples):
+  Top-1:  0.00%
+  Top-3:  100.00%
+  Top-5:  100.00%
+  Top-10: 100.00%
+
+Daewoo (12 samples):
+  Top-1:  100.00%
+  Top-3:  100.00%
+  Top-5:  100.00%
+  Top-10: 100.00%
+
+Great Wall (11 samples):
+  Top-1:  0.00%
+  Top-3:  100.00%
+  Top-5:  100.00%
+  Top-10: 100.00%
+
+================================================================================
+MOST CONFUSED BRAND PAIRS
+--------------------------------------------------------------------------------

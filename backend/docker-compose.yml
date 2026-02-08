@@ -1,0 +1,30 @@
+# CarWiseIQ Backend - Production docker-compose
+# Usage: Copy .env.example to .env, set variables, then:
+#   docker-compose up -d
+
+services:
+  backend:
+    build: .
+    image: carwiseiq-backend:latest
+    container_name: carwiseiq-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - ENV=production
+      - DEBUG=false
+    volumes:
+      # Persist SQLite and uploads
+      - ./users.db:/app/users.db
+      - ./uploads:/app/uploads
+      # Optional: mount models and data if not in image
+      # - ./models:/app/models
+      # - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

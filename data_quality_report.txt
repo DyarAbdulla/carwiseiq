@@ -1,0 +1,144 @@
+================================================================================
+DATA QUALITY REPORT
+================================================================================
+
+DATASET OVERVIEW
+--------------------------------------------------------------------------------
+Original shape: 62575 rows × 14 columns
+Final shape: 62181 rows × 18 columns
+Rows removed: 394
+Columns added: 4
+
+MISSING VALUES
+--------------------------------------------------------------------------------
+Before cleaning:
+  trim: 15217 (24.32%)
+  engine_size: 487 (0.78%)
+  cylinders: 480 (0.77%)
+
+After cleaning:
+  No missing values remaining!
+
+DATA TYPES
+--------------------------------------------------------------------------------
+  scraped_date: object
+  title: object
+  make: object
+  model: object
+  trim: object
+  year: int64
+  price: int64
+  mileage: float64
+  mileage_unit: object
+  location: object
+  condition: object
+  fuel_type: object
+  engine_size: float64
+  cylinders: int64
+  condition_encoded: int64
+  fuel_type_encoded: int64
+  location_encoded: int64
+  age_of_car: int64
+
+NUMERIC COLUMNS STATISTICS
+--------------------------------------------------------------------------------
+
+year:
+  Mean: 2019.71
+  Median: 2022.00
+  Std Dev: 5.90
+  Min: 1948.00
+  Max: 2025.00
+
+price:
+  Mean: 18776.07
+  Median: 16200.00
+  Std Dev: 15248.83
+  Min: 0.00
+  Max: 79000.00
+
+mileage:
+  Mean: 87937.37
+  Median: 64373.60
+  Std Dev: 86594.30
+  Min: 0.00
+  Max: 450000.00
+
+engine_size:
+  Mean: 2.67
+  Median: 2.40
+  Std Dev: 1.12
+  Min: 0.60
+  Max: 6.80
+
+cylinders:
+  Mean: 4.00
+  Median: 4.00
+  Std Dev: 0.00
+  Min: 4.00
+  Max: 4.00
+
+age_of_car:
+  Mean: 5.29
+  Median: 3.00
+  Std Dev: 5.90
+  Min: 0.00
+  Max: 77.00
+
+CATEGORICAL COLUMNS STATISTICS
+--------------------------------------------------------------------------------
+
+condition:
+  Unique values: 2
+  Top 5 values:
+    Used: 55859 (89.83%)
+    New: 6322 (10.17%)
+
+fuel_type:
+  Unique values: 13
+  Top 5 values:
+    Gasoline: 57032 (91.72%)
+    Hybrid: 3301 (5.31%)
+    Plug-In Hybrid: 817 (1.31%)
+    EV: 484 (0.78%)
+    Diesel: 339 (0.55%)
+
+location:
+  Unique values: 210
+  Top 5 values:
+    Baghdad: 19169 (30.83%)
+    Erbil: 14585 (23.46%)
+    Duhok: 3151 (5.07%)
+    Basra: 2885 (4.64%)
+    Sulaymaniyah: 2712 (4.36%)
+
+make:
+  Unique values: 91
+  Top 5 values:
+    Toyota: 10135 (16.30%)
+    Kia: 8211 (13.20%)
+    Hyundai: 7348 (11.82%)
+    Nissan: 4622 (7.43%)
+    Chevrolet: 3467 (5.58%)
+
+model:
+  Unique values: 765
+  Top 5 values:
+    Camry: 2155 (3.47%)
+    Elantra: 2033 (3.27%)
+    Grand Cherokee: 1980 (3.18%)
+    Land Cruiser: 1944 (3.13%)
+    Sportage: 1726 (2.78%)
+
+CLEANING SUMMARY
+--------------------------------------------------------------------------------
+[OK] Missing values handled
+[OK] Duplicates removed
+[OK] Data types fixed
+[OK] Mileage standardized to km
+[OK] Text columns cleaned
+[OK] Outliers handled
+[OK] Categorical variables encoded
+[OK] Feature engineering completed
+
+================================================================================

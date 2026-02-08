@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarWiseIQ Official Vehicle Valuation Report</title>
+    <style>
+        {
+                {
+                css_content|safe
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- SINGLE PAGE: ALL CONTENT -->
+    <div class="page">
+        <!-- HEADER SECTION -->
+        <header class="report-header">
+            <div class="header-top">
+                <div class="logo-section">
+                    <div class="logo">CarWiseIQ</div>
+                    <div class="logo-tagline">Professional Vehicle Valuation</div>
+                </div>
+                <div class="header-info">
+                    <div class="cert-badge">
+                        <div class="cert-label">Certificate #</div>
+                        <div class="cert-number">{{ certificate_number }}</div>
+                    </div>
+                    <div class="date-info">
+                        <div class="date-label">Generated</div>
+                        <div class="date-value">{{ generated_date }}</div>
+                        <div class="time-value">{{ generated_time }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="header-title">
+                <h1 class="report-title">Official Vehicle Valuation Report</h1>
+                <div class="verify-badge">✓ Verified Report</div>
+            </div>
+        </header>
+
+        <!-- VEHICLE SUMMARY CARD -->
+        <section class="vehicle-summary-card">
+            <h2 class="section-title">
+                <span class="title-icon">🚗</span>
+                Vehicle Summary
+            </h2>
+            <div class="summary-grid">
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <span class="item-icon">📅</span>
+                        <div class="item-content">
+                            <div class="item-label">Year</div>
+                            <div class="item-value">{{ car_features.get('year', 'N/A') }}</div>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="item-icon">🏭</span>
+                        <div class="item-content">
+                            <div class="item-label">Make</div>
+                            <div class="item-value">{{ car_features.get('make', 'N/A') }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <span class="item-icon">🚙</span>
+                        <div class="item-content">
+                            <div class="item-label">Model</div>
+                            <div class="item-value">{{ car_features.get('model', 'N/A') }}</div>
+                        </div>
+                    </div>
+                    {% if trim %}
+                    <div class="summary-item">
+                        <span class="item-icon">⭐</span>
+                        <div class="item-content">
+                            <div class="item-label">Trim</div>
+                            <div class="item-value">{{ trim }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <span class="item-icon">📏</span>
+                        <div class="item-content">
+                            <div class="item-label">Mileage</div>
+                            <div class="item-value">{{ mileage|int|string|replace(',', ',') }} km</div>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="item-icon">✨</span>
+                        <div class="item-content">
+                            <div class="item-label">Condition</div>
+                            <div class="item-value condition-badge condition-{{ condition|lower }}">{{ condition }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <span class="item-icon">📍</span>
+                        <div class="item-content">
+                            <div class="item-label">Location</div>
+                            <div class="item-value">{{ location }}</div>
+                        </div>
+                    </div>
+                    <div class="summary-item">
+                        <span class="item-icon">⛽</span>
+                        <div class="item-content">
+                            <div class="item-label">Fuel Type</div>
+                            <div class="item-value">{{ fuel_type }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% if car_features.get('engine_size') %}
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <span class="item-icon">⚙️</span>
+                        <div class="item-content">
+                            <div class="item-label">Engine</div>
+                            <div class="item-value">{{ car_features.get('engine_size') }}L{% if
+                                car_features.get('cylinders') %} {{ car_features.get('cylinders') }}-cyl{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- VEHICLE IMAGE (only if available) -->
+        {% if car_image %}
+        <section class="vehicle-image-section">
+            <img src="{{ car_image }}" alt="{{ vehicle_name }}" class="vehicle-image">
+        </section>
+        {% endif %}
+
+        <!-- ESTIMATED VALUE SECTION (PROMINENT) -->
+        <section class="valuation-section">
+            <div class="valuation-header">
+                <div class="valuation-label">Estimated Market Value</div>
+                {% if confidence_percentage %}
+                <div class="confidence-indicator">
+                    <div class="confidence-bar-container">
+                        <div class="confidence-bar" style="width: {{ confidence_percentage|int }}%"></div>
+                    </div>
+                    <div class="confidence-text">{{ confidence_percentage }}% Confidence</div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="valuation-price-container">
+                <div class="valuation-price">{{ predicted_price }}</div>
+                {% if confidence_interval %}
+                <div class="valuation-range">
+                    Fair Market Range: <strong>{{ confidence_interval.lower }}</strong> - <strong>{{
+                        confidence_interval.upper }}</strong>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- MARKET COMPARISON VISUAL -->
+        {% if market_comparison %}
+        <section class="market-comparison-section">
+            <h3 class="section-subtitle">Market Position Analysis</h3>
+            <div class="comparison-visual">
+                <div class="comparison-item">
+                    <div class="comparison-label">Market Average</div>
+                    <div class="comparison-bar-container">
+                        <div class="comparison-bar market-avg"
+                            style="width: {{ market_comparison.get('market_percentage', 50)|int }}%"></div>
+                    </div>
+                    <div class="comparison-value">{{ market_comparison.market_average }}</div>
+                </div>
+                <div class="comparison-item">
+                    <div class="comparison-label">Your Car</div>
+                    <div class="comparison-bar-container">
+                        <div class="comparison-bar your-car"
+                            style="width: {{ market_comparison.get('your_car_percentage', 50)|int }}%"></div>
+                    </div>
+                    <div class="comparison-value highlight">{{ market_comparison.your_car_price }}</div>
+                </div>
+                <div class="comparison-difference">
+                    <div class="difference-label">Price Difference</div>
+                    <div
+                        class="difference-value {% if market_comparison.percentage_difference > 0 %}positive{% elif market_comparison.percentage_difference < 0 %}negative{% else %}neutral{% endif %}">
+                        {{ market_comparison.percentage_difference_formatted }}%
+                    </div>
+                </div>
+            </div>
+            {% if deal_score %}
+            <div class="deal-rating-section">
+                <div class="deal-label">Deal Rating</div>
+                <div class="deal-badge deal-{{ deal_score.score }}">{{ deal_score.label }}</div>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        <!-- MARKET ANALYSIS GRID -->
+        <section class="market-analysis-section">
+            <h2 class="section-title">
+                <span class="title-icon">📊</span>
+                Market Analysis
+            </h2>
+            <div class="analysis-grid">
+                <div class="analysis-row">
+                    <div class="analysis-card">
+                        <div class="card-icon">📏</div>
+                        <div class="card-content">
+                            <div class="card-label">Mileage Impact</div>
+                            <div
+                                class="card-value {% if mileage < 50000 %}positive{% elif mileage < 100000 %}neutral{% else %}negative{% endif %}">
+                                {% if mileage < 50000 %}+5.2%{% elif mileage < 100000 %}+0.8%{% else %}-3.5%{% endif %}
+                                    </div>
+                                    <div class="card-desc">{{ mileage|int|string|replace(',', ',') }} km</div>
+                            </div>
+                        </div>
+                        <div class="analysis-card">
+                            <div class="card-icon">📍</div>
+                            <div class="card-content">
+                                <div class="card-label">Location Impact</div>
+                                <div class="card-value neutral">Neutral</div>
+                                <div class="card-desc">{{ location }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="analysis-row">
+                        <div class="analysis-card">
+                            <div class="card-icon">📈</div>
+                            <div class="card-content">
+                                <div class="card-label">Value Retention</div>
+                                <div class="card-value positive">Excellent</div>
+                                <div class="card-desc">Strong resale value</div>
+                            </div>
+                        </div>
+                        <div class="analysis-card">
+                            <div class="card-icon">⛽</div>
+                            <div class="card-content">
+                                <div class="card-label">Fuel Type Impact</div>
+                                <div
+                                    class="card-value {% if fuel_type|lower in ['electric', 'hybrid'] %}positive{% else %}neutral{% endif %}">
+                                    {% if fuel_type|lower in ['electric', 'hybrid'] %}+2.1%{% else %}Standard{% endif %}
+                                </div>
+                                <div class="card-desc">{{ fuel_type }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </section>
+
+        <!-- PRO TIPS SECTION -->
+        <section class="pro-tips-section">
+            <h3 class="tips-title">
+                <span class="tips-icon">💡</span>
+                Pro Tips
+            </h3>
+            <div class="tips-content">
+                <div class="tip-item">
+                    <span class="tip-bullet">✓</span>
+                    <span class="tip-text">This valuation is based on current market data and may vary based on actual
+                        condition inspection.</span>
+                </div>
+                <div class="tip-item">
+                    <span class="tip-bullet">✓</span>
+                    <span class="tip-text">Consider getting a professional inspection before finalizing any
+                        transaction.</span>
+                </div>
+                <div class="tip-item">
+                    <span class="tip-bullet">✓</span>
+                    <span class="tip-text">Market conditions can change rapidly; this valuation is valid for the date
+                        shown above.</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="report-footer">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="footer-logo">CarWiseIQ</div>
+                    <div class="footer-tagline">Professional Vehicle Valuation Services</div>
+                </div>
+                <div class="footer-info">
+                    <div class="footer-links">
+                        <div>www.carwiseiq.com</div>
+                        <div>support@carwiseiq.com</div>
+                    </div>
+                    <div class="footer-timestamp">
+                        Generated: {{ generated_date }} at {{ generated_time }}
+                    </div>
+                </div>
+            </div>
+            <div class="footer-disclaimer">
+                <p>This valuation is an estimate based on current market data and AI analysis. Actual market value may
+                    vary based on condition, location, and market conditions at time of sale. This report is for
+                    informational purposes only and does not constitute a binding offer or guarantee of sale price.</p>
+            </div>
+        </footer>
+    </div>
+</body>
+
+</html>

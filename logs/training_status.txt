@@ -1,0 +1,48 @@
+[2026-01-19 02:17:22] Training started
+CPU Cores: 12
+Batch Size: 64
+Epochs: 40
+================================================================================
+[2026-01-19 02:18:54] Starting epoch 1/40
+[2026-01-19 02:21:22] Starting epoch 2/40
+[2026-01-19 02:22:26] Starting epoch 3/40
+[2026-01-19 02:23:29] Starting epoch 4/40
+[2026-01-19 02:24:53] Starting epoch 5/40
+[2026-01-19 02:26:18] Starting epoch 6/40
+[2026-01-19 02:27:42] Starting epoch 7/40
+[2026-01-19 02:29:05] Starting epoch 8/40
+[2026-01-19 02:30:27] Starting epoch 9/40
+[2026-01-19 02:31:51] Starting epoch 10/40
+[2026-01-19 02:33:19] Starting epoch 11/40
+[2026-01-19 02:34:45] Starting epoch 12/40
+[2026-01-19 02:36:07] Starting epoch 13/40
+[2026-01-19 02:37:31] Starting epoch 14/40
+[2026-01-19 02:38:54] Starting epoch 15/40
+[2026-01-19 02:40:18] Starting epoch 16/40
+[2026-01-19 02:41:41] Starting epoch 17/40
+[2026-01-19 02:43:04] Starting epoch 18/40
+[2026-01-19 02:44:26] Starting epoch 19/40
+[2026-01-19 02:45:49] Starting epoch 20/40
+[2026-01-19 02:47:13] Starting epoch 21/40
+[2026-01-19 02:48:37] Starting epoch 22/40
+[2026-01-19 02:49:59] Starting epoch 23/40
+[2026-01-19 02:51:21] Starting epoch 24/40
+[2026-01-19 02:52:45] Starting epoch 25/40
+[2026-01-19 02:54:09] Starting epoch 26/40
+[2026-01-19 02:55:32] Starting epoch 27/40
+[2026-01-19 02:56:54] Starting epoch 28/40
+[2026-01-19 02:58:18] Starting epoch 29/40
+[2026-01-19 02:59:40] Starting epoch 30/40
+[2026-01-19 03:01:04] Starting epoch 31/40
+[2026-01-19 03:02:28] Starting epoch 32/40
+[2026-01-19 03:03:51] Starting epoch 33/40
+[2026-01-19 03:05:14] Starting epoch 34/40
+[2026-01-19 03:06:36] Starting epoch 35/40
+[2026-01-19 03:08:01] Starting epoch 36/40
+[2026-01-19 03:09:23] Starting epoch 37/40
+[2026-01-19 03:10:46] Starting epoch 38/40
+[2026-01-19 03:12:08] Starting epoch 39/40
+[2026-01-19 03:13:31] Training completed successfully
+Best Top-1 accuracy: 4.15%
+Total epochs: 40
+Model saved to: C:\Car price prection program Local E\models\car_clip_finetuned\best.pt

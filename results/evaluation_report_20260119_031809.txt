@@ -1,0 +1,254 @@
+================================================================================
+COMPREHENSIVE MODEL EVALUATION REPORT
+================================================================================
+Generated: 2026-01-19 03:18:09
+Test Set Size: 5,332 images
+Number of Brands: 34
+
+OVERALL ACCURACY METRICS
+--------------------------------------------------------------------------------
+TOP1: 4.35%
+TOP3: 14.40%
+TOP5: 25.15%
+TOP10: 50.39%
+
+PER-BRAND ACCURACY BREAKDOWN
+--------------------------------------------------------------------------------
+
+toyota (400 samples):
+  Top-1:  3.25%
+  Top-3:  15.00%
+  Top-5:  33.00%
+  Top-10: 69.75%
+
+hyundai (400 samples):
+  Top-1:  4.25%
+  Top-3:  17.50%
+  Top-5:  28.25%
+  Top-10: 62.75%
+
+kia (400 samples):
+  Top-1:  1.75%
+  Top-3:  12.25%
+  Top-5:  25.50%
+  Top-10: 64.00%
+
+nissan (400 samples):
+  Top-1:  0.50%
+  Top-3:  11.50%
+  Top-5:  34.50%
+  Top-10: 80.00%
+
+chevrolet (400 samples):
+  Top-1:  3.25%
+  Top-3:  14.75%
+  Top-5:  30.50%
+  Top-10: 63.50%
+
+jeep (400 samples):
+  Top-1:  3.75%
+  Top-3:  20.00%
+  Top-5:  30.00%
+  Top-10: 56.25%
+
+dodge (400 samples):
+  Top-1:  0.50%
+  Top-3:  12.25%
+  Top-5:  28.50%
+  Top-10: 68.50%
+
+ford (347 samples):
+  Top-1:  4.61%
+  Top-3:  15.27%
+  Top-5:  26.80%
+  Top-10: 53.60%
+
+bmw (305 samples):
+  Top-1:  8.20%
+  Top-3:  17.38%
+  Top-5:  24.59%
+  Top-10: 40.66%
+
+volkswagen (275 samples):
+  Top-1:  15.64%
+  Top-3:  30.55%
+  Top-5:  43.27%
+  Top-10: 67.64%
+
+mercedes-benz (227 samples):
+  Top-1:  15.86%
+  Top-3:  30.84%
+  Top-5:  36.12%
+  Top-10: 55.07%
+
+chrysler (195 samples):
+  Top-1:  7.69%
+  Top-3:  14.36%
+  Top-5:  18.46%
+  Top-10: 27.69%
+
+gmc (143 samples):
+  Top-1:  1.40%
+  Top-3:  6.99%
+  Top-5:  9.09%
+  Top-10: 15.38%
+
+mitsubishi (124 samples):
+  Top-1:  4.03%
+  Top-3:  6.45%
+  Top-5:  8.06%
+  Top-10: 13.71%
+
+land-rover (93 samples):
+  Top-1:  4.30%
+  Top-3:  10.75%
+  Top-5:  15.05%
+  Top-10: 19.35%
+
+chery (82 samples):
+  Top-1:  0.00%
+  Top-3:  3.66%
+  Top-5:  3.66%
+  Top-10: 7.32%
+
+lexus (81 samples):
+  Top-1:  3.70%
+  Top-3:  6.17%
+  Top-5:  6.17%
+  Top-10: 9.88%
+
+mg (63 samples):
+  Top-1:  3.17%
+  Top-3:  6.35%
+  Top-5:  7.94%
+  Top-10: 11.11%
+
+peugeot (58 samples):
+  Top-1:  3.45%
+  Top-3:  8.62%
+  Top-5:  12.07%
+  Top-10: 13.79%
+
+ram (57 samples):
+  Top-1:  1.75%
+  Top-3:  1.75%
+  Top-5:  5.26%
+  Top-10: 8.77%
+
+byd (48 samples):
+  Top-1:  2.08%
+  Top-3:  2.08%
+  Top-5:  2.08%
+  Top-10: 8.33%
+
+honda (47 samples):
+  Top-1:  2.13%
+  Top-3:  4.26%
+  Top-5:  6.38%
+  Top-10: 10.64%
+
+renault (46 samples):
+  Top-1:  2.17%
+  Top-3:  8.70%
+  Top-5:  10.87%
+  Top-10: 19.57%
+
+genesis (43 samples):
+  Top-1:  6.98%
+  Top-3:  11.63%
+  Top-5:  13.95%
+  Top-10: 18.60%
+
+saipa (39 samples):
+  Top-1:  0.00%
+  Top-3:  5.13%
+  Top-5:  15.38%
+  Top-10: 17.95%
+
+cadillac (35 samples):
+  Top-1:  0.00%
+  Top-3:  5.71%
+  Top-5:  5.71%
+  Top-10: 8.57%
+
+mazda (34 samples):
+  Top-1:  2.94%
+  Top-3:  2.94%
+  Top-5:  5.88%
+  Top-10: 5.88%
+
+jetour (31 samples):
+  Top-1:  0.00%
+  Top-3:  3.23%
+  Top-5:  9.68%
+  Top-10: 16.13%
+
+geely (30 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  3.33%
+  Top-10: 6.67%
+
+iran khodro (29 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  3.45%
+  Top-10: 13.79%
+
+tesla (28 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  7.14%
+  Top-10: 10.71%
+
+changan (28 samples):
+  Top-1:  0.00%
+  Top-3:  0.00%
+  Top-5:  0.00%
+  Top-10: 0.00%
+
+opel (23 samples):
+  Top-1:  8.70%
+  Top-3:  8.70%
+  Top-5:  8.70%
+  Top-10: 21.74%
+
+suzuki (21 samples):
+  Top-1:  0.00%
+  Top-3:  4.76%
+  Top-5:  4.76%
+  Top-10: 23.81%
+
+================================================================================
+MOST CONFUSED BRAND PAIRS
+--------------------------------------------------------------------------------
+dodge → mercedes-benz: 71 times
+toyota → mercedes-benz: 62 times
+hyundai → mercedes-benz: 61 times
+chevrolet → mercedes-benz: 58 times
+nissan → mercedes-benz: 55 times
+ford → mercedes-benz: 52 times
+nissan → volkswagen: 51 times
+toyota → volkswagen: 51 times
+chevrolet → volkswagen: 50 times
+ford → volkswagen: 49 times
+jeep → mercedes-benz: 48 times
+kia → mercedes-benz: 48 times
+dodge → volkswagen: 48 times
+hyundai → volkswagen: 46 times
+kia → volkswagen: 44 times
+jeep → volkswagen: 41 times
+hyundai → bmw: 37 times
+bmw → mercedes-benz: 36 times
+volkswagen → mercedes-benz: 33 times
+chrysler → mercedes-benz: 31 times
+
+================================================================================
+RECOMMENDATION
+--------------------------------------------------------------------------------
+❌ POOR: Top-1 accuracy < 15%. Model needs significant improvement.
+   Recommendations:
+   1. Collect more training data (especially for low-accuracy brands)
+   2. Train for more epochs (50-100)
+   3. Check for label quality issues
+   4. Consider using a larger model

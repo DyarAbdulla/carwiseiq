@@ -1,0 +1,61 @@
+================================================================================
+                    FILES TAGGED FOR MANUAL UNDO
+================================================================================
+
+Created: 2025-12-27
+Purpose: List all files created/modified during error fixing session
+Action: DELETE or RESTORE these files to undo changes
+
+================================================================================
+                            FILES TO DELETE
+================================================================================
+
+[DELETE] frontend/components/prediction/MarketTrends.tsx
+[DELETE] frontend/components/prediction/WhatIfScenarios.tsx
+[DELETE] frontend/components/ui/tabs.tsx
+
+================================================================================
+                          FILES TO RESTORE
+================================================================================
+
+[RESTORE] frontend/hooks/use-toast.tsx
+         → Was renamed from .ts to .tsx
+         → Contains JSX, so .tsx is correct
+         → If you undo, rename back to .ts (will cause errors)
+
+[RESTORE] frontend/components/ui/toaster.tsx
+         → Was simplified to return null
+         → Restore original if you have backup
+
+================================================================================
+                    FILES THAT NEED CODE UPDATES
+================================================================================
+
+[UPDATE] frontend/components/prediction/PredictionResult.tsx
+        → Remove line 11: import { MarketTrends } from './MarketTrends'
+        → Remove line 13: import { WhatIfScenarios } from './WhatIfScenarios'
+        → Remove lines 75-81: <WhatIfScenarios /> block
+        → Remove lines 92-98: <MarketTrends /> block
+
+[UPDATE] frontend/app/[locale]/stats/page.tsx
+        → Remove line 6: import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+        → Replace lines 179-247: <Tabs> components with alternative layout
+
+================================================================================
+                            QUICK REFERENCE
+================================================================================
+
+Full Paths:
+  C:\Car prices definer program local C\frontend\components\prediction\MarketTrends.tsx
+  C:\Car prices definer program local C\frontend\components\prediction\WhatIfScenarios.tsx
+  C:\Car prices definer program local C\frontend\components\ui\tabs.tsx
+  C:\Car prices definer program local C\frontend\hooks\use-toast.tsx
+  C:\Car prices definer program local C\frontend\components\ui\toaster.tsx
+
+Files Using These Components:
+  C:\Car prices definer program local C\frontend\components\prediction\PredictionResult.tsx
+  C:\Car prices definer program local C\frontend\app\[locale]\stats\page.tsx
+
+================================================================================
+
+

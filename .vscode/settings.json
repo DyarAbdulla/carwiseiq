@@ -1,0 +1,9 @@
+{
+    "git.ignoreLimitWarning": true,
+    "files.autoSave": "onWindowChange",
+    "files.autoSaveDelay": 1000,
+    "files.hotExit": "onExit",
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "editor.formatOnSave": true
+}

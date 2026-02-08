@@ -1,0 +1,52 @@
+================================================================================
+CAR PRICE PREDICTION MODEL - EVALUATION REPORT
+================================================================================
+
+BEST MODEL
+--------------------------------------------------------------------------------
+Model Name: Random Forest (Tuned)
+R² Score: 0.5316
+RMSE: $6,883.49
+MAE: $3,437.39
+MAPE: 8602.16%
+
+MODEL COMPARISON
+--------------------------------------------------------------------------------
+Random Forest (Tuned):
+  R²: 0.5316, RMSE: $6,883.49, MAE: $3,437.39, MAPE: 8602.16%
+Stacking Ensemble (Ridge Meta):
+  R²: 0.4864, RMSE: $7,208.38, MAE: $4,079.09, MAPE: 11111.51%
+Random Forest:
+  R²: 0.4442, RMSE: $7,498.17, MAE: $4,380.46, MAPE: 9884.79%
+XGBoost (Tuned):
+  R²: 0.1410, RMSE: $9,322.02, MAE: $5,020.09, MAPE: 14014.23%
+Gradient Boosting (Tuned):
+  R²: -0.1325, RMSE: $10,703.37, MAE: $7,182.96, MAPE: 21366.93%
+XGBoost:
+  R²: -0.3499, RMSE: $11,685.77, MAE: $8,141.26, MAPE: 31962.48%
+Gradient Boosting:
+  R²: -0.4621, RMSE: $12,161.70, MAE: $8,584.80, MAPE: 35029.44%
+Linear Regression:
+  R²: -1.0659, RMSE: $14,456.37, MAE: $11,020.10, MAPE: 50830.35%
+
+FEATURE IMPORTANCE (Top 10)
+--------------------------------------------------------------------------------
+1. mileage age_of_car: 0.1512
+2. model_encoded: 0.1428
+3. mileage engine_size: 0.0955
+4. year engine_size: 0.0802
+5. location_encoded: 0.0791
+6. brand_popularity: 0.0702
+7. year_mileage_interaction: 0.0550
+8. year mileage: 0.0545
+9. make_encoded: 0.0499
+10. mileage cylinders: 0.0395
+
+PREDICTION CONFIDENCE INTERVALS
+--------------------------------------------------------------------------------
+Average 95% CI Width: $27,224.68
+Coverage (actual within CI): 96.44%
+
+================================================================================
+END OF REPORT
+================================================================================

@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 78313c403c4d040a9b9e76122def78aa268d4162 DyarAbdulla <dyarabdula15@gmail.com> 1766246701 +0300	commit (initial): Initial commit - Car Price Predictor Pro v2.0.0
+78313c403c4d040a9b9e76122def78aa268d4162 78313c403c4d040a9b9e76122def78aa268d4162 DyarAbdulla <dyarabdula15@gmail.com> 1766246737 +0300	Branch: renamed refs/heads/main to refs/heads/main
+78313c403c4d040a9b9e76122def78aa268d4162 78313c403c4d040a9b9e76122def78aa268d4162 DyarAbdulla <dyarabdula15@gmail.com> 1766246765 +0300	Branch: renamed refs/heads/main to refs/heads/main
+78313c403c4d040a9b9e76122def78aa268d4162 78313c403c4d040a9b9e76122def78aa268d4162 DyarAbdulla <dyarabdula15@gmail.com> 1766246915 +0300	Branch: renamed refs/heads/main to refs/heads/main
+78313c403c4d040a9b9e76122def78aa268d4162 c0cc11dec3e68197555d1d9926745c715df1d2c7 DyarAbdulla <dyarabdula15@gmail.com> 1766247035 +0300	commit: Complete Car Price Predictor Project
+c0cc11dec3e68197555d1d9926745c715df1d2c7 af151ee5e60d9fae15660cf4924c7f3b9962a6b8 DyarAbdulla <dyarabdula15@gmail.com> 1766247237 +0300	commit: Remove large files and update .gitignore - Fix push timeout issue
