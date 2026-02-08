@@ -20,29 +20,9 @@ const nextConfig = {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000',
   },
 
-  // OPTIMIZED: Image optimization for maximum performance
+  // Cloudflare Pages: unoptimized required (no Node image optimizer at edge)
   images: {
-    formats: ['image/avif', 'image/webp'], // Modern formats first
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920], // Reduced sizes for faster loading
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 31536000, // Cache for 1 year (images are immutable)
-    dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    remotePatterns: [
-      { protocol: 'http', hostname: 'localhost', port: '8000', pathname: '/uploads/**' },
-      { protocol: 'http', hostname: 'localhost', port: '55730', pathname: '/uploads/**' },
-      { protocol: 'http', hostname: 'localhost', port: '8000', pathname: '/api/car-images/**' },
-      { protocol: 'http', hostname: '127.0.0.1', port: '8000', pathname: '/uploads/**' },
-      { protocol: 'http', hostname: '127.0.0.1', port: '55730', pathname: '/uploads/**' },
-      { protocol: 'http', hostname: '127.0.0.1', port: '8000', pathname: '/api/car-images/**' },
-      // Supabase storage domains
-      { protocol: 'https', hostname: 'fehkzrrahgyesxzrwlme.supabase.co', pathname: '/storage/v1/object/public/**' },
-      { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
-      // External CDN for car images
-      { protocol: 'https', hostname: 'cdn.iqcars.io', pathname: '/**' },
-    ],
-    unoptimized: false, // Keep optimized for production; Cloudflare uses @cloudflare/next-on-pages
+    unoptimized: true,
   },
 
   // OPTIMIZED: Add caching and security headers (CSP, HSTS, etc.)
@@ -145,9 +125,9 @@ const nextConfig = {
     return config
   },
 
-  // Experimental features to improve stability and performance
+  // Experimental: reduce build concurrency to lower memory use (Cloudflare Pages)
   experimental: {
-    // Optimize package imports - include lucide-react to prevent vendor-chunks errors
+    cpus: 1,
     optimizePackageImports: [
       'lucide-react',
       '@radix-ui/react-select',
@@ -156,6 +136,9 @@ const nextConfig = {
       'framer-motion',
     ],
   },
+
+  // Do not use standalone output (incompatible with Cloudflare Pages)
+  // output: 'standalone' must NOT be set
 
   // Compression
   compress: true,

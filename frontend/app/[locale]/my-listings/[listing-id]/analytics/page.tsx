@@ -2,6 +2,7 @@
 export const runtime = 'edge';
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,8 +10,15 @@ import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, TrendingUp, Eye, Heart, MessageSquare, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
+
+const LineChart = dynamic(() => import('recharts').then(m => ({ default: m.LineChart })), { ssr: false })
+const Line = dynamic(() => import('recharts').then(m => ({ default: m.Line })), { ssr: false })
+const XAxis = dynamic(() => import('recharts').then(m => ({ default: m.XAxis })), { ssr: false })
+const YAxis = dynamic(() => import('recharts').then(m => ({ default: m.YAxis })), { ssr: false })
+const CartesianGrid = dynamic(() => import('recharts').then(m => ({ default: m.CartesianGrid })), { ssr: false })
+const Tooltip = dynamic(() => import('recharts').then(m => ({ default: m.Tooltip })), { ssr: false })
+const ResponsiveContainer = dynamic(() => import('recharts').then(m => ({ default: m.ResponsiveContainer })), { ssr: false })
 import { motion } from 'framer-motion'
 import { ChartSkeleton } from '@/components/common/LoadingSkeleton'
 
