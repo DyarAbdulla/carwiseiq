@@ -61,9 +61,12 @@ class Settings(BaseSettings):
     @property
     def DATA_FILE(self) -> Path:
         """Path to the dataset file"""
-        # Priority: iqcars_cleaned.csv (production dataset), then final_dataset_with_images.csv, then cleaned_car_data.csv
+        # Priority: backend CSV (deployed), then iqcars_cleaned.csv, then final_dataset_with_images.csv, then cleaned_car_data.csv in data/
         paths = [
-            # Try iqcars_cleaned.csv first (production dataset with locations and fuel_types)
+            # Backend folder / Docker /app (production)
+            self.BASE_DIR / "cleaned_car_data.csv",
+            Path("/app/cleaned_car_data.csv"),
+            # Try iqcars_cleaned.csv (production dataset with locations and fuel_types)
             self.ROOT_DIR / "data" / "iqcars_cleaned.csv",
             self.BASE_DIR / "data" / "iqcars_cleaned.csv",
             Path("data/iqcars_cleaned.csv"),
