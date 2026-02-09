@@ -58,10 +58,14 @@ app.add_middleware(SecurityMiddleware)
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://carwiseiq.pages.dev",
+        "https://e0991c36.carwiseiq.pages.dev",
+        "http://localhost:3000",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_credentials=False,
 )
 
 # Root endpoint
