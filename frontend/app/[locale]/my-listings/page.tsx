@@ -201,7 +201,7 @@ function MyListingsContent() {
         console.log('[MyListings] [FETCH_LISTINGS] Response received, count:', response?.listings?.length || 0)
       }
 
-      const listingsData = response?.listings || []
+      const listingsData = Array.isArray(response?.listings) ? response.listings : []
       setListings(listingsData as CarListing[])
       setError(null)
     } catch (e: any) {
@@ -248,7 +248,7 @@ function MyListingsContent() {
     }
   }, [currentUser, toast])
 
-  // STEP 2: After session loads, fetch listings if user exists
+  // STEP 2: After session loads, fetch listings if user exists (with timeout)
   useEffect(() => {
     // Reset loading state when session or user changes
     if (!sessionLoaded) {
@@ -272,10 +272,22 @@ function MyListingsContent() {
     if (process.env.NODE_ENV === 'development') {
       console.log('[MyListings] [FETCH_LISTINGS] Session loaded, user exists, fetching listings...')
     }
-    fetchListings()
+
+    const timeout = setTimeout(() => {
+      setLoading((prev) => {
+        if (prev) {
+          setError('Request timed out')
+          return false
+        }
+        return prev
+      })
+    }, 10000)
+
+    fetchListings().finally(() => clearTimeout(timeout))
 
     // Cleanup: abort request on unmount or when dependencies change
     return () => {
+      clearTimeout(timeout)
       if (fetchAbortControllerRef.current) {
         fetchAbortControllerRef.current.abort()
       }

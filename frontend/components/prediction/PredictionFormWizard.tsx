@@ -430,11 +430,10 @@ export function PredictionFormWizard({ onSubmit, loading = false, prefillData = 
   const loadLocations = async () => {
     try {
       const locationsList = await apiClient.getLocations()
-      const fallback = ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Dubai', 'California', 'Texas', 'New York']
-      setLocations(locationsList?.length > 0 ? locationsList : fallback)
+      const list = Array.isArray(locationsList) && locationsList.length > 0 ? locationsList : []
+      setLocations(list)
     } catch {
-      const fallback = ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Dubai', 'California', 'Texas', 'New York']
-      setLocations(fallback)
+      setLocations([])
     }
   }
 
@@ -681,7 +680,7 @@ export function PredictionFormWizard({ onSubmit, loading = false, prefillData = 
               {loadingTrims ? (
                 <div className="p-2 text-center text-[#94a3b8]">Loading trims...</div>
               ) : trims.length > 0 ? (
-                trims.map((trim) => (
+                (trims || []).map((trim) => (
                   <SelectItem key={trim} value={trim} className="text-white">
                     {trim}
                   </SelectItem>
@@ -920,7 +919,7 @@ export function PredictionFormWizard({ onSubmit, loading = false, prefillData = 
               {initialLoading ? (
                 <div className="p-2 text-center text-[#94a3b8]">Loading locations...</div>
               ) : locations.length > 0 ? (
-                locations.map((location) => (
+                (locations || []).map((location) => (
                   <SelectItem key={location} value={location} className="text-white">
                     {location}
                   </SelectItem>

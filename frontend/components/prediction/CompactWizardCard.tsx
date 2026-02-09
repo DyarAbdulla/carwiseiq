@@ -705,7 +705,7 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
                         {loadingTrims ? (
                           <div className="p-2 text-center text-[#94a3b8]">{t('loadingTrims')}</div>
                         ) : trims.length > 0 ? (
-                          trims.map((trim) => (
+                          (trims || []).map((trim) => (
                             <SelectItem key={trim} value={trim} className="text-white">
                               {trim}
                             </SelectItem>
@@ -924,7 +924,7 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
                       </SelectTrigger>
                       <SelectContent className="max-h-[300px] bg-[#1a1d29] border-[#2a2d3a]">
                         {locations.length > 0 ? (
-                          locations.map((location) => (
+                          (locations || []).map((location) => (
                             <SelectItem key={location} value={location} className="text-white">
                               {location}
                             </SelectItem>

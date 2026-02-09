@@ -60,7 +60,7 @@ export function ServicesSection() {
       console.log('🔵 [ServicesSection] Fetching services and locations...')
       const [servicesRes, locationsRes] = await Promise.all([
         apiClient.getServices({ status: 'active' }),
-        apiClient.getLocations(true)
+        apiClient.getServiceLocations(true)
       ])
       console.log('✅ [ServicesSection] Services response:', servicesRes)
       console.log('✅ [ServicesSection] Locations response:', locationsRes)

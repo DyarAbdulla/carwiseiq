@@ -718,11 +718,12 @@ export const apiClient = {
       async () => {
         try {
           const response = await api.get<string[]>('/api/cars/makes')
-          return response.data
+          const data = response?.data
+          return Array.isArray(data) ? data : []
         } catch (error) {
           // Fallback to constants if API fails
           const { CAR_MAKES } = await import('./constants')
-          return CAR_MAKES
+          return Array.isArray(CAR_MAKES) ? CAR_MAKES : []
         }
       },
       undefined,
@@ -737,11 +738,13 @@ export const apiClient = {
       async () => {
         try {
           const response = await api.get<string[]>(`/api/cars/models/${encodeURIComponent(make)}`)
-          return response.data
+          const data = response?.data
+          return Array.isArray(data) ? data : []
         } catch (error) {
           // Fallback to constants if API fails
           const { MODELS_BY_MAKE } = await import('./constants')
-          return MODELS_BY_MAKE[make] || []
+          const fallback = MODELS_BY_MAKE[make]
+          return Array.isArray(fallback) ? fallback : []
         }
       },
       { make },
@@ -749,22 +752,17 @@ export const apiClient = {
     )
   },
 
-  // Fallback when /api/cars/locations fails or dataset has no locations (e.g. after DB reset, backend down)
+  // Dynamic locations from /api/cars/locations; fallback to empty array on failure
   async getLocations(): Promise<string[]> {
-    const LOCATIONS_FALLBACK = [
-      'Baghdad', 'Erbil', 'Basra', 'Mosul', 'Kirkuk', 'Najaf', 'Karbala', 'Sulaymaniyah', 'Duhok',
-      'Al-Fallujah', 'Ramadi', 'Samarra', 'Baqubah', 'Amara', 'Diwaniyah', 'Kut', 'Hillah', 'Nasiriyah',
-      'Dubai', 'Abu Dhabi', 'California', 'Texas', 'New York', 'London', 'Berlin', 'Istanbul',
-    ]
     return apiCache.getOrFetch(
       '/api/cars/locations',
       async () => {
         try {
           const response = await api.get<string[]>('/api/cars/locations')
-          const data = Array.isArray(response?.data) ? response.data : []
-          return data.length > 0 ? data : LOCATIONS_FALLBACK
+          const data = response?.data
+          return Array.isArray(data) ? data : []
         } catch {
-          return LOCATIONS_FALLBACK
+          return []
         }
       },
       undefined,
@@ -778,9 +776,10 @@ export const apiClient = {
       async () => {
         try {
           const response = await api.get<string[]>(`/api/cars/trims/${encodeURIComponent(make)}/${encodeURIComponent(model)}`)
-          return response.data
-        } catch (error) {
-          throw new Error(handleError(error))
+          const data = response?.data
+          return Array.isArray(data) ? data : []
+        } catch {
+          return []
         }
       },
       { make, model },
@@ -2492,14 +2491,14 @@ export const apiClient = {
     }
   },
 
-  async getLocations(activeOnly: boolean = true): Promise<{ locations: any[]; count: number }> {
+  async getServiceLocations(activeOnly: boolean = true): Promise<{ locations: any[]; count: number }> {
     try {
-      console.log('🔵 [API] getLocations called with activeOnly:', activeOnly)
+      console.log('🔵 [API] getServiceLocations called with activeOnly:', activeOnly)
       const response = await api.get('/api/locations', { params: { active_only: activeOnly } })
-      console.log('✅ [API] getLocations response:', response.data)
+      console.log('✅ [API] getServiceLocations response:', response.data)
       return response.data
     } catch (error: any) {
-      console.error('❌ [API] getLocations error:', error)
+      console.error('❌ [API] getServiceLocations error:', error)
       console.error('❌ [API] Error details:', {
         message: error.message,
         response: error.response?.data,

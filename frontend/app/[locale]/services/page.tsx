@@ -99,7 +99,7 @@ export default function ServicesPage() {
     try {
       const [servicesRes, locationsRes] = await Promise.all([
         apiClient.getServices({ status: 'active' }),
-        apiClient.getLocations(true)
+        apiClient.getServiceLocations(true)
       ])
 
       if (servicesRes && servicesRes.services && Array.isArray(servicesRes.services)) {

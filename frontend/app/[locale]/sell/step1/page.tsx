@@ -26,13 +26,17 @@ export default function SellStep1Page() {
   }, [city, neighborhood, setLocation])
 
   useEffect(() => {
-    apiClient.getLocations().then(setLocationsList).catch(() => setLocationsList([]))
+    apiClient
+      .getLocations()
+      .then((data) => setLocationsList(Array.isArray(data) ? data : []))
+      .catch(() => setLocationsList([]))
   }, [])
 
   const filtered = useMemo(() => {
+    const list = locationsList ?? []
     const q = search.trim().toLowerCase()
-    if (!q) return [...locationsList]
-    return locationsList.filter((c) => c.toLowerCase().includes(q))
+    if (!q) return [...list]
+    return list.filter((c) => c.toLowerCase().includes(q))
   }, [search, locationsList])
 
   const handleContinue = () => {
@@ -78,23 +82,25 @@ export default function SellStep1Page() {
                     onFocus={() => setFocused(true)}
                     onBlur={() => {
                       setTimeout(() => setFocused(false), 200)
-                      if (filtered.length === 1) {
-                        setCity(filtered[0]!)
+                      const flist = filtered ?? []
+                      if (flist.length === 1) {
+                        setCity(flist[0]!)
                         setSearch("")
                       }
-                      if (city && !locationsList.includes(city)) setSearch(city)
+                      const list = locationsList ?? []
+                      if (city && !list.includes(city)) setSearch(city)
                     }}
                     placeholder={t("cityPlaceholder")}
                     className="h-12 pl-11 pr-4 text-base bg-white/5 backdrop-blur-sm border-white/10 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:bg-white/10"
                   />
                   <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                 </div>
-                {(focused || search.length > 0) && filtered.length > 0 && (
+                {(focused || search.length > 0) && (filtered ?? []).length > 0 && (
                   <div
                     className="absolute top-full left-0 right-0 mt-2 max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl z-20"
                     onMouseDownCapture={(e) => e.preventDefault()}
                   >
-                    {filtered.map((c) => (
+                    {(filtered ?? []).map((c) => (
                       <button
                         key={c}
                         type="button"

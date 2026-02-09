@@ -273,7 +273,7 @@ export function DetailedFeedbackModal({
                     </SelectTrigger>
                     <SelectContent className="max-h-[60vh] overflow-y-auto bg-[#1a1d29] border-[#2a2d3a] z-[1200]">
                       {makes.length > 0 ? (
-                        makes.map((make) => (
+                        (makes || []).map((make) => (
                           <SelectItem
                             key={make}
                             value={make}

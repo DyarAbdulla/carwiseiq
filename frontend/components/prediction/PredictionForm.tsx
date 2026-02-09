@@ -1027,15 +1027,14 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
   }
 
   const loadLocations = async (): Promise<string[]> => {
-    const fallback = ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Dubai', 'California', 'Texas', 'New York']
     try {
       const locationsList = await apiClient.getLocations()
-      const list = locationsList?.length > 0 ? locationsList : fallback
+      const list = Array.isArray(locationsList) && locationsList.length > 0 ? locationsList : []
       setLocations(list)
       return list
     } catch {
-      setLocations(fallback)
-      return fallback
+      setLocations([])
+      return []
     }
   }
 
@@ -1614,7 +1613,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
                   {loadingTrims ? (
                     <div className="p-2 text-center text-[#94a3b8]">Loading trims...</div>
                   ) : trims.length > 0 ? (
-                    trims.map((trim) => (
+                    (trims || []).map((trim) => (
                       <SelectItem key={trim} value={trim} className="text-white">
                         {trim}
                       </SelectItem>
@@ -1935,7 +1934,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
                   {initialLoading ? (
                     <div className="p-2 text-center text-[#94a3b8]">Loading locations...</div>
                   ) : locations.length > 0 ? (
-                    locations.map((location) => (
+                    (locations || []).map((location) => (
                       <SelectItem key={location} value={location} className="text-white">
                         {location}
                       </SelectItem>

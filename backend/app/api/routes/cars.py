@@ -106,7 +106,7 @@ async def get_models(make: str):
 async def get_locations():
     """
     Get list of all unique locations from the dataset (e.g. cleaned_car_data.csv).
-    Reads the 'location' (or 'city') column and returns sorted unique values.
+    Reads the 'location' (or 'city', 'region') column and returns sorted unique values.
     """
     try:
         dataset_loader = DatasetLoader.get_instance()
@@ -114,40 +114,32 @@ async def get_locations():
 
         if df is None or len(df) == 0:
             logger.warning("Dataset not available for locations")
-            # Return common Iraqi locations as fallback
-            return ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Kirkuk', 'Najaf', 'Karbala', 'Sulaymaniyah', 'Duhok', 'Al-Fallujah', 'Ramadi', 'Samarra', 'Baqubah', 'Amara', 'Diwaniyah', 'Kut', 'Hillah', 'Nasiriyah', 'Haswa', 'Latifiya', 'Al Nashwa', 'Anbar', 'Abu Al-Khaseeb']
+            return []
 
-        # Find location column (try common names, case-insensitive)
-        loc_col = None
-        for c in ['location', 'Location', 'LOCATION', 'loc', 'city', 'City']:
-            if c in df.columns:
-                loc_col = c
+        # Log columns to see what's available
+        print("Dataset columns:", df.columns.tolist())
+
+        # Check for location column
+        location_col = None
+        for col in ['location', 'Location', 'city', 'City', 'region', 'Region']:
+            if col in df.columns:
+                location_col = col
                 break
-        if not loc_col:
+
+        if location_col is None:
             logger.warning("Location column not found in dataset")
-            return ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Kirkuk', 'Najaf', 'Karbala', 'Sulaymaniyah', 'Duhok', 'Al-Fallujah', 'Ramadi', 'Samarra', 'Baqubah', 'Amara', 'Diwaniyah', 'Kut', 'Hillah', 'Nasiriyah', 'Haswa', 'Latifiya', 'Al Nashwa', 'Anbar', 'Abu Al-Khaseeb']
+            return []
 
-        # Get unique locations, sorted; normalize to title case for consistent matching with frontend
-        locations = df[loc_col].dropna().unique().tolist()
-        locations = [str(loc).strip().title()
-                     for loc in locations if str(loc).strip()]
-        # Filter out invalid values
-        locations = [loc for loc in locations if loc.lower(
-        ) not in ['nan', 'none', 'null', 'n/a', '', 'unknown']]
+        locations = df[location_col].dropna().unique().tolist()
+        locations = sorted([str(loc).strip() for loc in locations if loc and str(loc).strip()])
+        locations = [loc for loc in locations if loc.lower() not in ['nan', 'none', 'null', 'n/a', '', 'unknown']]
         locations = sorted(list(set(locations)))
-
-        # If no valid locations found, return fallback
-        if not locations:
-            logger.warning(
-                "No valid locations found in dataset, using fallback")
-            return ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Kirkuk', 'Najaf', 'Karbala', 'Sulaymaniyah', 'Duhok', 'Al-Fallujah', 'Ramadi', 'Samarra', 'Baqubah', 'Amara', 'Diwaniyah', 'Kut', 'Hillah', 'Nasiriyah', 'Haswa', 'Latifiya', 'Al Nashwa', 'Anbar', 'Abu Al-Khaseeb']
 
         logger.info(f"Returning {len(locations)} locations")
         return locations
     except Exception as e:
         logger.error(f"Error getting locations: {e}", exc_info=True)
-        # Return fallback locations instead of error
-        return ['Baghdad', 'Erbil', 'Basra', 'Mosul', 'Kirkuk', 'Najaf', 'Karbala', 'Sulaymaniyah', 'Duhok', 'Al-Fallujah', 'Ramadi', 'Samarra', 'Baqubah', 'Amara', 'Diwaniyah', 'Kut', 'Hillah', 'Nasiriyah', 'Haswa', 'Latifiya', 'Al Nashwa', 'Anbar', 'Abu Al-Khaseeb']
+        return []
 
 
 @router.get("/trims/{make}/{model}", response_model=List[str])
@@ -169,6 +161,16 @@ async def get_trims(make: str, model: str):
             logger.warning("Dataset not available for trims")
             return []
 
+        # Check for trim column
+        trim_col = None
+        for col in ['trim', 'Trim', 'variant', 'Variant', 'version', 'Version']:
+            if col in df.columns:
+                trim_col = col
+                break
+
+        if trim_col is None:
+            return []
+
         # Filter by make and model (case-insensitive)
         filtered = df[
             (df['make'].str.lower() == make.lower()) &
@@ -178,24 +180,9 @@ async def get_trims(make: str, model: str):
         if len(filtered) == 0:
             return []
 
-        # Get unique trims, sorted, and filter out empty/null values
-        if 'trim' not in filtered.columns:
-            return []
-
-        # Get all trim values, including empty ones to check
-        all_trims = filtered['trim'].dropna().unique().tolist()
-
-        # Filter out empty strings, 'nan', 'none', and other invalid values
-        trims = []
-        for t in all_trims:
-            t_str = str(t).strip()
-            t_lower = t_str.lower()
-            # Skip empty, nan, none, null, and other invalid values
-            if (t_str and
-                t_lower not in ['nan', 'none', 'null', 'n/a', 'na', '', 'undefined'] and
-                    not t_lower.startswith('nan')):
-                trims.append(t_str)
-
+        trims = filtered[trim_col].dropna().unique().tolist()
+        trims = sorted([str(t).strip() for t in trims if t and str(t).strip()])
+        trims = [t for t in trims if t.lower() not in ['nan', 'none', 'null', 'n/a', 'na', '', 'undefined']]
         trims = sorted(list(set(trims)))
 
         return trims

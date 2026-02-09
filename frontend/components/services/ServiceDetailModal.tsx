@@ -94,7 +94,7 @@ export function ServiceDetailModal({ service, open, onOpenChange, onView }: Serv
     if (open) {
       const loadLocations = async () => {
         try {
-          const res = await apiClient.getLocations(true)
+          const res = await apiClient.getServiceLocations(true)
           if (res && res.locations) {
             setLocations(res.locations)
           }
