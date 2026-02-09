@@ -59,7 +59,7 @@ app.add_middleware(SecurityMiddleware)
 # CORS with pattern matching for Cloudflare Pages
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://.*\.carwiseiq\.pages\.dev|https://carwiseiq\.pages\.dev|http://localhost:\d+",
+    allow_origin_regex=r"https://.*\.carwiseiq\.pages\.dev|https://carwiseiq\.pages\.dev|https://carwiseiq\.com|https://www\.carwiseiq\.com|http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
