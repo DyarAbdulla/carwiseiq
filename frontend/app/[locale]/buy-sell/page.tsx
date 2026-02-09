@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,13 @@ import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
 import { listingImageUrl, isVideoUrl } from '@/lib/utils'
 import { ListingCardSkeleton } from '@/components/common/LoadingSkeleton'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import ListingDetailClient from './[id]/ListingDetailClient'
 
 function firstImageUrl(images: unknown): string | null {
   if (!images || !Array.isArray(images)) return null
@@ -30,6 +37,9 @@ function conditionLabel(c: string): string {
 }
 
 export default function BuySellPage() {
+  const searchParams = useSearchParams()
+  const carId = searchParams?.get('id') ?? undefined
+
   const [listings, setListings] = useState<CarListing[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -49,6 +59,10 @@ export default function BuySellPage() {
   const locale = useLocale()
   const t = useTranslations('marketplace')
   const { toast } = useToast()
+
+  const closeDetailModal = useCallback(() => {
+    router.push(`/${locale}/buy-sell`)
+  }, [router, locale])
 
   // Quick budget chips
   const budgetChips = [
@@ -220,6 +234,18 @@ export default function BuySellPage() {
 
   return (
     <div className="relative min-h-screen text-gray-100">
+      {/* Car detail modal when ?id= is in URL (e.g. from redirect /buy-sell/123 -> /buy-sell?id=123) */}
+      <Dialog open={!!carId} onOpenChange={(open) => { if (!open) closeDetailModal() }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 gap-0 border-0 bg-slate-900/95 backdrop-blur-xl text-gray-100">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Listing details</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto">
+            {carId && <ListingDetailClient listingIdOverride={carId} />}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Gradient orb background ambience */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-radial from-indigo-500/15 via-purple-500/10 to-transparent blur-3xl" />

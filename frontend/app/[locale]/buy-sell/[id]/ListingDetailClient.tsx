@@ -124,7 +124,13 @@ function normalizeSupabaseListing(row: Record<string, unknown>): Record<string, 
   }
 }
 
-export default function ListingDetailPage() {
+type ListingDetailClientProps = {
+  /** When provided (e.g. from URL ?id=), use this instead of route params (for buy-sell page modal) */
+  listingIdOverride?: string
+}
+
+export default function ListingDetailPage(props: ListingDetailClientProps = {}) {
+  const { listingIdOverride } = props
   const params = useParams()
   const router = useRouter()
   const locale = useLocale()
@@ -133,7 +139,7 @@ export default function ListingDetailPage() {
   const { toast } = useToast()
   const { user, isAuthenticated } = useAuth()
   const { user: currentUser } = useAuthContext()
-  const listingId = params?.id as string
+  const listingId = (listingIdOverride ?? params?.id) as string
 
   const [listing, setListing] = useState<any>(null)
   const [loading, setLoading] = useState(true)
