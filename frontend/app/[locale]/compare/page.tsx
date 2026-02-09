@@ -68,6 +68,7 @@ export default function ComparePage() {
   const [loadingListings, setLoadingListings] = useState(false)
   const [predictingAll, setPredictingAll] = useState(false)
   const [highlightDifferencesOnly, setHighlightDifferencesOnly] = useState(false)
+  const [locations, setLocations] = useState<string[]>([])
 
   const MAX_CARS = 4
 
@@ -81,6 +82,17 @@ export default function ComparePage() {
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  // Load locations for the Compare page prediction form dropdown (ensures location options are available)
+  useEffect(() => {
+    apiClient
+      .getLocations()
+      .then((data) => setLocations(Array.isArray(data) ? data : []))
+      .catch((err) => {
+        console.error('Failed to load locations:', err)
+        setLocations([])
+      })
   }, [])
 
   // Restore prediction comparison from share URL (?type=pred&d=...)
@@ -1445,6 +1457,7 @@ export default function ComparePage() {
                               color: car.features.color || '',
                             } : null}
                             loading={car.loading || false}
+                            locations={locations}
                           />
                           {car.prediction && car.features && (
                             <motion.div

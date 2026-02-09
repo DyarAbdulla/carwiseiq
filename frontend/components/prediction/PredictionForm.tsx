@@ -66,9 +66,11 @@ interface PredictionFormProps {
   onFormChange?: (carId: string, data: Partial<CarFeatures> | null) => void
   onStepChange?: (carId: string, step: number) => void
   formId?: string // Unique identifier for this form instance (e.g., car card ID) - REQUIRED for isolation
+  /** Optional locations from parent (e.g. Compare page). When provided, used for the location dropdown. */
+  locations?: string[]
 }
 
-export function PredictionForm({ onSubmit, loading = false, prefillData = null, onFormChange, onStepChange, formId }: PredictionFormProps) {
+export function PredictionForm({ onSubmit, loading = false, prefillData = null, onFormChange, onStepChange, formId, locations: locationsProp }: PredictionFormProps) {
   // Debug logs only in development
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -104,6 +106,10 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
   const [models, setModels] = useState<string[]>([]) // Filtered models for current make
   const [trims, setTrims] = useState<string[]>([])
   const [locations, setLocations] = useState<string[]>([])
+  // When parent passes locations (e.g. Compare page), use them for the dropdown; otherwise use internal state
+  const displayLocations = (locationsProp != null && Array.isArray(locationsProp) && locationsProp.length > 0)
+    ? locationsProp
+    : locations
   const [conditions, setConditions] = useState<string[]>(CONDITIONS)
   const [fuelTypes, setFuelTypes] = useState<string[]>(FUEL_TYPES)
   const [yearRange, setYearRange] = useState(YEAR_RANGE)
@@ -1933,8 +1939,8 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
                 <SelectContent className="max-h-[300px]">
                   {initialLoading ? (
                     <div className="p-2 text-center text-[#94a3b8]">Loading locations...</div>
-                  ) : locations.length > 0 ? (
-                    (locations || []).map((location) => (
+                  ) : displayLocations.length > 0 ? (
+                    (displayLocations || []).map((location) => (
                       <SelectItem key={location} value={location} className="text-white">
                         {location}
                       </SelectItem>
