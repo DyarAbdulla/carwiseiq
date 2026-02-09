@@ -12,6 +12,7 @@ import uvicorn
 from app.middleware.security import SecurityMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+import re
 from fastapi.responses import JSONResponse, Response
 from fastapi import FastAPI, Request
 from app.api.routes import health, predict, cars, budget, stats, auth, options, images, model_info, feedback, admin, marketplace, messaging, favorites, ai, dataset, export, services, providers
@@ -55,14 +56,10 @@ app = FastAPI(
 # Security middleware (path-specific rate limiting, HSTS, CSP)
 app.add_middleware(SecurityMiddleware)
 
-# CORS middleware
+# CORS with pattern matching for Cloudflare Pages
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://carwiseiq.pages.dev",
-        "https://e0991c36.carwiseiq.pages.dev",
-        "http://localhost:3000",
-    ],
+    allow_origin_regex=r"https://.*\.carwiseiq\.pages\.dev|https://carwiseiq\.pages\.dev|http://localhost:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
