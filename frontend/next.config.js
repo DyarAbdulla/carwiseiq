@@ -26,6 +26,10 @@ const nextConfig = {
   // Cloudflare Pages: unoptimized required (no Node image optimizer at edge)
   images: {
     unoptimized: true,
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.supabase.co', pathname: '/**' },
+      { protocol: 'https', hostname: '**.supabase.co', pathname: '/**' },
+    ],
   },
 
   // Reduce memory during build (avoid heap OOM on Cloudflare)

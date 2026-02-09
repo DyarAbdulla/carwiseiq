@@ -1,12 +1,14 @@
 """
 Backend-specific prediction module for production model (91.1% accuracy)
-Loads production_model.pkl and uses DataFrame for CatBoost prediction
+Loads production_model.pkl and uses DataFrame for CatBoost prediction.
+Falls back to dataset-based estimate when model file is not found.
 """
 
 import pickle
 import json
 import logging
 from pathlib import Path
+from typing import Tuple, Optional, Any
 import pandas as pd
 import numpy as np
 
@@ -16,29 +18,45 @@ logger = logging.getLogger(__name__)
 _cached_model = None
 _cached_model_info = None
 _cached_encoders = None
+_using_fallback = False
 
 
-def load_model():
-    """Load the production model (91.1% accurate)"""
-    global _cached_model, _cached_model_info, _cached_encoders
+def _model_paths() -> list:
+    """Return list of paths to check for production_model.pkl (first existing wins)."""
+    current_file = Path(__file__)
+    backend_dir = current_file.parent.parent.parent
+    root_dir = backend_dir.parent
+    return [
+        backend_dir / "models" / "production_model.pkl",
+        Path("/app/models/production_model.pkl"),
+        root_dir / "models" / "production_model.pkl",
+    ]
+
+
+def _find_model_path() -> Optional[Path]:
+    for p in _model_paths():
+        if p.exists():
+            return p
+    return None
+
+
+def load_model() -> Tuple[Any, dict, dict]:
+    """Load the production model (91.1% accurate) or return None for fallback."""
+    global _cached_model, _cached_model_info, _cached_encoders, _using_fallback
 
     if _cached_model is not None:
         return _cached_model, _cached_model_info, _cached_encoders
 
-    # Get project root (3 levels up from backend/app/core/)
-    current_file = Path(__file__)
-    backend_dir = current_file.parent.parent.parent
-    root_dir = backend_dir.parent
-    models_dir = root_dir / "models"
+    model_path = _find_model_path()
+    if not model_path:
+        logger.warning("Model not found in any of: %s; using dataset fallback", [str(p) for p in _model_paths()])
+        _using_fallback = True
+        _cached_model = None
+        _cached_model_info = {}
+        _cached_encoders = {}
+        return None, {}, {}
 
-    # Load production model
-    model_path = models_dir / "production_model.pkl"
-
-    if not model_path.exists():
-        error_msg = f"Model not found: {model_path}"
-        logger.error(error_msg)
-        raise FileNotFoundError(error_msg)
-
+    models_dir = model_path.parent
     logger.info(f"Loading model from: {model_path}")
 
     try:
@@ -58,7 +76,11 @@ def load_model():
 
     except Exception as e:
         logger.error(f"Failed to load model: {e}", exc_info=True)
-        raise
+        _using_fallback = True
+        _cached_model = None
+        _cached_model_info = {}
+        _cached_encoders = {}
+        return None, {}, {}
 
     # Load model info JSON
     model_info_path = models_dir / "model_info.json"
@@ -101,9 +123,60 @@ def load_model():
     return model, model_info, encoders
 
 
+def _predict_from_dataset(car_data: dict) -> float:
+    """Estimate price from dataset (mean price for make/model/year when model file missing)."""
+    try:
+        from app.services.dataset_loader import DatasetLoader
+        loader = DatasetLoader.get_instance()
+        df = loader.dataset
+        if df is None or len(df) == 0:
+            logger.warning("Dataset not loaded; using default estimate")
+            return 25000.0
+        price_col = loader.get_price_column() or "price"
+        if price_col not in df.columns:
+            return 25000.0
+        make = str(car_data.get("make", "")).strip()
+        model_name = str(car_data.get("model", "")).strip()
+        year = int(car_data.get("year", 2020))
+        mileage = car_data.get("mileage")
+        if mileage is None or (isinstance(mileage, float) and np.isnan(mileage)):
+            mileage = 50000
+        mileage = float(mileage)
+        mask = pd.Series(True, index=df.index)
+        if make:
+            mask &= df["make"].astype(str).str.strip().str.lower() == make.lower()
+        if model_name:
+            mask &= df["model"].astype(str).str.strip().str.lower() == model_name.lower()
+        mask &= df["year"].astype(int) == year
+        subset = df.loc[mask]
+        if len(subset) == 0:
+            subset = df[(df["make"].astype(str).str.strip().str.lower() == make.lower()) & (df["model"].astype(str).str.strip().str.lower() == model_name.lower())]
+        if len(subset) == 0:
+            subset = df[df["make"].astype(str).str.strip().str.lower() == make.lower()]
+        if len(subset) == 0:
+            subset = df
+        prices = subset[price_col].dropna()
+        if len(prices) == 0:
+            return 25000.0
+        # Simple adjustment by mileage vs subset mean
+        mean_price = float(prices.mean())
+        mean_mileage = subset["mileage"].mean() if "mileage" in subset.columns else 50000
+        if pd.notna(mean_mileage) and mean_mileage > 0:
+            # Lower mileage -> higher price (rough factor)
+            ratio = mean_mileage / max(mileage, 1000)
+            ratio = min(2.0, max(0.5, ratio))
+            estimate = mean_price * ratio
+        else:
+            estimate = mean_price
+        return float(max(500, min(1000000, estimate)))
+    except Exception as e:
+        logger.warning("Dataset fallback failed: %s", e)
+        return 25000.0
+
+
 def predict_price(car_data: dict, return_confidence: bool = False):
     """
-    Predict price using CatBoost model
+    Predict price using CatBoost model or dataset fallback when model file is missing.
 
     Args:
         car_data: Dictionary containing car features
@@ -113,16 +186,19 @@ def predict_price(car_data: dict, return_confidence: bool = False):
         Predicted price as float
     """
     try:
-        # Load model
+        # Load model (may return None when file not found)
         model, model_info, encoders = load_model()
+
+        if model is None:
+            return _predict_from_dataset(car_data)
 
         # Get feature columns from model_info (try both keys)
         feature_columns = model_info.get(
             'feature_columns') or model_info.get('features', [])
 
         if not feature_columns:
-            raise ValueError(
-                "feature_columns or features not found in model_info.json")
+            logger.warning("feature_columns not found in model_info; using dataset fallback")
+            return _predict_from_dataset(car_data)
 
         logger.info(
             f"Using {len(feature_columns)} features: {feature_columns[:5]}...")
@@ -281,8 +357,8 @@ def predict_price(car_data: dict, return_confidence: bool = False):
         return float(prediction)
 
     except FileNotFoundError as e:
-        logger.error(f"❌ Model file not found: {e}")
-        raise
+        logger.warning(f"Model file not found: {e}; using dataset fallback")
+        return _predict_from_dataset(car_data)
     except Exception as e:
         logger.error(f"❌ Prediction error: {e}", exc_info=True)
         import traceback

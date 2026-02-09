@@ -21,7 +21,7 @@ class HealthResponse(BaseModel):
 # --- Car features (input) ---
 class CarFeatures(BaseModel):
     year: int
-    mileage: float
+    mileage: Optional[float] = None  # Optional; backend uses 50000 or dataset average when missing
     engine_size: float
     cylinders: int
     make: str

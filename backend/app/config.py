@@ -88,8 +88,9 @@ class Settings(BaseSettings):
     def MODEL_DIR(self) -> Path:
         """Path to models directory"""
         paths = [
-            self.ROOT_DIR / "models",
             self.BASE_DIR / "models",
+            Path("/app/models"),
+            self.ROOT_DIR / "models",
         ]
         for p in paths:
             if p.exists():

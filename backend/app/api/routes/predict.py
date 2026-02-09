@@ -76,9 +76,11 @@ async def predict_price(
         logger.info("📥 PREDICTION REQUEST RECEIVED")
         logger.info("=" * 80)
 
-        # Convert Pydantic model to dict
+        # Convert Pydantic model to dict (fill optional mileage if missing)
         try:
             car_data = request.features.dict()
+            if car_data.get("mileage") is None:
+                car_data["mileage"] = 50000
             logger.info(
                 f"✅ Request parsed successfully: {list(car_data.keys())}")
         except Exception as e:
@@ -114,7 +116,7 @@ async def predict_price(
                 return {k: to_native_type(v) for k, v in value.items()}
             return value
 
-        # Convert ALL numeric fields to native Python types FIRST
+        # Convert ALL numeric fields to native Python types FIRST (mileage already defaulted above if None)
         for key in ['year', 'mileage', 'engine_size', 'cylinders']:
             if key in car_data and car_data[key] is not None:
                 try:

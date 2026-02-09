@@ -14,6 +14,7 @@ car_images/
 thumbnails/
 models/
 !**/app/models/
+!backend/models/
 models_archive/
 data/
 backend/uploads/
