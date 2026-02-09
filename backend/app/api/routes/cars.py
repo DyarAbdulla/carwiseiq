@@ -105,9 +105,8 @@ async def get_models(make: str):
 @router.get("/locations", response_model=List[str])
 async def get_locations():
     """
-    Get list of all unique locations from the dataset
-
-    Returns sorted list of location names
+    Get list of all unique locations from the dataset (e.g. cleaned_car_data.csv).
+    Reads the 'location' (or 'city') column and returns sorted unique values.
     """
     try:
         dataset_loader = DatasetLoader.get_instance()

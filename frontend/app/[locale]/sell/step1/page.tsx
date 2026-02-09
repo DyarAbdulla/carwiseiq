@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MapPin } from "lucide-react"
 import { useSellWizard } from "@/context/SellWizardContext"
-import { IRAQ_CITIES } from "@/lib/iraq-locations"
+import { apiClient } from "@/lib/api"
 
 export default function SellStep1Page() {
   const router = useRouter()
@@ -19,16 +19,21 @@ export default function SellStep1Page() {
   const [neighborhood, setNeighborhood] = useState(location?.neighborhood ?? "")
   const [search, setSearch] = useState("")
   const [focused, setFocused] = useState(false)
+  const [locationsList, setLocationsList] = useState<string[]>([])
 
   useEffect(() => {
     setLocation({ city, neighborhood })
   }, [city, neighborhood, setLocation])
 
+  useEffect(() => {
+    apiClient.getLocations().then(setLocationsList).catch(() => setLocationsList([]))
+  }, [])
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return [...IRAQ_CITIES]
-    return IRAQ_CITIES.filter((c) => c.toLowerCase().includes(q))
-  }, [search])
+    if (!q) return [...locationsList]
+    return locationsList.filter((c) => c.toLowerCase().includes(q))
+  }, [search, locationsList])
 
   const handleContinue = () => {
     if (!city.trim()) return
@@ -77,7 +82,7 @@ export default function SellStep1Page() {
                         setCity(filtered[0]!)
                         setSearch("")
                       }
-                      if (city && !IRAQ_CITIES.includes(city)) setSearch(city)
+                      if (city && !locationsList.includes(city)) setSearch(city)
                     }}
                     placeholder={t("cityPlaceholder")}
                     className="h-12 pl-11 pr-4 text-base bg-white/5 backdrop-blur-sm border-white/10 rounded-xl focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:bg-white/10"
