@@ -284,7 +284,3 @@ def change_admin_password(admin_id: int, old_password: str, new_password: str) -
     except Exception as e:
         logger.error(f"Error changing password: {e}")
         return False, str(e)
-
-
-# Initialize database on import
-init_admin_db()
