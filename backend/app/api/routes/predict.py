@@ -288,9 +288,10 @@ async def predict_price(
 
         # Convert image features if provided
         image_features_array = None
-        if request.image_features:
+        image_features = getattr(request, "image_features", None)
+        if image_features:
             try:
-                image_features_array = np.array(request.image_features)
+                image_features_array = np.array(image_features)
                 # Validate shape (must be exactly 2048 for ResNet50)
                 if len(image_features_array.shape) == 1:
                     if image_features_array.shape[0] != 2048:
@@ -994,7 +995,7 @@ async def predict_price(
                 user_id=user_id,
                 confidence_interval=confidence_interval_for_db,
                 confidence_level=confidence_level,
-                image_features=request.image_features
+                image_features=getattr(request, "image_features", None)
             )
             logger.info(f"✅ Saved prediction attempt: ID {prediction_id}")
         except Exception as e:

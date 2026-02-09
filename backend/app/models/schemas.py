@@ -34,6 +34,7 @@ class CarFeatures(BaseModel):
 # --- Prediction request/response ---
 class PredictionRequest(BaseModel):
     features: CarFeatures
+    image_features: Optional[List[float]] = None
 
 
 class ConfidenceInterval(BaseModel):
