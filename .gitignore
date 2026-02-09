@@ -13,6 +13,7 @@ __pycache__/
 car_images/
 thumbnails/
 models/
+!**/app/models/
 models_archive/
 data/
 backend/uploads/
