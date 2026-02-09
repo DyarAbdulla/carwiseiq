@@ -139,7 +139,9 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
   const { toast } = useToast()
   const { user, isAuthenticated } = useAuth()
   const { user: currentUser } = useAuthContext()
-  const listingId = (listingIdOverride ?? params?.id) as string
+  // Normalize id: strip any .txt or other extension that redirects might have added
+  const rawId = (listingIdOverride ?? params?.id) as string
+  const listingId = typeof rawId === 'string' ? rawId.replace(/\.(txt|html?)$/i, '').trim() : rawId
 
   const [listing, setListing] = useState<any>(null)
   const [loading, setLoading] = useState(true)

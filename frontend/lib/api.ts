@@ -2056,7 +2056,7 @@ export const apiClient = {
     if (typeof listingId === 'string' && /^[0-9a-f-]{36}$/i.test(listingId)) {
       return Promise.reject(new Error('UUID listings must be fetched from Supabase, not the marketplace API.'))
     }
-    const id = typeof listingId === 'number' ? listingId : parseInt(String(listingId), 10)
+    const id = typeof listingId === 'number' ? listingId : parseInt(String(listingId).replace(/\.(txt|html?)$/i, ''), 10)
     if (!Number.isInteger(id) || id <= 0) {
       return Promise.reject(new Error('getListing requires a positive integer listing ID.'))
     }

@@ -2,8 +2,8 @@
 / /en 302
 
 # Dynamic routes: redirect detail URL to list page with id in query (static export has no [id] pages)
-/en/buy-sell/* /en/buy-sell?id=:splat 302
-/ar/buy-sell/* /ar/buy-sell?id=:splat 302
+/en/buy-sell/:id /en/buy-sell?id=:id 302
+/ar/buy-sell/:id /ar/buy-sell?id=:id 302
 
 # www -> non-www (or vice versa; adjust to your preference)
 https://www.carwiseiq.com/* https://carwiseiq.com/:splat 301
