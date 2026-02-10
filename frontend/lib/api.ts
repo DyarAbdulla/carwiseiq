@@ -595,9 +595,17 @@ export const apiClient = {
         throw new Error('Invalid car features provided')
       }
 
-      // Validate required fields
+      // Validate required fields (allow 0 for mileage - 0 km is valid)
       const requiredFields = ['make', 'model', 'year', 'mileage', 'engine_size', 'cylinders', 'condition', 'fuel_type', 'location']
-      const missingFields = requiredFields.filter(field => !features[field as keyof CarFeatures])
+      const isEmpty = (field: string, value: unknown) => {
+        if (value === null || value === undefined || value === '') return true
+        if (typeof value === 'number' && isNaN(value)) return true
+        return false
+      }
+      const missingFields = requiredFields.filter(field => {
+        const value = features[field as keyof CarFeatures]
+        return isEmpty(field, value)
+      })
 
       if (missingFields.length > 0) {
         console.error('❌ [API] Missing required fields:', { missingFields, features })

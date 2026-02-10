@@ -213,11 +213,15 @@ def create_draft_listing(listing_data: Dict, user_id: Optional[int] = None) -> i
 
 
 def create_listing(listing_data: Dict, user_id: Optional[int] = None) -> int:
-    """Create a new listing (validates required fields)"""
-    # Validate required fields
+    """Create a new listing (validates required fields). Allows 0 for mileage and price."""
     required_fields = ['make', 'model', 'year', 'price', 'mileage', 'condition', 'transmission', 'fuel_type', 'color']
     for field in required_fields:
-        if not listing_data.get(field):
+        val = listing_data.get(field)
+        if val is None:
+            raise ValueError(f"Required field '{field}' is missing")
+        if field in ('mileage', 'price'):
+            continue  # 0 is valid
+        if val == '':
             raise ValueError(f"Required field '{field}' is missing")
 
     conn = get_db()

@@ -148,9 +148,15 @@ async def create_car_listing(
         # Convert Pydantic model to dict
         listing_dict = listing_data.dict(exclude_unset=False)
         
-        # Validate required fields
+        # Validate required fields (allow 0 for mileage and price - 0 km / contact-for-price is valid)
         required_fields = ['make', 'model', 'year', 'price', 'mileage', 'condition', 'transmission', 'fuel_type', 'color']
-        missing_fields = [field for field in required_fields if not listing_dict.get(field)]
+        def _is_missing(field: str, value: object) -> bool:
+            if value is None:
+                return True
+            if field in ('mileage', 'price'):  # 0 is valid
+                return False
+            return value == '' or (isinstance(value, (int, float)) and value != 0 and not value)
+        missing_fields = [f for f in required_fields if _is_missing(f, listing_dict.get(f))]
         if missing_fields:
             raise HTTPException(
                 status_code=400,
@@ -201,7 +207,13 @@ async def create_listing_with_images(
         data = json.loads(listing)
 
         required = ['make', 'model', 'year', 'price', 'mileage', 'condition', 'transmission', 'fuel_type', 'color']
-        missing = [f for f in required if not data.get(f)]
+        def _is_missing(f: str, val: object) -> bool:
+            if val is None:
+                return True
+            if f in ('mileage', 'price'):  # 0 is valid
+                return False
+            return val == '' or (isinstance(val, (int, float)) and val != 0 and not val)
+        missing = [f for f in required if _is_missing(f, data.get(f))]
         if missing:
             raise HTTPException(status_code=400, detail=f"Missing required fields: {', '.join(missing)}")
 
@@ -905,13 +917,15 @@ async def publish_listing(
         if listing.get('status') == 'active':
             return {"success": True, "message": "Already published"}
 
-        # Validate required fields before publishing
+        # Validate required fields before publishing (allow 0 for mileage and price)
         required_fields = ['make', 'model', 'year', 'price', 'mileage', 'condition', 'transmission', 'fuel_type', 'color']
-        missing_fields = []
-        for field in required_fields:
-            if not listing.get(field):
-                missing_fields.append(field)
-        
+        def _missing(f: str, val: object) -> bool:
+            if val is None:
+                return True
+            if f in ('mileage', 'price'):
+                return False
+            return val == ''
+        missing_fields = [f for f in required_fields if _missing(f, listing.get(f))]
         if missing_fields:
             raise HTTPException(
                 status_code=400,

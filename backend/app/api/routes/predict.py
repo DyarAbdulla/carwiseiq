@@ -1335,9 +1335,10 @@ async def predict_from_url(request: UrlPredictionRequest):
         # Log extracted data for debugging
         logger.info(f"Extracted data from scraper: {extracted_data}")
 
-        # Ensure all required fields have defaults
+        # Ensure all required fields have defaults (allow 0 for mileage)
         year = extracted_data.get('year') or 2020
-        mileage = extracted_data.get('mileage') or 50000
+        _m = extracted_data.get('mileage')
+        mileage = 50000 if (_m is None or (_m != _m)) else float(_m)  # _m != _m is True for NaN
         engine_size = extracted_data.get('engine_size') or 2.0
         cylinders = extracted_data.get('cylinders') or 4
         make = extracted_data.get('make', '').strip()
