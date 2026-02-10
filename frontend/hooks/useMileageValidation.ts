@@ -26,7 +26,7 @@ export function calculateExpectedMileage(year: number): number {
  * Note: This is NOT a React hook despite the naming - it's a pure function
  */
 export function validateMileage(year: number, mileage: number): MileageValidationResult {
-  if (!year || !mileage || mileage <= 0) {
+  if (!year || (typeof mileage !== 'number') || isNaN(mileage) || mileage < 0) {
     return {
       state: 'normal',
       message: '',

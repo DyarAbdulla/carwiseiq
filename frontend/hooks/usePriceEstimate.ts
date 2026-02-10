@@ -17,7 +17,7 @@ export interface PriceEstimateParams {
  * Calculate price estimate based on form data
  */
 export function calculatePriceEstimate(params: PriceEstimateParams): number {
-  if (!params.make || !params.model || !params.year || !params.mileage) {
+  if (!params.make || !params.model || !params.year || params.mileage == null || params.mileage === undefined || typeof params.mileage !== 'number' || isNaN(params.mileage) || params.mileage < 0) {
     return 0
   }
 

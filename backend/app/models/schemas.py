@@ -2,7 +2,7 @@
 Pydantic schemas for API request/response models.
 """
 from typing import Optional, List, Any, Dict
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # --- Health ---
@@ -21,7 +21,7 @@ class HealthResponse(BaseModel):
 # --- Car features (input) ---
 class CarFeatures(BaseModel):
     year: int
-    mileage: Optional[float] = None  # Optional; backend uses 50000 or dataset average when missing
+    mileage: Optional[float] = Field(None, ge=0)  # Optional; >= 0 when provided; backend uses 50000 when missing
     engine_size: float
     cylinders: int
     make: str

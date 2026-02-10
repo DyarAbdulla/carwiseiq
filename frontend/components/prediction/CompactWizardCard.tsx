@@ -557,7 +557,8 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
       return !!(values.make && values.model && values.year)
     }
     if (currentStep === 2) {
-      return !!(values.mileage && values.engine_size && values.cylinders && values.fuel_type)
+      const mileageValid = typeof values.mileage === 'number' && !isNaN(values.mileage) && values.mileage >= 0
+      return !!(mileageValid && values.engine_size && values.cylinders && values.fuel_type)
     }
     if (currentStep === 3) {
       return !!(values.condition && values.location)

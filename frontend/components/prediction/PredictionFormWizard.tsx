@@ -972,7 +972,8 @@ export function PredictionFormWizard({ onSubmit, loading = false, prefillData = 
                 return !values.make || !values.model || !values.year
               }
               if (currentStep === 2) {
-                return !values.mileage || !values.engine_size || !values.cylinders || !values.fuel_type
+                const mileageValid = typeof values.mileage === 'number' && !isNaN(values.mileage) && values.mileage >= 0
+                return !mileageValid || !values.engine_size || !values.cylinders || !values.fuel_type
               }
               return false
             })()}
@@ -1017,7 +1018,8 @@ export function PredictionFormWizard({ onSubmit, loading = false, prefillData = 
                   return !values.make || !values.model || !values.trim || !values.year
                 }
                 if (currentStep === 2) {
-                  return !values.mileage || !values.engine_size || !values.cylinders || !values.fuel_type
+                  const mileageValid = typeof values.mileage === 'number' && !isNaN(values.mileage) && values.mileage >= 0
+                  return !mileageValid || !values.engine_size || !values.cylinders || !values.fuel_type
                 }
                 return false
               })()}
