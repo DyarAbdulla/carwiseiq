@@ -54,7 +54,7 @@ const HeroSection = memo(function HeroSection({ t, locale, tCommon, onLearnMoreC
     >
       {/* Content */}
       <div className="relative z-10 container w-full max-w-[100%]">
-        <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-6 sm:gap-8 text-center px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-4 sm:gap-6 lg:gap-8 text-center px-3 sm:px-6 lg:px-8">
           {/* Headline - Crystal Clear White with Cinematic Style */}
           <motion.h1
             id="hero-title"
@@ -126,7 +126,7 @@ const HowItWorksSection = memo(function HowItWorksSection({ t }: { t: (k: string
 
   return (
     <section className="relative z-10 w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="how-it-works-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
         <motion.h2
           id="how-it-works-title"
           initial={{ opacity: 0, y: 20 }}
@@ -138,7 +138,7 @@ const HowItWorksSection = memo(function HowItWorksSection({ t }: { t: (k: string
           {t('howItWorks.title')}
         </motion.h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4 md:gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6 md:gap-4 md:gap-6 max-w-6xl mx-auto">
           {steps.map((step, index) => {
             const Icon = step.icon
             return (
@@ -150,7 +150,7 @@ const HowItWorksSection = memo(function HowItWorksSection({ t }: { t: (k: string
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="relative"
               >
-                <div className="h-full rounded-2xl border border-slate-200 dark:border-white/20 md:border-slate-200 dark:md:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-xl hover:bg-slate-100 dark:hover:bg-white/[0.07] hover:border-slate-300 dark:hover:border-white/20 transition-all duration-300 p-6 sm:p-8 flex flex-col items-center text-center shadow-sm">
+                <div className="h-full rounded-2xl border border-slate-200 dark:border-white/20 md:border-slate-200 dark:md:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-xl hover:bg-slate-100 dark:hover:bg-white/[0.07] hover:border-slate-300 dark:hover:border-white/20 transition-all duration-300 p-3 sm:p-6 lg:p-8 flex flex-col items-center text-center shadow-sm">
                   <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/20 md:border-slate-200 dark:md:border-white/10 flex items-center justify-center mb-4">
                     <Icon className="h-7 w-7 sm:h-8 sm:w-8 text-indigo-400" />
                   </div>
@@ -181,7 +181,7 @@ const ValuePropositionSection = memo(function ValuePropositionSection({ t, local
 
   return (
     <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="value-prop-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -244,7 +244,7 @@ const SocialProofSection = memo(function SocialProofSection({ t, locale }: { t: 
 
   return (
     <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="social-proof-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -260,7 +260,7 @@ const SocialProofSection = memo(function SocialProofSection({ t, locale }: { t: 
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 max-w-6xl mx-auto">
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={index}
@@ -310,8 +310,8 @@ const RegionalIntelligenceSection = memo(function RegionalIntelligenceSection({ 
 
   return (
     <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="regional-intel-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-12 items-center max-w-6xl mx-auto">
+      <div className="container mx-auto px-3 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 lg:gap-12 items-center max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -353,7 +353,7 @@ const RegionalIntelligenceSection = memo(function RegionalIntelligenceSection({ 
             transition={{ duration: 0.6 }}
             className="relative"
           >
-            <Card className="border border-white/10 max-md:border-white/20 bg-white/[0.03] backdrop-blur-xl p-6 md:p-8 hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
+            <Card className="border border-white/10 max-md:border-white/20 bg-white/[0.03] backdrop-blur-xl p-3 sm:p-6 md:p-8 hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
               <div className="space-y-6">
                 <div className="flex items-center justify-between p-4 bg-purple-600/10 rounded-lg">
                   <span className="text-[#94a3b8]">Market Coverage</span>
@@ -387,7 +387,7 @@ const PopularBrandsSection = memo(function PopularBrandsSection({ t }: { t: (k: 
 
   return (
     <section className="relative z-10 w-full py-8 sm:py-10" aria-label={t('popularBrandsLabel')}>
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-4xl">
+      <div className="container mx-auto px-3 sm:px-6 md:px-8 lg:px-12 max-w-4xl">
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
           {brands.map((brand) => (
             <motion.button
@@ -410,7 +410,7 @@ const PopularBrandsSection = memo(function PopularBrandsSection({ t }: { t: (k: 
 const InteractiveDemoSection = memo(function InteractiveDemoSection({ t, locale }: { t: any, locale: string }) {
   return (
     <section id="predict-cta" className="relative z-10 w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="demo-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -467,7 +467,7 @@ const ComparisonSection = memo(function ComparisonSection({ t, locale }: { t: an
 
   return (
     <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="comparison-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -561,7 +561,7 @@ const FAQSection = memo(function FAQSection({ t, locale }: { t: any, locale: str
 
   return (
     <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="faq-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -632,7 +632,7 @@ const NewsletterSection = memo(function NewsletterSection({ t, locale }: { t: an
 
   return (
     <section className="w-full py-12 sm:py-14 md:py-16 lg:py-24" aria-labelledby="newsletter-title">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -729,12 +729,12 @@ const FinalCTASection = memo(function FinalCTASection({ t, locale }: { t: any, l
 const PredictShortcutSection = memo(function PredictShortcutSection({ t, locale }: { t: (k: string) => string; locale: string }) {
   return (
     <section className="w-full py-6 sm:py-8" aria-labelledby="predict-shortcut">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
+      <div className="container mx-auto px-3 sm:px-6 max-w-[100%]">
         <Link href={`/${locale}/predict`} className="block">
           <motion.div
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-6 flex items-center justify-between gap-4 min-h-[60px]"
+            className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-3 sm:p-5 lg:p-6 flex items-center justify-between gap-4 min-h-[60px]"
           >
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
@@ -756,12 +756,12 @@ const PredictShortcutSection = memo(function PredictShortcutSection({ t, locale 
 const SellCtaSection = memo(function SellCtaSection({ t, locale }: { t: (k: string) => string; locale: string }) {
   return (
     <section className="w-full py-6 sm:py-8" aria-labelledby="sell-cta">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
+      <div className="container mx-auto px-3 sm:px-6 max-w-[100%]">
         <SellCarCTA as="span" showIcon={false} className="block">
           <motion.div
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            className="rounded-2xl border border-slate-200 dark:border-white/20 md:border-slate-200 dark:md:border-white/10 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur-xl p-5 sm:p-6 flex items-center justify-between gap-4 min-h-[60px]"
+            className="rounded-2xl border border-slate-200 dark:border-white/20 md:border-slate-200 dark:md:border-white/10 bg-gradient-to-r from-indigo-600/20 to-purple-600/20 backdrop-blur-xl p-3 sm:p-5 lg:p-6 flex items-center justify-between gap-4 min-h-[60px]"
           >
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-indigo-500/30 flex items-center justify-center shrink-0">
@@ -789,7 +789,7 @@ const BUDGET_CHIPS = [
 const BudgetChipsSection = memo(function BudgetChipsSection({ t, locale }: { t: (k: string) => string; locale: string }) {
   return (
     <section className="w-full py-6 sm:py-8" aria-labelledby="budget-chips">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
+      <div className="container mx-auto px-3 sm:px-6 max-w-[100%]">
         <h2 id="budget-chips" className="text-lg font-bold text-white mb-4">{t('nav.budget')}</h2>
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide overflow-y-hidden" style={{ WebkitOverflowScrolling: 'touch' }}>
           {BUDGET_CHIPS.map((chip) => (
@@ -816,7 +816,7 @@ const BestDealsSection = memo(function BestDealsSection({ t, locale }: { t: (k: 
   }, [])
   return (
     <section className="w-full py-6 sm:py-8" aria-labelledby="best-deals">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
+      <div className="container mx-auto px-3 sm:px-6 max-w-[100%]">
         <div className="flex items-center justify-between gap-2 mb-4">
           <h2 id="best-deals" className="text-lg font-bold text-white">{t('bestDeals')}</h2>
           <Link href={`/${locale}/buy-sell`} className="text-sm font-medium text-indigo-400 hover:text-indigo-300">{t('viewAll')}</Link>
@@ -855,12 +855,12 @@ const BestDealsSection = memo(function BestDealsSection({ t, locale }: { t: (k: 
 const CompareShortcutSection = memo(function CompareShortcutSection({ t, locale }: { t: (k: string) => string; locale: string }) {
   return (
     <section className="w-full py-6 sm:py-8" aria-labelledby="compare-shortcut">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[100%]">
+      <div className="container mx-auto px-3 sm:px-6 max-w-[100%]">
         <Link href={`/${locale}/compare`} className="block">
           <motion.div
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
-            className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-6 flex items-center justify-between gap-4 min-h-[60px]"
+            className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-3 sm:p-5 lg:p-6 flex items-center justify-between gap-4 min-h-[60px]"
           >
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center shrink-0">
@@ -880,13 +880,13 @@ const CompareShortcutSection = memo(function CompareShortcutSection({ t, locale 
 const MarketPulseSection = memo(function MarketPulseSection({ t }: { t: (k: string) => string }) {
   return (
     <section className="relative z-10 w-full py-6 sm:py-8" aria-labelledby="market-pulse">
-      <div className="container mx-auto px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
+      <div className="container mx-auto px-3 sm:px-6 md:px-8 lg:px-12 max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-5 sm:p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300"
+          className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-3 sm:p-5 lg:p-6 hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-indigo-500/20 border border-white/10 flex items-center justify-center shrink-0">
@@ -1139,7 +1139,7 @@ const TrustBarSection = memo(function TrustBarSection({ t }: { t: (k: string) =>
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="rounded-2xl border border-slate-200 dark:border-white/20 md:border-slate-200 dark:md:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-xl p-5 sm:p-6"
+          className="rounded-2xl border border-slate-200 dark:border-white/20 md:border-slate-200 dark:md:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-xl p-3 sm:p-5 lg:p-6"
         >
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12">
             {/* Stat 1: Cars Analyzed */}
@@ -1192,8 +1192,8 @@ const BentoGridSection = memo(function BentoGridSection({ t, locale }: { t: (k: 
 
   return (
     <section className="relative z-10 w-full py-20" aria-labelledby="bento-grid">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[1200px]">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="container mx-auto px-3 sm:px-6 max-w-[1200px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6">
           {/* Card 1: Market Pulse */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1201,7 +1201,7 @@ const BentoGridSection = memo(function BentoGridSection({ t, locale }: { t: (k: 
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0 }}
             whileHover={{ y: -4, scale: 1.01 }}
-            className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-6 hover:bg-white/[0.07] hover:border-purple-500/50 transition-all duration-300 glassCard cursor-pointer"
+            className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-3 sm:p-6 hover:bg-white/[0.07] hover:border-purple-500/50 transition-all duration-300 glassCard cursor-pointer"
           >
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
@@ -1223,7 +1223,7 @@ const BentoGridSection = memo(function BentoGridSection({ t, locale }: { t: (k: 
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
             whileHover={{ y: -4, scale: 1.01 }}
-            className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-6 hover:bg-white/[0.07] hover:border-purple-500/50 transition-all duration-300 glassCard cursor-pointer"
+            className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-3 sm:p-6 hover:bg-white/[0.07] hover:border-purple-500/50 transition-all duration-300 glassCard cursor-pointer"
           >
             <Link href={`/${locale}/buy-sell`} className="block">
               <div className="flex items-start gap-4 mb-4">
@@ -1255,7 +1255,7 @@ const BentoGridSection = memo(function BentoGridSection({ t, locale }: { t: (k: 
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
             whileHover={{ y: -4, scale: 1.01 }}
-            className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-6 hover:bg-white/[0.07] hover:border-purple-500/50 transition-all duration-300 glassCard cursor-pointer"
+            className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-3 sm:p-6 hover:bg-white/[0.07] hover:border-purple-500/50 transition-all duration-300 glassCard cursor-pointer"
           >
             <Link href={`/${locale}/compare`} className="block">
               <div className="flex items-start gap-4">

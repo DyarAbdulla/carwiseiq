@@ -96,7 +96,7 @@ export default async function LocaleLayout({
                     <Header />
                   </ErrorBoundary>
                   <main id="main-content" className="relative flex-1 min-h-[calc(100vh-8rem)]" role="main">
-                    <div className="relative z-10 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-24 sm:pb-20 overflow-x-hidden overflow-y-visible">
+                    <div className="relative z-10 w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-24 sm:pb-20 overflow-x-hidden overflow-y-visible">
                       <ErrorBoundary homeHref={`/${locale}`}>
                         <PageTransition>
                           {children}

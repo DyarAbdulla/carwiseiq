@@ -330,7 +330,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-radial from-indigo-500/15 via-purple-500/10 to-transparent blur-3xl" />
         </div>
-        <div className="backdrop-blur-xl bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-8 max-w-md text-center shadow-2xl">
+        <div className="backdrop-blur-xl bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 sm:p-6 lg:p-8 max-w-md text-center shadow-2xl">
           <p className="text-slate-900 dark:text-white text-xl mb-2 font-semibold">{loadError || t('notFound')}</p>
           {loadError && (
             <p className="text-slate-600 dark:text-gray-400 text-sm mb-6">{t('loadError')}</p>
@@ -499,11 +499,11 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
           </button>
         </Link>
 
-        <div className={`max-w-7xl mx-auto px-4 md:px-8 pt-0 ${hasContact ? 'pb-28 md:pb-16' : 'pb-12 md:pb-16'} md:pt-0 scroll-smooth`} style={hasContact ? { paddingBottom: '112px' } : undefined}>
+        <div className={`max-w-7xl mx-auto px-3 sm:px-6 md:px-8 pt-0 ${hasContact ? 'pb-28 md:pb-16' : 'pb-12 md:pb-16'} md:pt-0 scroll-smooth`} style={hasContact ? { paddingBottom: '112px' } : undefined}>
           {/* Owner Management Panel - Mobile Only - At Top */}
           {isOwner && (
             <div className="lg:hidden mb-6 mt-20 md:mt-0">
-              <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm">
+              <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-3 sm:p-5 shadow-sm">
                 <ManageListingActions
                   listingId={listing.id}
                   isSold={isSold}
@@ -695,14 +695,14 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
             )}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 md:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-3 sm:gap-6 md:gap-8">
             {/* Left Column: Key facts, Features, Description, VIN, Price history, Similar */}
             <div className="space-y-6">
               {/* Contact Seller - Mobile Only (shown before car details on mobile) */}
               <div key="contact-seller-mobile" className="lg:hidden mb-6">{contactSellerCard}</div>
 
               {/* Key facts - Enhanced Glass Tiles Grid */}
-              <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 md:p-6 shadow-sm mb-6 lg:mb-0">
+              <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-3 sm:p-5 md:p-6 shadow-sm mb-6 lg:mb-0">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-5">{t('carDetails') || 'Car Details'}</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
                   <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
@@ -773,7 +773,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
 
                 {/* Features - chips */}
                 {listing.features?.length > 0 && (
-                  <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 md:p-6 shadow-sm mb-6">
+                  <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-3 sm:p-5 md:p-6 shadow-sm mb-6">
                     <h3 className="text-slate-900 dark:text-white font-semibold text-lg mb-4">{t('features')}</h3>
                     <div className="flex flex-wrap gap-2 md:gap-3">
                       {listing.features.map((f: string, i: number) => (
@@ -785,21 +785,21 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
 
                 {/* Description - stripped, no contact */}
                 {displayDescription && (
-                  <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 md:p-6 shadow-sm mb-6">
+                  <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-3 sm:p-5 md:p-6 shadow-sm mb-6">
                     <h3 className="text-slate-900 dark:text-white font-semibold text-lg mb-4">{t('description')}</h3>
                     <p className="text-slate-700 dark:text-gray-300 text-sm md:text-base whitespace-pre-wrap leading-relaxed" style={{ fontSize: 'clamp(14px, 4vw, 16px)' }}>{displayDescription}</p>
                   </div>
                 )}
 
                 {listing.vin && (
-                  <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 md:p-6 shadow-sm">
+                  <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-3 sm:p-5 md:p-6 shadow-sm">
                     <h3 className="text-slate-900 dark:text-white font-semibold text-lg mb-3">{t('vin')}</h3>
                     <p className="text-slate-700 dark:text-gray-300 font-mono text-sm md:text-base backdrop-blur-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 inline-block break-all">{listing.vin}</p>
                   </div>
                 )}
 
                 {priceHistory.length > 0 && (
-                  <div className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-2xl p-5 md:p-6">
+                  <div className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-2xl p-3 sm:p-5 md:p-6">
                     <h3 className="text-white font-semibold text-lg mb-4">{t('priceHistory')}</h3>
                     <div className="space-y-3">
                       {priceHistory.slice(-5).reverse().map((entry: { price: number; timestamp: string }, i: number) => {

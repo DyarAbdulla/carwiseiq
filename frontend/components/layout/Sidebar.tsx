@@ -33,7 +33,7 @@ export function Sidebar({ className }: SidebarProps) {
           className
         )}
       >
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           {/* Sidebar is now empty - all content moved to Learn More modal */}
         </div>
       </aside>

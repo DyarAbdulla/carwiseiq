@@ -898,9 +898,9 @@ export default function PredictPage() {
         ></motion.div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10 overflow-visible">
+      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 md:py-10 overflow-visible">
         {/* Main Content Grid - Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6">
           {/* Left Column: Form (Glassmorphism Card) */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -909,7 +909,7 @@ export default function PredictPage() {
             className="lg:col-span-5 order-1"
           >
             <div className="sticky top-6 h-fit">
-              <div className="backdrop-blur-xl bg-black/40 border border-white/30 rounded-2xl shadow-2xl p-6 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:border-white/40">
+              <div className="backdrop-blur-xl bg-black/40 border border-white/30 rounded-2xl shadow-2xl p-3 sm:p-6 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:border-white/40">
                 <CompactWizardCard
                   onSubmit={handlePredict}
                   loading={loading}
@@ -943,7 +943,7 @@ export default function PredictPage() {
               /* Has Prediction: Show Results */
               <ErrorBoundary fallback={
                 <Card className="border border-red-500/50 bg-red-500/10">
-                  <CardContent className="p-6">
+                  <CardContent className="p-3 sm:p-6">
                     <p className="text-sm text-red-400">Failed to display prediction results. Please try again.</p>
                   </CardContent>
                 </Card>
@@ -956,7 +956,7 @@ export default function PredictPage() {
                     duration: 0.6,
                     ease: [0.16, 1, 0.3, 1],
                   }}
-                  className="space-y-6"
+                  className="space-y-3 sm:space-y-6"
                   id="results-section"
                 >
                   {/* Car Preview Card - Always shown at top */}
@@ -1122,7 +1122,7 @@ export default function PredictPage() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5 }}
-                className="space-y-6"
+                className="space-y-3 sm:space-y-6"
               >
                 {/* Smart Tips - Always visible when no prediction */}
                 <ErrorBoundary fallback={null}>

@@ -251,7 +251,7 @@ export default function BuySellPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-radial from-indigo-500/15 via-purple-500/10 to-transparent blur-3xl" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-8 pb-12 md:pt-12 md:pb-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 md:px-8 pt-8 pb-12 md:pt-12 md:pb-16">
         {/* Floating Glass Header with Search & Filters */}
         <div className="mb-8 md:mb-10">
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">{t('title')}</h1>
@@ -303,7 +303,7 @@ export default function BuySellPage() {
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="md:backdrop-blur-xl md:bg-white/80 dark:md:bg-white/5 md:border md:border-slate-200 dark:md:border-white/10 md:rounded-2xl md:p-5 md:p-6 md:mb-6 md:shadow-xl fixed md:static bottom-0 left-0 right-0 z-[101] md:z-auto bg-white dark:bg-gray-900 border-t border-slate-200 dark:border-white/10 rounded-t-3xl p-6 max-h-[90vh] overflow-y-auto md:max-h-none md:overflow-visible shadow-2xl"
+                className="md:backdrop-blur-xl md:bg-white/80 dark:md:bg-white/5 md:border md:border-slate-200 dark:md:border-white/10 md:rounded-2xl md:p-5 md:p-6 md:mb-6 md:shadow-xl fixed md:static bottom-0 left-0 right-0 z-[101] md:z-auto bg-white dark:bg-gray-900 border-t border-slate-200 dark:border-white/10 rounded-t-3xl p-3 sm:p-6 max-h-[90vh] overflow-y-auto md:max-h-none md:overflow-visible shadow-2xl"
               >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-slate-900 dark:text-white font-semibold text-lg">{t('filters')}</h3>
@@ -477,7 +477,7 @@ export default function BuySellPage() {
 
         {/* Listings Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <ListingCardSkeleton key={i} />
             ))}
@@ -501,7 +501,7 @@ export default function BuySellPage() {
             <p className="mb-4 text-slate-600 dark:text-gray-400 text-sm font-medium">
               {t('showingRange', { from: 1, to: filtered.length, total: filtered.length })}
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0 md:gap-4 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0 md:gap-3 md:gap-4 md:gap-6">
               {filtered.map((listing) => {
                 const src = firstImageUrl(listing.images)
                 const coverUrl = src ? listingImageUrl(src) : null

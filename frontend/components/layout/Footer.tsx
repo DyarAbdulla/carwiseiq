@@ -10,7 +10,7 @@ export function Footer() {
 
   return (
     <footer className="relative z-10 border-t border-white/10 bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 py-6 sm:py-12 lg:py-16 mt-auto">
-      <div className="container mx-auto px-6 sm:px-8 lg:px-12 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-6 lg:px-8 max-w-7xl">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-12 mb-4 sm:mb-6">
           {/* Brand */}
           <div className="space-y-2 sm:space-y-3 text-center sm:text-left">

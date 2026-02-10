@@ -103,7 +103,7 @@ export function Header() {
   if (!mounted) {
     return (
       <header className="sticky top-0 z-50 w-full glass-header supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-slate-900/80">
-        <div className="flex h-16 min-h-[44px] items-center justify-between px-4 md:px-6">
+        <div className="flex h-16 min-h-[44px] items-center justify-between px-3 sm:px-6">
           <div className="h-6 w-6 rounded-lg bg-slate-200 dark:bg-slate-700/50 animate-pulse" />
         </div>
       </header>
@@ -136,7 +136,7 @@ export function Header() {
         !headerVisible && "max-lg:-translate-y-full"
       )}
     >
-      <div className="flex h-16 min-h-[44px] items-center justify-between gap-4 px-4 sm:px-6 max-w-[1800px] mx-auto">
+      <div className="flex h-16 min-h-[44px] items-center justify-between gap-4 px-3 sm:px-6 max-w-[1800px] mx-auto">
         {/* Logo (left on mobile); center empty on mobile */}
         <Link href={`/${locale || 'en'}`} className="flex items-center gap-2.5 shrink-0 min-w-0">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
@@ -227,7 +227,7 @@ export function Header() {
                   </>
                 ) : (
                   <>
-                    <div className="px-4 py-3 border-b border-slate-200 dark:border-white/10">
+                    <div className="px-3 py-3 border-b border-slate-200 dark:border-white/10">
                       <p className="text-[10px] text-slate-500 dark:text-slate-500 font-medium mb-1.5 uppercase tracking-wider">{tAuth('user')}</p>
                       <p className="text-sm text-slate-600 dark:text-slate-400 truncate">{user?.email || tAuth('user')}</p>
                       {isAdmin && <Badge variant="warning" className="mt-2 shrink-0 text-[10px]">ADMIN</Badge>}
@@ -325,7 +325,7 @@ export function Header() {
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
                   {/* Sticky header: title + close */}
-                  <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 backdrop-blur-xl bg-white/90 dark:bg-slate-950/90 border-b border-slate-200 dark:border-white/10">
+                  <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-3 backdrop-blur-xl bg-white/90 dark:bg-slate-950/90 border-b border-slate-200 dark:border-white/10">
                     <span className="text-base font-semibold text-slate-900 dark:text-white">{t('nav.menu') || 'Menu'}</span>
                     <Button
                       variant="ghost"
@@ -338,10 +338,10 @@ export function Header() {
                     </Button>
                   </div>
 
-                  <div className="px-3 py-4 space-y-1">
+                  <div className="px-3 py-3 space-y-1">
                     {/* User Profile Summary at Top */}
                     {isAuthenticated && user && (
-                      <div className="px-4 py-4 mb-4 backdrop-blur-md bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
+                      <div className="px-3 py-3 mb-3 backdrop-blur-md bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
                         <div className="flex items-center gap-3">
                           <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
                             {user.email?.charAt(0).toUpperCase() || 'U'}
@@ -354,14 +354,14 @@ export function Header() {
                       </div>
                     )}
                     {/* Top: Language + Theme */}
-                    <div className="px-4 py-3">
+                    <div className="px-3 py-2">
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">{tCommon('language')}</span>
                       <LanguageSelector variant="inline" />
                     </div>
                     <button
                       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                       className={cn(
-                        "flex items-center gap-3 rounded-xl px-4 py-3 min-h-[48px] w-full text-sm font-medium transition-colors",
+                        "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] w-full text-sm font-medium transition-colors",
                         "hover:bg-slate-100 dark:hover:bg-white/10 active:bg-slate-100 dark:active:bg-white/10 text-slate-700 dark:text-slate-200"
                       )}
                       aria-label={theme === 'dark' ? tCommon('themeLight') : tCommon('themeDark')}
@@ -375,14 +375,14 @@ export function Header() {
                       <div className="flex flex-col gap-2">
                         <button
                           onClick={() => openAuth('signin')}
-                          className="flex items-center gap-3 rounded-xl px-4 py-3 min-h-[48px] w-full text-start text-sm font-medium bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
+                          className="flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] w-full text-start text-sm font-medium bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
                         >
                           <User className="h-5 w-5 shrink-0" />
                           <span>{tAuth('signIn')}</span>
                         </button>
                         <button
                           onClick={() => openAuth('register')}
-                          className="flex items-center gap-3 rounded-xl px-4 py-3 min-h-[48px] w-full text-start text-sm font-medium border border-slate-200 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
+                          className="flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] w-full text-start text-sm font-medium border border-slate-200 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
                         >
                           <User className="h-5 w-5 shrink-0" />
                           <span>{tAuth('register')}</span>
@@ -395,7 +395,7 @@ export function Header() {
                             href={`/${locale}/admin/dashboard`}
                             onClick={() => setMobileMenuOpen(false)}
                             className={cn(
-                              "flex items-center gap-3 rounded-xl px-4 py-3 min-h-[48px] text-sm font-medium transition-colors",
+                              "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
                               "hover:bg-white/10 active:bg-white/10",
                               basePathname.startsWith('/admin') ? "bg-amber-500/20 text-amber-600 dark:text-amber-400" : "text-slate-700 dark:text-slate-200"
                             )}
@@ -409,7 +409,7 @@ export function Header() {
                           href={`/${locale}/my-listings`}
                           onClick={() => setMobileMenuOpen(false)}
                           className={cn(
-                            "flex items-center gap-3 rounded-xl px-4 py-3 min-h-[48px] text-sm font-medium transition-colors",
+                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
                             "hover:bg-white/10 active:bg-white/10",
                             basePathname.startsWith('/my-listings') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-200"
                           )}
@@ -421,7 +421,7 @@ export function Header() {
                           href={`/${locale}/profile`}
                           onClick={() => setMobileMenuOpen(false)}
                           className={cn(
-                            "flex items-center gap-3 rounded-xl px-4 py-3 min-h-[48px] text-sm font-medium transition-colors",
+                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
                             "hover:bg-white/10 active:bg-white/10",
                             basePathname.startsWith('/profile') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-200"
                           )}
@@ -440,7 +440,7 @@ export function Header() {
                           href={`/${locale}${item.href}`}
                           onClick={() => { handleNavClick(item.href); setMobileMenuOpen(false) }}
                           className={cn(
-                            "flex items-center gap-3 rounded-xl px-4 py-3 min-h-[48px] text-sm font-medium transition-colors",
+                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
                             "hover:bg-white/10 active:bg-white/10",
                             isActiveNav(item.href) ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300"
                           )}
@@ -458,7 +458,7 @@ export function Header() {
                         <button
                           onClick={() => { handleLogoutClick(); setMobileMenuOpen(false) }}
                           className={cn(
-                            "flex items-center gap-3 rounded-xl px-4 py-3 min-h-[48px] w-full text-start text-sm font-medium transition-colors",
+                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] w-full text-start text-sm font-medium transition-colors",
                             "hover:bg-white/10 active:bg-white/10 text-slate-200"
                           )}
                         >
@@ -469,12 +469,12 @@ export function Header() {
                     )}
 
                     {/* Prominent Sell Car Button at Bottom */}
-                    <div className="sticky bottom-0 pt-4 pb-4 mt-4 border-t border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl">
+                    <div className="sticky bottom-0 pt-3 pb-3 mt-3 border-t border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl">
                       <SellCarCTA
                         as="span"
                         onClick={() => setMobileMenuOpen(false)}
                         className={cn(
-                          "flex items-center justify-center gap-3 rounded-xl px-4 py-4 min-h-[56px] w-full text-base font-semibold transition-all shadow-lg",
+                          "flex items-center justify-center gap-3 rounded-xl px-3 py-4 min-h-[56px] w-full text-base font-semibold transition-all shadow-lg",
                           "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-600/30"
                         )}
                         showIcon
