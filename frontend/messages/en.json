@@ -341,7 +341,12 @@
     "publishUploadError": "Upload failed",
     "publishDbError": "Failed to create listing",
     "publishSessionError": "Session expired. Please sign in again.",
-    "publishValidationError": "Invalid year, price, or mileage. Please check car details."
+    "publishValidationError": "Invalid year, price, or mileage. Please check car details.",
+    "loginRequired": "Please log in to upload images.",
+    "sessionExpired": "Session expired. Please log in again.",
+    "uploadFailedGeneric": "Failed to upload images. Please check your connection and try again.",
+    "warningPartialUploadTitle": "Warning",
+    "warningPartialUpload": "Only {uploaded} of {total} files uploaded successfully."
   },
   "favorites": {
     "title": "My Favorites",

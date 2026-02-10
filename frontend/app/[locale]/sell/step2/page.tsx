@@ -38,7 +38,7 @@ export default function SellStep2Page() {
       if (!user?.id) {
         toast({ 
           title: t("publishUploadError"), 
-          description: "Please log in to upload images.", 
+          description: t("loginRequired"), 
           variant: "destructive" 
         })
       }
@@ -58,10 +58,10 @@ export default function SellStep2Page() {
       console.error("[Step2] ❌ No Supabase session:", sessionError?.message || "Session not found")
       toast({ 
         title: t("publishUploadError"), 
-        description: "Session expired. Please log in again.", 
+        description: t("sessionExpired"), 
         variant: "destructive" 
       })
-      router.push(`/${locale}/login?returnUrl=/${locale}/sell/step2`)
+      router.push(`/${locale}/login?returnUrl=${encodeURIComponent(`/${locale}/sell/step2`)}`)
       return
     }
 
@@ -101,7 +101,7 @@ export default function SellStep2Page() {
         console.error("[Step2] ❌ Upload failed:", firstErr.error)
         toast({ 
           title: t("publishUploadError"), 
-          description: firstErr.error.message || "Failed to upload images. Please check your connection and try again.", 
+          description: firstErr.error.message || t("uploadFailedGeneric"), 
           variant: "destructive" 
         })
         setUploading(false)
@@ -117,8 +117,8 @@ export default function SellStep2Page() {
       if (urls.length !== ordered.length) {
         console.warn("[Step2] ⚠️ Some uploads may have failed. Expected:", ordered.length, "Got:", urls.length)
         toast({ 
-          title: "Warning", 
-          description: `Only ${urls.length} of ${ordered.length} files uploaded successfully.`, 
+          title: t("warningPartialUploadTitle"), 
+          description: t("warningPartialUpload", { uploaded: urls.length, total: ordered.length }), 
           variant: "default" 
         })
       }
@@ -132,7 +132,7 @@ export default function SellStep2Page() {
       const msg = e instanceof Error ? e.message : String(e)
       toast({ 
         title: t("publishUploadError"), 
-        description: msg || "Failed to upload images. Please check your connection and try again.", 
+        description: msg || t("uploadFailedGeneric"), 
         variant: "destructive" 
       })
       setUploading(false)

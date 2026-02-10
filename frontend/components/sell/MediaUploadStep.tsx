@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useRef, useState } from "react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import {
   DndContext,
   closestCenter,
@@ -150,6 +150,8 @@ export interface MediaUploadStepProps {
   errors?: string[]
 }
 
+const RTL_LOCALES = ['ar', 'ku']
+
 export function MediaUploadStep({
   media,
   onAdd,
@@ -158,10 +160,12 @@ export function MediaUploadStep({
   onReorder,
   errors = [],
 }: MediaUploadStepProps) {
+  const locale = useLocale() || 'en'
   const t = useTranslations("sell")
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   const [dropError, setDropError] = useState<ValidateError | null>(null)
+  const isRTL = RTL_LOCALES.includes(locale)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -246,8 +250,9 @@ export function MediaUploadStep({
         onChange={handleFileChange}
       />
 
-      {/* Drag-and-drop zone - Premium Glass Surface */}
+      {/* Drag-and-drop zone - Premium Glass Surface. Use dir="ltr" in RTL so file input click works reliably. */}
       <div
+        dir={isRTL ? "ltr" : undefined}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

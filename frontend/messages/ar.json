@@ -316,7 +316,12 @@
     "publishUploadError": "فشل رفع الصور",
     "publishDbError": "فشل حفظ البيانات",
     "publishSessionError": "انتهت الجلسة، سجل الدخول مجدداً.",
-    "publishValidationError": "تحقق من السعر أو العداد."
+    "publishValidationError": "تحقق من السعر أو العداد.",
+    "loginRequired": "يرجى تسجيل الدخول لرفع الصور.",
+    "sessionExpired": "انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.",
+    "uploadFailedGeneric": "فشل رفع الصور. يرجى التحقق من الاتصال والمحاولة مرة أخرى.",
+    "warningPartialUploadTitle": "تحذير",
+    "warningPartialUpload": "تم رفع {uploaded} من {total} ملفات بنجاح فقط."
   },
   "favorites": {
     "title": "المفضلة",

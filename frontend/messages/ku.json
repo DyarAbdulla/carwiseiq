@@ -316,7 +316,12 @@
     "publishUploadError": "کێشە لە بارکردنی وێنەکان هەیە",
     "publishDbError": "کێشە لە تۆمارکردن هەیە",
     "publishSessionError": "کاتەکەت تەواو بوو، تکایە دووبارە بچۆ ژوورەوە.",
-    "publishValidationError": "نرخ یان کیلۆمەتر هەڵەیە."
+    "publishValidationError": "نرخ یان کیلۆمەتر هەڵەیە.",
+    "loginRequired": "تکایە بچۆ ژوورەوە بۆ بارکردنی وێنەکان.",
+    "sessionExpired": "کاتەکەت تەواو بوو. تکایە دووبارە بچۆ ژوورەوە.",
+    "uploadFailedGeneric": "بارکردنی وێنەکان سەرکەوتوو نەبوو. تکایە پەیوەندییەکەت بپشکنە و دووبارە هەوڵ بدەرەوە.",
+    "warningPartialUploadTitle": "ئاگاداری",
+    "warningPartialUpload": "تەنها {uploaded} لە {total} فایل بە سەرکەوتوویی بارکران."
   },
   "favorites": {
     "title": "دڵخوازەکان",
