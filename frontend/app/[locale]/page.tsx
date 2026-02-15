@@ -14,7 +14,7 @@ import {
   ChevronDown, Mail, Sparkles, Gift,
   Play, Award, TrendingDown,
   Database, CheckCircle, Clipboard, Search, Gavel, Plus, Car, Wallet,
-  HelpCircle, Headphones, BookOpen, Flag, Phone, X, MessageCircle
+  HelpCircle, Headphones, Flag, Phone, X, MessageCircle
 } from 'lucide-react'
 import Link from 'next/link'
 import { LearnMoreModal } from '@/components/LearnMoreModal'
@@ -956,14 +956,6 @@ const FloatingSupportButton = memo(function FloatingSupportButton({ t, locale }:
       phone: '0777 447 2106',
       email: 'carwise15@gmail.com',
       color: 'purple'
-    },
-    {
-      icon: BookOpen,
-      title: t('support.guide.title') || 'User Guide',
-      description: t('support.guide.description') || 'Learn how to get the most out of CarWiseIQ\'s features',
-      button: t('support.guide.button') || 'Learn More',
-      link: `/${locale}/docs`,
-      color: 'blue'
     },
     {
       icon: Flag,

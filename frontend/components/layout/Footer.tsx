@@ -42,6 +42,11 @@ export function Footer() {
             <h3 className="text-white font-semibold text-base mb-2 sm:mb-3">{t('legal')}</h3>
             <ul className="space-y-2 text-sm">
               <li>
+                <Link href={`/${locale}/about`} className="text-[#94a3b8] hover:text-[#5B7FFF] hover:underline transition-all duration-300 py-1.5 block">
+                  {t('aboutUs')}
+                </Link>
+              </li>
+              <li>
                 <Link href={`/${locale}/privacy`} className="text-[#94a3b8] hover:text-[#5B7FFF] hover:underline transition-all duration-300 py-1.5 block">
                   {t('privacy')}
                 </Link>
