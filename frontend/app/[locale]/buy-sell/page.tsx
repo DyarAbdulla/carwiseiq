@@ -507,7 +507,7 @@ export default function BuySellPage() {
                 const coverUrl = src ? listingImageUrl(src) : null
                 const sold = !!listing.is_sold
 
-                const href = `/${locale}/buy-sell/${listing.id}`
+                const href = `/${locale}/buy-sell?id=${encodeURIComponent(String(listing.id))}`
 
                 const card = (
                   <div

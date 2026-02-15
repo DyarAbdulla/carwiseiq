@@ -32,6 +32,13 @@ function getPathWithoutLocale(pathname: string, locale: string): string {
   return pathname || '/'
 }
 
+/** Normalize path so /buy-sell/123 becomes /buy-sell?id=123 (avoids 404 on static export). */
+function normalizePathForLocale(pathWithoutLocale: string): string {
+  const buySellMatch = pathWithoutLocale.match(/^\/buy-sell\/([^/]+)\/?$/)
+  if (buySellMatch) return `/buy-sell?id=${encodeURIComponent(buySellMatch[1])}`
+  return pathWithoutLocale || '/'
+}
+
 interface LanguageSelectorProps {
   variant?: LanguageSelectorVariant
 }
@@ -64,10 +71,12 @@ export function LanguageSelector({ variant = 'dropdown' }: LanguageSelectorProps
       localStorage.setItem(LOCALE_STORAGE_KEY, newLocale)
     } catch (_) {}
     const pathWithoutLocale = getPathWithoutLocale(pathname, locale)
-    const newPath = `/${newLocale}${pathWithoutLocale}`.replace(/\/+/g, '/')
+    const normalizedPath = normalizePathForLocale(pathWithoutLocale)
+    const newPath = `/${newLocale}${normalizedPath}`.replace(/\/+/g, '/')
     const queryString = searchParams?.toString?.()
-    router.push(queryString ? `${newPath}?${queryString}` : newPath)
-    router.refresh()
+    const fullUrl = queryString ? `${newPath}${newPath.includes('?') ? '&' : '?'}${queryString}` : newPath
+    // Full page navigation so layout and all content re-render with new locale messages
+    window.location.assign(fullUrl)
   }
 
   const currentLabel = (() => { try { return t(locale) } catch { return locale } })()

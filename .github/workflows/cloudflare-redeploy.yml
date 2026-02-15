@@ -1,0 +1,65 @@
+# Trigger a Cloudflare Pages redeploy (retry latest production deployment).
+# Use when you want to rebuild/redeploy without pushing a new commit.
+#
+# Required GitHub secrets:
+#   CLOUDFLARE_ACCOUNT_ID  - From Cloudflare Dashboard → any product → right sidebar
+#   CLOUDFLARE_API_TOKEN   - Create at https://dash.cloudflare.com/profile/api-tokens
+#                            Template: "Edit Cloudflare Workers" or custom with "Pages: Edit"
+#   CLOUDFLARE_PAGES_PROJECT_NAME - Your Pages project name (e.g. carwiseiq)
+
+name: Cloudflare Pages Redeploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest deployment
+        id: get-deployment
+        env:
+          ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PROJECT_NAME: ${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
+        run: |
+          if [ -z "$ACCOUNT_ID" ] || [ -z "$API_TOKEN" ] || [ -z "$PROJECT_NAME" ]; then
+            echo "Missing required secrets. Set CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, CLOUDFLARE_PAGES_PROJECT_NAME in repo Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          RES=$(curl -s -w "\n%{http_code}" \
+            "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/deployments?per_page=1" \
+            -H "Authorization: Bearer ${API_TOKEN}")
+          HTTP_BODY=$(echo "$RES" | head -n -1)
+          HTTP_CODE=$(echo "$RES" | tail -n 1)
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Failed to list deployments (HTTP $HTTP_CODE): $HTTP_BODY"
+            exit 1
+          fi
+          DEPLOYMENT_ID=$(echo "$HTTP_BODY" | jq -r '.result[0].id // empty')
+          if [ -z "$DEPLOYMENT_ID" ]; then
+            echo "No deployment found. Response: $HTTP_BODY"
+            exit 1
+          fi
+          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "Using deployment: $DEPLOYMENT_ID"
+
+      - name: Retry deployment
+        env:
+          ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PROJECT_NAME: ${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
+          DEPLOYMENT_ID: ${{ steps.get-deployment.outputs.deployment_id }}
+        run: |
+          RES=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/pages/projects/${PROJECT_NAME}/deployments/${DEPLOYMENT_ID}/retry" \
+            -H "Authorization: Bearer ${API_TOKEN}" \
+            -H "Content-Type: application/json")
+          HTTP_BODY=$(echo "$RES" | head -n -1)
+          HTTP_CODE=$(echo "$RES" | tail -n 1)
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Retry failed (HTTP $HTTP_CODE): $HTTP_BODY"
+            exit 1
+          fi
+          echo "Redeploy triggered successfully."
+          echo "$HTTP_BODY" | jq -r '.result.url // empty' | xargs -I {} echo "URL: {}"

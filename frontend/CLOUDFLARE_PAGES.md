@@ -2,6 +2,21 @@
 
 The frontend uses **Next.js static export** (`output: 'export'`) so Cloudflare Pages serves plain HTML/JS/CSS with no SSR and no memory-heavy build.
 
+## Redeploy (GitHub Actions)
+
+A workflow can trigger a **redeploy** without pushing a new commit (retries the latest deployment):
+
+1. **Repo → Actions → "Cloudflare Pages Redeploy" → Run workflow.**
+
+2. **Required secrets** (Settings → Secrets and variables → Actions):
+   - `CLOUDFLARE_ACCOUNT_ID` – Cloudflare Dashboard → any product → right sidebar "Account ID".
+   - `CLOUDFLARE_API_TOKEN` – [Create API token](https://dash.cloudflare.com/profile/api-tokens) with **Pages: Edit**.
+   - `CLOUDFLARE_PAGES_PROJECT_NAME` – Your Pages project name (e.g. `carwiseiq`).
+
+3. After the workflow runs, check the [Cloudflare Pages dashboard](https://dash.cloudflare.com/) for the new deployment.
+
+Pushing to the connected branch (e.g. `main`) still triggers an automatic deployment via Cloudflare’s Git integration.
+
 ## Build configuration
 
 | Setting | Value |
