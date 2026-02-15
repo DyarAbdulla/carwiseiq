@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -52,6 +53,9 @@ interface PredictionHistoryItem {
 export default function ActivityHistoryPage() {
   const t = useTranslations('feedback.history')
   const tCommon = useTranslations('common')
+  const tAuth = useTranslations('auth')
+  const locale = useLocale()
+  const router = useRouter()
   const { toast } = useToast()
   const { user, sessionLoaded } = useAuthSession()
 
@@ -259,8 +263,10 @@ export default function ActivityHistoryPage() {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
         <div className="backdrop-blur-xl bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-12 text-center shadow-sm">
-          <p className="text-slate-600 dark:text-slate-400 mb-4">Please login to view your activity history</p>
-          <Button onClick={() => window.location.href = '/login'}>Login</Button>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">{t('loginRequired')}</p>
+          <Button onClick={() => router.push(`/${locale}/login?returnUrl=/${locale}/history`)}>
+            {tAuth('login')}
+          </Button>
         </div>
       </div>
     )
@@ -351,7 +357,7 @@ export default function ActivityHistoryPage() {
                 <h3 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-white mb-2">No Activity Yet</h3>
                 <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md">Start using the platform to see your activity history here</p>
                 <Button
-                  onClick={() => window.location.href = '/predict'}
+                  onClick={() => router.push(`/${locale}/predict`)}
                   className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/30 h-12 px-8"
                 >
                   Start Your First Prediction

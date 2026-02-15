@@ -1065,6 +1065,7 @@
     "history": {
       "title": "Prediction History",
       "description": "View and update feedback on your past predictions",
+      "loginRequired": "Please login to view your activity history",
       "noHistory": "No prediction history yet",
       "noHistoryDesc": "Your past predictions will appear here",
       "updateFeedback": "Update Feedback",
