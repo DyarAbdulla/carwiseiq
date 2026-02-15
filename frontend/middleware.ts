@@ -27,6 +27,12 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${match[1]}`, request.url));
   }
 
+  // Security: old admin path is no longer valid - redirect to home (admin route was renamed to a secret path)
+  const adminLegacyMatch = pathname.match(/^\/(en|ku|ar)\/admin(\/|$)/);
+  if (adminLegacyMatch) {
+    return NextResponse.redirect(new URL(`/${adminLegacyMatch[1]}`, request.url));
+  }
+
   // Let next-intl handle "/" -> redirect to detected or preferred locale (Accept-Language / NEXT_LOCALE)
   return intlMiddleware(request);
 }

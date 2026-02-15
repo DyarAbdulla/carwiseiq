@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     try {
       const adminToken = localStorage.getItem('admin_token')
       if (!adminToken) {
-        router.push(`/${locale}/admin/login`)
+        router.push(`/${locale}/admin1129admin/login`)
         return
       }
       const admin = await apiClient.getAdminMe()
@@ -54,13 +54,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     } catch (error) {
       localStorage.removeItem('admin_token')
       localStorage.removeItem('admin_info')
-      router.push(`/${locale}/admin/login`)
+      router.push(`/${locale}/admin1129admin/login`)
     }
   }, [router, locale])
 
   useEffect(() => {
     // Skip auth check for login page
-    if (pathname?.includes('/admin/login')) {
+    if (pathname?.includes('/admin1129admin/login')) {
       setLoading(false)
       return
     }
@@ -75,22 +75,22 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     } finally {
       localStorage.removeItem('admin_token')
       localStorage.removeItem('admin_info')
-      router.push(`/${locale}/admin/login`)
+      router.push(`/${locale}/admin1129admin/login`)
     }
   }
 
   const menuItems = [
-    { href: `/${locale}/admin/dashboard`, label: 'Dashboard', icon: LayoutDashboard },
-    { href: `/${locale}/admin/feedback`, label: 'Feedback Management', icon: MessageSquare },
-    { href: `/${locale}/admin/users`, label: 'User Management', icon: Users },
-    { href: `/${locale}/admin/services`, label: 'Services Management', icon: Wrench },
-    { href: `/${locale}/admin/services/providers`, label: 'Providers Management', icon: Building2 },
-    { href: `/${locale}/admin/settings`, label: 'System Settings', icon: Settings },
-    { href: `/${locale}/admin/reports`, label: 'Reports', icon: FileText },
+    { href: `/${locale}/admin1129admin/dashboard`, label: 'Dashboard', icon: LayoutDashboard },
+    { href: `/${locale}/admin1129admin/feedback`, label: 'Feedback Management', icon: MessageSquare },
+    { href: `/${locale}/admin1129admin/users`, label: 'User Management', icon: Users },
+    { href: `/${locale}/admin1129admin/services`, label: 'Services Management', icon: Wrench },
+    { href: `/${locale}/admin1129admin/services/providers`, label: 'Providers Management', icon: Building2 },
+    { href: `/${locale}/admin1129admin/settings`, label: 'System Settings', icon: Settings },
+    { href: `/${locale}/admin1129admin/reports`, label: 'Reports', icon: FileText },
   ]
 
   // For login page, render children without sidebar
-  if (pathname?.includes('/admin/login')) {
+  if (pathname?.includes('/admin1129admin/login')) {
     return <>{children}</>
   }
 

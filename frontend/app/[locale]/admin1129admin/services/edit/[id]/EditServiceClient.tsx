@@ -121,7 +121,7 @@ export default function EditServicePage() {
         description: error.message || 'Failed to load service',
         variant: 'destructive',
       })
-      router.push(`/${locale}/admin/services`)
+      router.push(`/${locale}/admin1129admin/services`)
     } finally {
       setLoading(false)
     }
@@ -157,7 +157,7 @@ export default function EditServicePage() {
         title: 'Success',
         description: 'Service updated successfully',
       })
-      router.push(`/${locale}/admin/services`)
+      router.push(`/${locale}/admin1129admin/services`)
     } catch (error: any) {
       toast({
         title: 'Error',

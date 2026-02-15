@@ -22,7 +22,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
     if (loading) return
 
     if (!user) {
-      const returnUrl = pathname || `/${locale}/admin`
+      const returnUrl = pathname || `/${locale}/admin1129admin`
       router.push(`/${locale}/login?returnUrl=${encodeURIComponent(returnUrl)}`)
       return
     }

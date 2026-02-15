@@ -233,20 +233,6 @@ export function Header() {
                       {isAdmin && <Badge variant="warning" className="mt-2 shrink-0 text-[10px]">ADMIN</Badge>}
                     </div>
                     <div className="py-2">
-                      {isAdmin && (
-                        <DropdownMenuItem asChild>
-                          <Link
-                            href={`/${locale}/admin/dashboard`}
-                            className="flex items-center gap-3 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white focus:bg-slate-100 dark:focus:bg-white/10 focus:text-slate-900 dark:focus:text-white active:bg-slate-100 dark:active:bg-white/10 active:text-slate-900 dark:active:text-white cursor-pointer py-2.5 px-4 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                            }}
-                          >
-                            <LayoutDashboard className="h-4 w-4 shrink-0" />
-                            {t('nav.adminDashboard')}
-                          </Link>
-                        </DropdownMenuItem>
-                      )}
                       <DropdownMenuItem asChild>
                         <Link
                           href={`/${locale}/my-listings`}
@@ -390,21 +376,6 @@ export function Header() {
                       </div>
                     ) : (
                       <>
-                        {isAdmin && (
-                          <Link
-                            href={`/${locale}/admin/dashboard`}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className={cn(
-                              "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
-                              "hover:bg-white/10 active:bg-white/10",
-                              basePathname.startsWith('/admin') ? "bg-amber-500/20 text-amber-600 dark:text-amber-400" : "text-slate-700 dark:text-slate-200"
-                            )}
-                          >
-                            <LayoutDashboard className="h-5 w-5 shrink-0 text-slate-400" />
-                            <span>{t('nav.adminDashboard')}</span>
-                            <Badge variant="warning" className="shrink-0 ms-auto">ADMIN</Badge>
-                          </Link>
-                        )}
                         <Link
                           href={`/${locale}/my-listings`}
                           onClick={() => setMobileMenuOpen(false)}

@@ -103,7 +103,7 @@ export default function AddServicePage() {
         title: 'Success',
         description: 'Service created successfully',
       })
-      router.push(`/${locale}/admin/services`)
+      router.push(`/${locale}/admin1129admin/services`)
     } catch (error: any) {
       toast({
         title: 'Error',

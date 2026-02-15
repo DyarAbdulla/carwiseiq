@@ -8,7 +8,7 @@ export default function AdminPage() {
   const locale = useLocale()
 
   useEffect(() => {
-    router.replace(`/${locale}/admin/dashboard`)
+    router.replace(`/${locale}/admin1129admin/dashboard`)
   }, [router, locale])
 
   return null

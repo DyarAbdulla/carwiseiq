@@ -158,7 +158,7 @@ export default function ServicesManagementPage() {
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={() => router.push(`/${locale}/admin/services/locations`)}
+            onClick={() => router.push(`/${locale}/admin1129admin/services/locations`)}
             variant="outline"
             className="border-gray-600 text-gray-300 hover:bg-gray-700"
           >
@@ -166,7 +166,7 @@ export default function ServicesManagementPage() {
             Manage Locations
           </Button>
           <Button
-            onClick={() => router.push(`/${locale}/admin/services/add`)}
+            onClick={() => router.push(`/${locale}/admin1129admin/services/add`)}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -339,7 +339,7 @@ export default function ServicesManagementPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => router.push(`/${locale}/admin/services/edit/${service.id}`)}
+                              onClick={() => router.push(`/${locale}/admin1129admin/services/edit/${service.id}`)}
                               className="text-blue-400 hover:text-blue-300"
                             >
                               <Edit className="h-4 w-4" />

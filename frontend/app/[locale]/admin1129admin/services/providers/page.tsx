@@ -138,7 +138,7 @@ export default function ProvidersManagementPage() {
           <p className="text-gray-400 mt-1">Manage all service providers</p>
         </div>
         <Button
-          onClick={() => router.push(`/${locale}/admin/services/providers/add`)}
+          onClick={() => router.push(`/${locale}/admin1129admin/services/providers/add`)}
           className="bg-[#8b5cf6] hover:bg-[#7c3aed]"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -243,7 +243,7 @@ export default function ProvidersManagementPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => router.push(`/${locale}/admin/services/providers/edit/${provider.id}`)}
+                          onClick={() => router.push(`/${locale}/admin1129admin/services/providers/edit/${provider.id}`)}
                           className="border-gray-600"
                         >
                           <Edit className="h-4 w-4" />

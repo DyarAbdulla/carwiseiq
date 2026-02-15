@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
     // Check if already logged in
     const adminToken = localStorage.getItem('admin_token')
     if (adminToken) {
-      router.push(`/${locale}/admin/dashboard`)
+      router.push(`/${locale}/admin1129admin/dashboard`)
     }
   }, [router, locale])
 
@@ -62,7 +62,7 @@ export default function AdminLoginPage() {
         description: `Welcome back, ${response.admin.name}!`,
       })
 
-      router.push(`/${locale}/admin/dashboard`)
+      router.push(`/${locale}/admin1129admin/dashboard`)
     } catch (error: any) {
       toast({
         title: 'Login failed',
@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@carprediction.com"
+                  placeholder="Enter your email"
                   className="pl-10"
                   {...register('email')}
                 />
@@ -144,13 +144,6 @@ export default function AdminLoginPage() {
             >
               Sign In
             </LoadingButton>
-
-            <div className="text-center text-sm text-gray-500 mt-4">
-              <p>Default credentials:</p>
-              <p className="font-mono text-xs mt-1">
-                admin@carprediction.com / Admin@123
-              </p>
-            </div>
           </form>
         </CardContent>
       </Card>
