@@ -465,7 +465,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
           <p className="text-gray-400 text-sm py-3">{t('contactNotAvailable')}</p>
         )}
       </div>
-      <div className="pt-4 border-t border-white/10 space-y-3">
+      <div className="pt-4 border-t border-white/10 space-y-3 pb-8 md:pb-0">
         <p className="text-amber-400/90 text-xs flex items-start gap-2 leading-relaxed" style={{ fontSize: 'clamp(12px, 3vw, 14px)' }}>
           <span className="text-base">⚠</span>
           <span>{t('safetyTip')}</span>
@@ -499,7 +499,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
           </button>
         </Link>
 
-        <div className={`max-w-7xl mx-auto px-3 sm:px-6 md:px-8 pt-0 ${hasContact ? 'pb-28 md:pb-16' : 'pb-12 md:pb-16'} md:pt-0 scroll-smooth`} style={hasContact ? { paddingBottom: '112px' } : undefined}>
+        <div className={`max-w-7xl mx-auto px-3 sm:px-6 md:px-8 pt-0 ${hasContact ? 'pb-40 md:pb-16' : 'pb-12 md:pb-16'} md:pt-0 scroll-smooth overflow-x-hidden`} style={hasContact ? { paddingBottom: 'max(10rem, 180px)' } : undefined}>
           {/* Owner Management Panel - Mobile Only - At Top */}
           {isOwner && (
             <div className="lg:hidden mb-6 mt-20 md:mt-0">
@@ -640,6 +640,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                       <SocialShareButtons
                         listing={{ id: listing.id, make: listing.make, model: listing.model, year: listing.year, price: listing.price }}
                         url={typeof window !== 'undefined' ? window.location.href : ''}
+                        shareLabel={t('shareListing')}
                       />
                     </div>
                   </div>
@@ -783,10 +784,10 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                   </div>
                 )}
 
-                {/* Description - stripped, no contact */}
+                {/* Description - stripped, no contact; label indicates original seller text */}
                 {displayDescription && (
                   <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-3 sm:p-5 md:p-6 shadow-sm mb-6">
-                    <h3 className="text-slate-900 dark:text-white font-semibold text-lg mb-4">{t('description')}</h3>
+                    <h3 className="text-slate-900 dark:text-white font-semibold text-lg mb-4">{t('sellerNotesLabel')}</h3>
                     <p className="text-slate-700 dark:text-gray-300 text-sm md:text-base whitespace-pre-wrap leading-relaxed" style={{ fontSize: 'clamp(14px, 4vw, 16px)' }}>{displayDescription}</p>
                   </div>
                 )}

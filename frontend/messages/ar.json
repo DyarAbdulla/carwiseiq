@@ -120,6 +120,7 @@
     "condition": "الحالة",
     "features": "المواصفات",
     "description": "الملاحظات",
+    "sellerNotesLabel": "ملاحظات البائع (أصلية)",
     "vin": "رقم الشاصي (VIN)",
     "priceHistory": "تغيرات السعر",
     "contactSeller": "تواصل مع البائع",

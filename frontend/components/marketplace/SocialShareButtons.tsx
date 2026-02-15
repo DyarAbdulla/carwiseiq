@@ -25,9 +25,11 @@ interface SocialShareButtonsProps {
     price: number
   }
   url: string
+  /** Translated label for the Share button (e.g. "Share", "هاوبەشکردن", "مشاركة") */
+  shareLabel?: string
 }
 
-export function SocialShareButtons({ listing, url }: SocialShareButtonsProps) {
+export function SocialShareButtons({ listing, url, shareLabel = 'Share' }: SocialShareButtonsProps) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const toastHook = useToast()
@@ -89,7 +91,7 @@ export function SocialShareButtons({ listing, url }: SocialShareButtonsProps) {
         className="backdrop-blur-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
       >
         <Share2 className="h-4 w-4 mr-2" />
-        Share
+        {shareLabel}
       </Button>
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
