@@ -1059,8 +1059,22 @@
     "introduction": "CarWiseIQ is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our car marketplace platform in Iraq and Kurdistan. Please read this policy carefully to understand our practices regarding your personal data.",
     "sections": {
       "introduction": {
+        "number": "1.",
         "title": "Introduction",
         "content": "CarWiseIQ is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our car marketplace platform in Iraq and Kurdistan. Please read this policy carefully to understand our practices regarding your personal data."
+      },
+      "dataCollection": {
+        "number": "2.",
+        "title": "Information We Collect",
+        "content": "We collect various types of information to provide and improve our services:",
+        "items": [
+          "Account information (name, email address, password, phone number)",
+          "Profile information (location - GPS data collected automatically)",
+          "Vehicle listing information (car details, uploaded photos, pricing)",
+          "Communication data (messages between buyers and sellers)",
+          "Usage data and analytics for AI model training",
+          "Device information (browser type, IP address, device ID)"
+        ]
       },
       "informationWeCollect": {
         "title": "Information We Collect",
@@ -1068,28 +1082,99 @@
         "items": "Account information (name, email address, password, phone number)|Profile information (location - GPS data collected automatically)|Vehicle listing information (car details, uploaded photos, pricing)|Communication data (messages between buyers and sellers)|Usage data and analytics for AI model training|Device information (browser type, IP address, device ID)"
       },
       "howWeCollect": {
+        "number": "3.",
         "title": "How We Collect Information",
-        "description": "We collect information through the following methods:",
-        "items": "Information you provide directly (registration, listings, messages)|Automatically collected data (location via GPS, cookies, analytics)|Photos uploaded by users for car listings"
+        "content": "We collect information through the following methods:",
+        "items": [
+          "Information you provide directly (registration, listings, messages)",
+          "Automatically collected data (location via GPS, cookies, analytics)",
+          "Photos uploaded by users for car listings"
+        ]
+      },
+      "howWeUse": {
+        "number": "4.",
+        "title": "How We Use Your Information",
+        "content": "We use the information we collect to:",
+        "items": [
+          "Provide and maintain our car marketplace services",
+          "Process and facilitate car buying/selling transactions",
+          "Train and improve our AI valuation models",
+          "Send service-related notifications and updates",
+          "Send marketing communications (users can opt-out)",
+          "Verify user identity and prevent fraud",
+          "Analyze usage patterns to improve platform",
+          "Generate market insights and pricing data",
+          "Facilitate messaging between buyers and sellers"
+        ]
       },
       "howWeUseInfo": {
         "title": "How We Use Your Information",
         "description": "We use the information we collect to:",
         "items": "Provide and maintain our car marketplace services|Process and facilitate car buying/selling transactions|Train and improve our AI valuation models|Send service-related notifications and updates|Send marketing communications (users can opt-out)|Verify user identity and prevent fraud|Analyze usage patterns to improve platform|Generate market insights and pricing data|Facilitate messaging between buyers and sellers"
       },
+      "thirdParty": {
+        "number": "5.",
+        "title": "Third-Party Services",
+        "content": "We use the following third-party services:",
+        "items": [
+          "Google Maps (for location services)",
+          "Payment gateways (for secure transactions)",
+          "Cloud storage providers (AWS/Google Cloud for data storage)",
+          "Social media integration (Facebook/Google for optional login)",
+          "Analytics tools (Google Analytics for platform improvement)"
+        ]
+      },
       "thirdPartyServices": {
         "title": "Third-Party Services",
         "description": "We use the following third-party services:",
         "items": "Google Maps (for location services)|Payment gateways (for secure transactions)|Cloud storage providers (AWS/Google Cloud for data storage)|Social media integration (Facebook/Google for optional login)|Analytics tools (Google Analytics for platform improvement)"
+      },
+      "sharing": {
+        "number": "6.",
+        "title": "Information Sharing",
+        "content": "We do NOT sell your personal information. We may share your information in the following circumstances:",
+        "items": [
+          "Phone numbers in listings are visible to all users when you create a listing",
+          "Shared with buyers/sellers when you initiate contact",
+          "Shared with third-party service providers (listed above)",
+          "Shared when required by Iraqi law or legal process",
+          "Shared to protect rights, safety, and security"
+        ]
       },
       "informationSharing": {
         "title": "Information Sharing",
         "description": "We do NOT sell your personal information. We may share your information in the following circumstances:",
         "items": "Phone numbers in listings are visible to all users when you create a listing|Shared with buyers/sellers when you initiate contact|Shared with third-party service providers (listed above)|Shared when required by Iraqi law or legal process|Shared to protect rights, safety, and security"
       },
+      "security": {
+        "number": "7.",
+        "title": "Data Security",
+        "content": "We implement industry-standard encryption for data transmission, secure servers and databases, regular security audits, and limited employee access to personal data.",
+        "items": [
+          "Encryption for data transmission",
+          "Secure servers and databases",
+          "Regular security audits",
+          "Limited employee access to personal data"
+        ],
+        "note": "However, please note that no online system is 100% secure."
+      },
       "dataSecurity": {
         "title": "Data Security",
         "content": "We implement industry-standard encryption for data transmission, secure servers and databases, regular security audits, and limited employee access to personal data. However, please note that no online system is 100% secure."
+      },
+      "rights": {
+        "number": "8.",
+        "title": "Your Rights and Choices",
+        "content": "You have the following rights regarding your personal data:",
+        "items": [
+          "Access your personal data through profile settings",
+          "Update or correct your information",
+          "Delete your account by contacting support",
+          "Opt-out of marketing emails/notifications in settings",
+          "Disable location services (may limit functionality)",
+          "Request data export or deletion"
+        ],
+        "contact": "You can exercise these rights by accessing your profile settings or contacting us at carwise15@gmail.com."
       },
       "yourRights": {
         "title": "Your Rights and Choices",
@@ -1097,32 +1182,94 @@
         "items": "Access your personal data through profile settings|Update or correct your information|Delete your account by contacting support|Opt-out of marketing emails/notifications in settings|Disable location services (may limit functionality)|Request data export or deletion",
         "footer": "You can exercise these rights by accessing your profile settings or contacting us at carwise15@gmail.com."
       },
+      "retention": {
+        "number": "9.",
+        "title": "Data Retention",
+        "content": "Active accounts: Data retained while account is active. Deleted accounts: Data retained for 60 days then permanently deleted. Exception: Legal requirements may require longer retention. Transaction records kept for 7 years for legal/tax purposes.",
+        "items": [
+          "Active accounts: Data retained while account is active",
+          "Deleted accounts: Data retained for 60 days then permanently deleted",
+          "Exception: Legal requirements may require longer retention",
+          "Transaction records kept for 7 years for legal/tax purposes"
+        ]
+      },
       "dataRetention": {
         "title": "Data Retention",
         "content": "Active accounts: Data retained while account is active. Deleted accounts: Data retained for 60 days then permanently deleted. Exception: Legal requirements may require longer retention. Transaction records kept for 7 years for legal/tax purposes."
       },
       "cookies": {
+        "number": "10.",
         "title": "Cookies and Tracking",
-        "description": "We use cookies and similar tracking technologies. Types of cookies we use:",
+        "content": "We use cookies and similar tracking technologies. Types of cookies we use:",
         "typesLabel": "Types of cookies we use:",
-        "items": "Essential cookies (required for website functionality)|Analytics cookies (Google Analytics for usage tracking)|Preference cookies (language, settings)|Marketing cookies (optional, can be disabled)",
-        "footer": "Users can manage cookie preferences in browser settings."
+        "items": [
+          "Essential cookies (required for website functionality)",
+          "Analytics cookies (Google Analytics for usage tracking)",
+          "Preference cookies (language, settings)",
+          "Marketing cookies (optional, can be disabled)"
+        ],
+        "note": "Users can manage cookie preferences in browser settings."
+      },
+      "children": {
+        "number": "11.",
+        "title": "Children's Privacy",
+        "content": "Our service is not intended for users under 18 years old. We do not knowingly collect data from minors. If discovered, we will delete such data immediately."
       },
       "childrensPrivacy": {
         "title": "Children's Privacy",
         "content": "Our service is not intended for users under 18 years old. We do not knowingly collect data from minors. If discovered, we will delete such data immediately."
       },
+      "changes": {
+        "number": "12.",
+        "title": "Changes to Privacy Policy",
+        "content": "We may update this policy periodically. The \"Last updated\" date is shown at the top. Users notified of major changes via email. Continued use implies acceptance of changes."
+      },
       "changesToPolicy": {
         "title": "Changes to Privacy Policy",
         "content": "We may update this policy periodically. The \"Last updated\" date is shown at the top. Users notified of major changes via email. Continued use implies acceptance of changes."
+      },
+      "transfers": {
+        "number": "13.",
+        "title": "International Data Transfers",
+        "content": "Data primarily stored and processed in Iraq. Third-party services may process data outside Iraq. We ensure appropriate safeguards for data protection."
       },
       "internationalTransfers": {
         "title": "International Data Transfers",
         "content": "Data primarily stored and processed in Iraq. Third-party services may process data outside Iraq. We ensure appropriate safeguards for data protection."
       },
+      "compliance": {
+        "number": "14.",
+        "title": "Iraqi Law Compliance",
+        "content": "This policy complies with applicable Iraqi laws and regulations. Users have rights under Iraqi consumer protection laws."
+      },
       "iraqiLaw": {
         "title": "Iraqi Law Compliance",
         "content": "This policy complies with applicable Iraqi laws and regulations. Users have rights under Iraqi consumer protection laws."
+      },
+      "faq": {
+        "number": "15.",
+        "title": "Frequently Asked Questions",
+        "questions": [
+          { "question": "How is my personal data protected?", "answer": "We use industry-standard encryption for data transmission, secure servers and databases, regular security audits, and limit employee access to personal data. However, no online system is 100% secure." },
+          { "question": "Can I delete my account and all my data?", "answer": "Yes, you can delete your account by contacting support at carwise15@gmail.com. Your data will be deleted within 60 days, except where legal requirements require longer retention." },
+          { "question": "Who can see my phone number in car listings?", "answer": "Your phone number is visible to all users when you create a car listing. This allows potential buyers to contact you directly about your vehicle." },
+          { "question": "Do you share my information with other companies?", "answer": "We do NOT sell your personal information. We only share information with third-party service providers (Google Maps, payment gateways, cloud storage) necessary to operate our platform, and as required by Iraqi law." },
+          { "question": "How do you use my location data?", "answer": "We use location data to show nearby cars, improve search results, and provide location-based services. You can disable location services in your device settings, though this may limit some platform functionality." },
+          { "question": "Can I opt-out of marketing emails?", "answer": "Yes, you can opt-out of marketing emails via your profile settings or by clicking the unsubscribe link in any marketing email we send you." },
+          { "question": "How long do you keep my data after I delete my account?", "answer": "After account deletion, we retain your data for 60 days (grace period), then permanently delete it. Exception: Transaction records are kept for 7 years for legal/tax purposes." },
+          { "question": "What happens to my car listing photos?", "answer": "Your car listing photos are stored securely on our cloud servers, used for your listings and anonymized AI training. When you delete your account, all photos are permanently deleted within 60 days." },
+          { "question": "Do you use my data to train AI?", "answer": "Yes, we use anonymized data to train our AI pricing models and improve platform features. Personal identifiers are removed before data is used for AI training." },
+          { "question": "How do I exercise my privacy rights?", "answer": "You can exercise your privacy rights by accessing your profile settings or contacting us directly at carwise15@gmail.com. We will respond to your request within 30 days." }
+        ]
+      },
+      "contact": {
+        "number": "16.",
+        "title": "Contact Us",
+        "content": "If you have any questions about this Privacy Policy or want to exercise your privacy rights, please contact us:",
+        "phone": "Phone",
+        "phoneNumber": "0777 447 2106",
+        "email": "Email",
+        "emailAddress": "carwise15@gmail.com"
       },
       "contactUs": {
         "title": "Contact Us",
