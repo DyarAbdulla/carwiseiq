@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { MessageCircle, X, Send, Bot } from 'lucide-react';
+import { vazirmatn, inter } from '@/lib/fonts';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -35,12 +36,12 @@ export default function ChatBot() {
       hint: 'دەربارەی نرخی ئۆتۆمبێل، تایبەتمەندییەکان، یان چۆنیەتی بەکارهێنانی CarWiseIQ بپرسە',
       placeholder: 'پەیامەکەت بنووسە...',
       error: 'ببورە، هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵ بدەوە.',
-      thinking: 'بیرکردنەوە...'
+      thinking: 'بیردەکەمەوە...'
     },
     ar: {
       title: 'مساعد CarWiseIQ',
-      subtitle: 'اسألني أي شيء وسأجيبك!',
-      welcome: 'مرحباً! 👋 كيف يمكنني مساعدتك اليوم؟',
+      subtitle: 'اسألني وسأجيبك!',
+      welcome: 'مرحباً! 👋 كيف يمكنني مساعدتك؟',
       hint: 'اسأل عن أسعار السيارات أو الميزات أو كيفية استخدام CarWiseIQ',
       placeholder: 'اكتب رسالتك...',
       error: 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.',
@@ -50,6 +51,7 @@ export default function ChatBot() {
 
   const t = translations[locale as keyof typeof translations] || translations.en;
   const isRTL = locale === 'ku' || locale === 'ar';
+  const fontClass = isRTL ? vazirmatn.className : inter.className;
 
   const colors = {
     bg: isDark ? 'bg-gray-900' : 'bg-white',
@@ -65,7 +67,7 @@ export default function ChatBot() {
     const checkTheme = () => {
       const isDarkMode =
         document.documentElement.classList.contains('dark') ||
-        window.matchMedia('(prefers-color-scheme: dark)').matches;
+        (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
       setIsDark(isDarkMode);
     };
     checkTheme();
@@ -163,10 +165,10 @@ export default function ChatBot() {
         </button>
       )}
 
-      {/* Chat Modal - Full screen on mobile, floating widget on desktop */}
+      {/* Chat Modal - Full screen on mobile, floating widget on desktop; Vazirmatn for RTL */}
       {isOpen && (
         <div
-          className={`fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:left-auto z-50 flex flex-col overflow-hidden
+          className={`${fontClass} fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:left-auto z-50 flex flex-col overflow-hidden
             sm:w-[400px] sm:max-h-[600px] sm:h-[600px]
             w-full h-full sm:rounded-3xl sm:rounded-b-2xl
             ${colors.bg} border-0 sm:border ${colors.border} ${colors.shadow}
