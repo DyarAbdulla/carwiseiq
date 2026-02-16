@@ -137,6 +137,8 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail="Chat service not available")
 
     try:
+        import anthropic
+
         client = Anthropic(api_key=api_key)
 
         response = client.messages.create(
@@ -160,9 +162,24 @@ async def chat(request: ChatRequest):
         )
 
         return {"response": response_text}
+    except anthropic.APIConnectionError:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service temporarily unavailable",
+        )
+    except anthropic.RateLimitError:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many requests, please wait",
+        )
+    except anthropic.APIStatusError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"AI service error: {str(e)}",
+        )
     except Exception as e:
         logger.error("Chat API error: %s", e, exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail="Failed to get response",
+            detail="Chat service error",
         )

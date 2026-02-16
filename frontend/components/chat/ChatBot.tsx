@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useLocale } from 'next-intl';
-import { MessageCircle, X, Send, Loader2, Bot } from 'lucide-react';
+import { MessageCircle, X, Send, Bot } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -59,29 +59,65 @@ export default function ChatBot() {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
-    const chatUrl = `${apiBase.replace(/\/$/, '')}/api/chat`;
-    try {
-      const response = await fetch(chatUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...messages, { role: 'user', content: userMessage }],
-          locale
-        })
-      });
+    const maxRetries = 3;
+    let lastError: unknown = null;
 
-      const data = await response.json();
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-      if (!response.ok) throw new Error(data.error || data.detail || t.error);
-      const reply = data.response || data.detail || t.error;
+        const base = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+        const chatUrl = base ? `${base}/api/chat` : '/api/chat';
+        const response = await fetch(chatUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              messages: [...messages, { role: 'user', content: userMessage }],
+              locale
+            }),
+            signal: controller.signal
+          }
+        );
 
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-    } catch (error) {
-      setMessages(prev => [...prev, { role: 'assistant', content: t.error }]);
-    } finally {
-      setIsLoading(false);
+        clearTimeout(timeout);
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data.detail || data.error || `HTTP ${response.status}`);
+        }
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+        setIsLoading(false);
+        return;
+      } catch (error) {
+        lastError = error;
+        console.error(`Chat attempt ${attempt} failed:`, error);
+
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, attempt * 1000));
+        }
+      }
     }
+
+    setMessages(prev => [
+      ...prev,
+      {
+        role: 'assistant',
+        content:
+          locale === 'ku'
+            ? 'ببورە، نەتوانرا پەیوەندی بکرێت. تکایە دووبارە هەوڵ بدە.'
+            : locale === 'ar'
+              ? 'عذراً، تعذر الاتصال. يرجى المحاولة مرة أخرى.'
+              : 'Sorry, could not connect. Please try again.'
+      }
+    ]);
+    setIsLoading(false);
   };
 
   return (
@@ -181,13 +217,15 @@ export default function ChatBot() {
             ))}
 
             {isLoading && (
-              <div className={`flex ${isRTL ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`p-4 rounded-2xl ${isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'} bg-white/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10`}
-                >
+              <div className="flex justify-start">
+                <div className="p-3 rounded-2xl rounded-tl-sm bg-white/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10">
                   <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-purple-600 dark:text-purple-400" />
-                    <span className="text-slate-500 dark:text-slate-400 text-sm">...</span>
+                    <div className="flex gap-1">
+                      <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <span className="text-slate-500 dark:text-slate-400 text-sm">Thinking...</span>
                   </div>
                 </div>
               </div>
