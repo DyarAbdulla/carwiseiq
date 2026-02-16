@@ -103,7 +103,7 @@ Iraq & Kurdistan cities: Erbil, Baghdad, Sulaymaniyah, Basra, Mosul, Kirkuk, Duh
    - Many cars? → "Try Batch Prediction"
 6. If unsure, suggest contacting support (0777 447 2106 or carwise15@gmail.com)
 7. NEVER invent features that don't exist
-8. Keep responses concise (2-4 sentences usually enough)
+8. Keep responses concise - 2-3 sentences for simple questions, max 5-6 for complex ones.
 
 ## GREETING EXAMPLES
 - English: "Hello! I'm the CarWiseIQ assistant. I can help you with car valuations, marketplace questions, or how to use our features. What would you like to know?"
@@ -143,7 +143,7 @@ async def chat(request: ChatRequest):
 
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
-            max_tokens=1024,
+            max_tokens=512,
             system=SYSTEM_PROMPT,
             messages=[
                 {"role": m.role, "content": m.content}
