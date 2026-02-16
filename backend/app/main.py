@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import re
 from fastapi.responses import JSONResponse, Response
 from fastapi import FastAPI, Request
-from app.api.routes import health, predict, cars, budget, stats, auth, options, images, model_info, feedback, admin, marketplace, messaging, favorites, ai, dataset, export, services, providers
+from app.api.routes import health, predict, cars, budget, stats, auth, options, images, model_info, feedback, admin, marketplace, messaging, favorites, ai, chat, dataset, export, services, providers
 from app.config import settings
 import os
 from pathlib import Path
@@ -104,6 +104,7 @@ app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(marketplace.router,
                    prefix="/api/marketplace", tags=["Marketplace"])
 app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
+app.include_router(chat.router, prefix="/api", tags=["Chat"])
 app.include_router(
     messaging.router, prefix="/api/messaging", tags=["Messaging"])
 app.include_router(

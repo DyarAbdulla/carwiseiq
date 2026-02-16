@@ -1,11 +1,20 @@
-import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+"""
+Chat API: CarWiseIQ AI assistant powered by Claude.
+POST /api/chat: { messages, locale } -> { response }
+"""
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import logging
+import os
+from typing import List
 
-const SYSTEM_PROMPT = `You are the official AI assistant for CarWiseIQ. You help users with car valuations, marketplace questions, and general car buying/selling advice for Iraq and Kurdistan.
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+SYSTEM_PROMPT = """You are the official AI assistant for CarWiseIQ. You help users with car valuations, marketplace questions, and general car buying/selling advice for Iraq and Kurdistan.
 
 ## ABOUT CARWISEIQ
 - AI-powered car valuation and marketplace platform for Iraq & Kurdistan
@@ -99,33 +108,61 @@ Iraq & Kurdistan cities: Erbil, Baghdad, Sulaymaniyah, Basra, Mosul, Kirkuk, Duh
 ## GREETING EXAMPLES
 - English: "Hello! I'm the CarWiseIQ assistant. I can help you with car valuations, marketplace questions, or how to use our features. What would you like to know?"
 - Kurdish: "سڵاو! من یاریدەدەری CarWiseIQ م. دەتوانم یارمەتیت بدەم لە نرخاندنی ئۆتۆمبێل، پرسیارەکانی بازاڕ، یان چۆنیەتی بەکارهێنانی تایبەتمەندییەکانمان. چی دەتەوێت بزانیت؟"
-- Arabic: "مرحباً! أنا مساعد CarWiseIQ. يمكنني مساعدتك في تقييم السيارات أو أسئلة السوق أو كيفية استخدام ميزاتنا. ماذا تريد أن تعرف؟"`;
+- Arabic: "مرحباً! أنا مساعد CarWiseIQ. يمكنني مساعدتك في تقييم السيارات أو أسئلة السوق أو كيفية استخدام ميزاتنا. ماذا تريد أن تعرف؟"
+"""
 
-export async function POST(request: Request) {
-  try {
-    const { messages, locale } = await request.json();
 
-    const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT,
-      messages: messages.map((msg: { role: string; content: string }) => ({
-        role: msg.role,
-        content: msg.content
-      }))
-    });
+class ChatMessage(BaseModel):
+    role: str
+    content: str
 
-    const textContent = response.content.find(block => block.type === 'text');
-    const responseText = textContent && 'text' in textContent
-      ? textContent.text
-      : 'Sorry, I could not generate a response.';
 
-    return NextResponse.json({ response: responseText });
-  } catch (error) {
-    console.error('Chat API Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to get response' },
-      { status: 500 }
-    );
-  }
-}
+class ChatRequest(BaseModel):
+    messages: List[ChatMessage]
+    locale: str = "en"
+
+
+@router.post("/chat")
+async def chat(request: ChatRequest):
+    """Handle chat messages via Anthropic Claude API."""
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        logger.error("ANTHROPIC_API_KEY not set")
+        raise HTTPException(status_code=500, detail="Chat service not configured")
+
+    try:
+        from anthropic import Anthropic
+    except ImportError:
+        logger.error("anthropic package not installed")
+        raise HTTPException(status_code=500, detail="Chat service not available")
+
+    try:
+        client = Anthropic(api_key=api_key)
+
+        response = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1024,
+            system=SYSTEM_PROMPT,
+            messages=[
+                {"role": m.role, "content": m.content}
+                for m in request.messages
+            ],
+        )
+
+        text_content = next(
+            (b for b in response.content if getattr(b, "type", None) == "text"),
+            None,
+        )
+        response_text = (
+            getattr(text_content, "text", None)
+            if text_content
+            else "Sorry, I could not generate a response."
+        )
+
+        return {"response": response_text}
+    except Exception as e:
+        logger.error("Chat API error: %s", e, exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to get response",
+        )

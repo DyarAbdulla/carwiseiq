@@ -59,8 +59,10 @@ export default function ChatBot() {
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+    const chatUrl = `${apiBase.replace(/\/$/, '')}/api/chat`;
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch(chatUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -71,9 +73,10 @@ export default function ChatBot() {
 
       const data = await response.json();
 
-      if (data.error) throw new Error(data.error);
+      if (!response.ok) throw new Error(data.error || data.detail || t.error);
+      const reply = data.response || data.detail || t.error;
 
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } catch (error) {
       setMessages(prev => [...prev, { role: 'assistant', content: t.error }]);
     } finally {

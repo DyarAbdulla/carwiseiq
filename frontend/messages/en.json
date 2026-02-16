@@ -1474,6 +1474,15 @@
         "title": "Entire Agreement",
         "content": "These Terms of Service constitute the entire agreement between you and CarWiseIQ regarding use of the platform."
       },
+      "contact": {
+        "number": "20",
+        "title": "Contact Us",
+        "content": "If you have any questions about these Terms of Service, need to report a violation, or require support, please contact us:",
+        "phone": "Phone",
+        "phoneNumber": "0777 447 2106",
+        "email": "Email",
+        "emailAddress": "carwise15@gmail.com"
+      },
       "contactUs": {
         "title": "Contact Us",
         "description": "If you have any questions about these Terms of Service, need to report a violation, or require support, please contact us:",
