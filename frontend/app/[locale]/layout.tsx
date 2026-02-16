@@ -31,6 +31,10 @@ const CookieConsent = dynamic(
   () => import('@/components/common/CookieConsent').then((m) => ({ default: m.CookieConsent })),
   { ssr: false, loading: () => null }
 );
+const ChatBot = dynamic(
+  () => import('@/components/chat/ChatBot').then((m) => ({ default: m.default })),
+  { ssr: false, loading: () => null }
+);
 
 export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'ar' }, { locale: 'ku' }]
@@ -109,6 +113,7 @@ export default async function LocaleLayout({
                   </ErrorBoundary>
                 </div>
                 <CookieConsent />
+                <ChatBot />
               </PredictLoadingProvider>
             </ToastProvider>
           </ThemeProvider>
