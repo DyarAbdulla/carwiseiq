@@ -90,47 +90,74 @@ export default function ChatBot() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-24 right-6 z-50 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-110 animate-pulse hover:animate-none"
+          className="fixed bottom-24 right-6 z-50 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white p-4 rounded-full shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 animate-pulse hover:animate-none"
           aria-label="Open chat"
         >
           <MessageCircle className="w-6 h-6" />
         </button>
       )}
 
-      {/* Chat Modal */}
+      {/* Chat Modal - Full screen on mobile, floating widget on desktop */}
       {isOpen && (
         <div
-          className={`fixed bottom-6 ${isRTL ? 'left-6' : 'right-6'} z-50 w-[90vw] max-w-[400px] h-[550px] bg-gray-900 rounded-2xl shadow-2xl border border-gray-700/50 flex flex-col overflow-hidden`}
+          className={`fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:left-auto z-50 flex flex-col overflow-hidden
+            sm:w-[400px] sm:max-h-[600px] sm:h-[600px]
+            w-full h-full sm:rounded-3xl sm:rounded-b-2xl
+            bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl
+            border-0 sm:border border-black/5 dark:border-white/10
+            shadow-2xl
+            pt-[env(safe-area-inset-top)] sm:pt-0 pb-[env(safe-area-inset-bottom)] sm:pb-0
+            ${isRTL ? 'sm:right-auto sm:left-6' : ''}`}
           dir={isRTL ? 'rtl' : 'ltr'}
         >
+          {/* Ambient glow behind chatbot (desktop only) */}
+          <div
+            className="hidden sm:block absolute -z-10 -inset-4 rounded-3xl opacity-60 pointer-events-none overflow-hidden"
+            aria-hidden
+          >
+            <div
+              className="absolute inset-0 rounded-3xl blur-3xl"
+              style={{
+                background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.25) 0%, rgba(99, 102, 241, 0.1) 40%, transparent 70%)'
+              }}
+            />
+          </div>
+
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 to-purple-700 p-4 flex items-center justify-between">
+          <div
+            className={`flex-shrink-0 p-4 flex items-center justify-between border-b border-black/5 dark:border-white/10 ${
+              isRTL ? 'flex-row-reverse' : ''
+            }`}
+          >
             <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-full bg-purple-500/20 dark:bg-white/10 flex items-center justify-center border border-purple-400/20 dark:border-white/10">
+                <Bot className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div className={isRTL ? 'text-right' : 'text-left'}>
-                <h3 className="text-white font-semibold">{t.title}</h3>
-                <p className="text-white/70 text-sm">{t.subtitle}</p>
+                <h3 className="font-semibold bg-gradient-to-r from-purple-500 to-indigo-500 dark:from-purple-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                  {t.title}
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">{t.subtitle}</p>
               </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-white/70 hover:text-white transition-colors"
+              className="p-2 rounded-full text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+              aria-label="Close chat"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-700">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-400/30 dark:scrollbar-thumb-white/20 min-h-0">
             {messages.length === 0 && (
-              <div className={`text-center text-gray-400 mt-8 ${isRTL ? 'text-right' : ''}`}>
-                <div className="w-16 h-16 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Bot className="w-8 h-8 text-purple-400" />
+              <div className={`text-center mt-8 ${isRTL ? 'text-right' : ''}`}>
+                <div className="w-16 h-16 rounded-full bg-purple-500/20 dark:bg-purple-600/20 flex items-center justify-center mx-auto mb-4 border border-purple-400/20 dark:border-purple-500/30">
+                  <Bot className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                 </div>
-                <p className="text-lg">{t.welcome}</p>
-                <p className="text-sm mt-2 text-gray-500">{t.hint}</p>
+                <p className="text-lg text-slate-700 dark:text-slate-200">{t.welcome}</p>
+                <p className="text-sm mt-2 text-slate-500 dark:text-slate-400">{t.hint}</p>
               </div>
             )}
 
@@ -140,10 +167,12 @@ export default function ChatBot() {
                 className={`flex ${msg.role === 'user' ? (isRTL ? 'justify-start' : 'justify-end') : (isRTL ? 'justify-end' : 'justify-start')}`}
               >
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl ${
+                  className={`max-w-[85%] p-4 leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-800 text-gray-100 border border-gray-700/50'
+                      ? 'bg-gradient-to-r from-purple-600/80 to-indigo-600/80 dark:from-purple-600/90 dark:to-indigo-600/90 backdrop-blur-md text-white ' +
+                        (isRTL ? 'rounded-2xl rounded-tl-sm' : 'rounded-2xl rounded-tr-sm')
+                      : 'bg-white/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-slate-700 dark:text-slate-200 ' +
+                        (isRTL ? 'rounded-2xl rounded-tr-sm' : 'rounded-2xl rounded-tl-sm')
                   }`}
                 >
                   <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
@@ -153,10 +182,12 @@ export default function ChatBot() {
 
             {isLoading && (
               <div className={`flex ${isRTL ? 'justify-end' : 'justify-start'}`}>
-                <div className="bg-gray-800 p-4 rounded-2xl border border-gray-700/50">
+                <div
+                  className={`p-4 rounded-2xl ${isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'} bg-white/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10`}
+                >
                   <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-purple-400" />
-                    <span className="text-gray-400 text-sm">...</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-purple-600 dark:text-purple-400" />
+                    <span className="text-slate-500 dark:text-slate-400 text-sm">...</span>
                   </div>
                 </div>
               </div>
@@ -165,23 +196,23 @@ export default function ChatBot() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <div className="p-4 border-t border-gray-700/50 bg-gray-800/50">
-            <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          {/* Input Area */}
+          <div className="flex-shrink-0 p-4 bg-slate-100/80 dark:bg-black/20 backdrop-blur-md border-t border-black/5 dark:border-white/10">
+            <div className={`flex gap-2 items-center ${isRTL ? 'flex-row-reverse' : ''}`}>
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
                 placeholder={t.placeholder}
-                className={`flex-1 bg-gray-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/50 placeholder:text-gray-500 border border-gray-700/50 ${isRTL ? 'text-right' : 'text-left'}`}
+                className={`flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 rounded-xl px-4 py-3 focus:outline-none focus:ring-0 border border-slate-300/50 dark:border-white/10 focus:border-purple-400/50 dark:focus:border-purple-400/50 ${isRTL ? 'text-right' : 'text-left'}`}
                 disabled={isLoading}
                 dir={isRTL ? 'rtl' : 'ltr'}
               />
               <button
                 onClick={sendMessage}
                 disabled={isLoading || !input.trim()}
-                className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors"
+                className="flex-shrink-0 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-full transition-all shadow-[0_0_15px_rgba(147,51,234,0.5)] hover:shadow-[0_0_20px_rgba(147,51,234,0.6)]"
               >
                 <Send className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
               </button>
