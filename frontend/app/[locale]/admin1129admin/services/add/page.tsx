@@ -1,13 +1,14 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { apiClient } from '@/lib/api'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, Save } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
@@ -38,6 +39,7 @@ export default function AddServicePage() {
   const router = useRouter()
   const locale = useLocale()
   const { toast } = useToast()
+  const t = useTranslations()
 
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -107,7 +109,7 @@ export default function AddServicePage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create service',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive',
       })
     } finally {

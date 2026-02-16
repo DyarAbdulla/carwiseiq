@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,12 +11,14 @@ import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { LoadingButton } from '@/components/common/LoadingButton'
 import { PasswordStrength } from '@/components/common/PasswordStrength'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
   const locale = useLocale()
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  const t = useTranslations()
 
   const [token, setToken] = useState('')
   const [password, setPassword] = useState('')
@@ -59,7 +61,7 @@ export default function ResetPasswordPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to reset password',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive'
       })
     } finally {

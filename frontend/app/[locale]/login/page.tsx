@@ -12,6 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useToast } from '@/hooks/use-toast'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { LoadingButton } from '@/components/common/LoadingButton'
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
@@ -36,6 +37,7 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const t = useTranslations('auth')
   const tCommon = useTranslations('common')
+  const tRoot = useTranslations()
   const locale = useLocale() || 'en'
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -217,18 +219,13 @@ export default function LoginPage() {
         router.refresh()
       }
     } catch (e: any) {
-      console.error('[Login] Login error:', e)
-      console.error('[Login] Error response:', e.response)
-      
-      let msg = e.message || (t('loginError') || 'Login failed.')
-      const lower = msg?.toLowerCase() ?? ''
-      
-      if (lower.includes('invalid') || lower.includes('incorrect') || lower.includes('credentials')) {
-        msg = "Incorrect email or password. If you're sure they're correct, try Forgot password to reset."
-      } else if (lower.includes('rate limit') || lower.includes('rate limit exceeded')) {
-        msg = 'Too many attempts. Please wait a few minutes before trying again.'
-      }
-      
+      const lower = (e.message || '').toLowerCase()
+      const msg =
+        lower.includes('invalid') || lower.includes('incorrect') || lower.includes('credentials')
+          ? "Incorrect email or password. If you're sure they're correct, try Forgot password to reset."
+          : lower.includes('rate limit') || lower.includes('rate limit exceeded')
+            ? 'Too many attempts. Please wait a few minutes before trying again.'
+            : getUserFacingApiError(e, tRoot)
       toast({ title: tCommon('error'), description: msg, variant: 'destructive' })
     }
   }

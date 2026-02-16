@@ -1,13 +1,14 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { apiClient } from '@/lib/api'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, Save } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
@@ -39,6 +40,7 @@ export default function EditServicePage() {
   const params = useParams()
   const locale = useLocale()
   const { toast } = useToast()
+  const t = useTranslations()
 
   const serviceId = params.id as string
   const [loading, setLoading] = useState(true)
@@ -118,7 +120,7 @@ export default function EditServicePage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to load service',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive',
       })
       router.push(`/${locale}/admin1129admin/services`)
@@ -161,7 +163,7 @@ export default function EditServicePage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update service',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive',
       })
     } finally {

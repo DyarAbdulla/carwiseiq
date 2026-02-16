@@ -3,8 +3,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import type { CarRow, CarInsert } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const locale = useLocale() || 'en'
   const { toast } = useToast()
+  const t = useTranslations()
 
   const [cars, setCars] = useState<CarRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -62,7 +64,7 @@ export default function DashboardPage() {
       .select('*')
       .order('created_at', { ascending: false })
     if (error) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' })
+      toast({ title: 'Error', description: getUserFacingApiError(error, t), variant: 'destructive' })
       return
     }
     setCars((data as CarRow[]) || [])
@@ -113,7 +115,7 @@ export default function DashboardPage() {
       resetForm()
       await fetchCars()
     } catch (e: any) {
-      toast({ title: 'Error', description: e?.message || 'Failed to add car', variant: 'destructive' })
+      toast({ title: 'Error', description: getUserFacingApiError(e, t), variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -142,7 +144,7 @@ export default function DashboardPage() {
       resetForm()
       await fetchCars()
     } catch (e: any) {
-      toast({ title: 'Error', description: e?.message || 'Failed to update', variant: 'destructive' })
+      toast({ title: 'Error', description: getUserFacingApiError(e, t), variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -156,7 +158,7 @@ export default function DashboardPage() {
       toast({ title: 'Success', description: 'Car deleted' })
       await fetchCars()
     } catch (e: any) {
-      toast({ title: 'Error', description: e?.message || 'Failed to delete', variant: 'destructive' })
+      toast({ title: 'Error', description: getUserFacingApiError(e, t), variant: 'destructive' })
     } finally {
       setDeletingId(null)
     }

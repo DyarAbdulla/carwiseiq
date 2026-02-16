@@ -17,6 +17,7 @@ const PredictionResult = dynamic(
   { loading: () => <PredictionResultSkeleton />, ssr: false }
 )
 import { apiClient } from '@/lib/api'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import type { CarFeatures, PredictionResponse } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 import { Image as ImageIcon, Car } from 'lucide-react'
@@ -478,6 +479,7 @@ export default function PredictPage() {
   // Hooks must be called unconditionally
   const t = useTranslations('predict')
   const tCommon = useTranslations('common')
+  const tRoot = useTranslations()
   const toastHook = useToast()
   const toast = toastHook || { toast: () => { } }
 
@@ -775,30 +777,7 @@ export default function PredictPage() {
         }
       }
     } catch (error: unknown) {
-      // Extract error message from API response
-      let errorMessage = 'Failed to predict price'
-
-      if (axios.isAxiosError(error)) {
-        // Handle Axios errors (API errors)
-        const detail = error.response?.data?.detail
-        if (Array.isArray(detail)) {
-          // Pydantic validation errors
-          errorMessage = detail.map((err: any) => {
-            const field = err.loc?.join('.') || 'field'
-            const msg = err.msg || 'Invalid value'
-            return `${field}: ${msg}`
-          }).join(', ')
-        } else if (typeof detail === 'string') {
-          errorMessage = detail
-        } else if (error.response?.data?.message) {
-          errorMessage = error.response.data.message
-        } else if (error.message) {
-          errorMessage = error.message
-        }
-      } else if (error instanceof Error) {
-        errorMessage = error.message
-      }
-
+      const errorMessage = getUserFacingApiError(error, tRoot)
       if (toast?.toast) {
         toast.toast({
           title: tCommon?.('error') || 'Error',

@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { supabase } from '@/lib/supabase'
 import { useAuthSession } from '@/lib/useAuthSession'
 import { activityHelpers } from '@/lib/activityLogger'
@@ -120,6 +121,7 @@ function MyListingsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  const t = useTranslations()
 
   // Use deterministic auth session hook
   const { user: currentUser, sessionLoaded } = useAuthSession()
@@ -217,7 +219,7 @@ function MyListingsContent() {
         console.error('[MyListings] [FETCH_LISTINGS] Error:', e.response?.status, e.message)
       }
 
-      const errorMsg = e.response?.data?.detail || e.message || 'Failed to load listings'
+      const errorMsg = getUserFacingApiError(e, t)
       setError(errorMsg)
       setListings([])
 
@@ -276,7 +278,7 @@ function MyListingsContent() {
     const timeout = setTimeout(() => {
       setLoading((prev) => {
         if (prev) {
-          setError('Request timed out')
+          setError(t('errors.timeout'))
           return false
         }
         return prev

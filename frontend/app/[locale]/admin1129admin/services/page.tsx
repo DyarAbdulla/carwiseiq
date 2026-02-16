@@ -1,11 +1,12 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { useToast } from '@/hooks/use-toast'
 import { Search, Plus, Edit, Trash2, Eye, EyeOff, Filter, MapPin } from 'lucide-react'
 import {
@@ -36,6 +37,7 @@ export default function ServicesManagementPage() {
   const router = useRouter()
   const locale = useLocale()
   const { toast } = useToast()
+  const t = useTranslations()
 
   const [services, setServices] = useState<any[]>([])
   const [total, setTotal] = useState(0)
@@ -69,10 +71,9 @@ export default function ServicesManagementPage() {
       setServices(data.services || [])
       setTotal(data.pagination?.total || 0)
     } catch (error: any) {
-      console.error('Error loading services:', error)
       toast({
         title: 'Error',
-        description: error.message || 'Failed to load services',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive',
       })
     } finally {
@@ -93,7 +94,7 @@ export default function ServicesManagementPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete service',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive',
       })
     }
@@ -111,7 +112,7 @@ export default function ServicesManagementPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update service status',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive',
       })
     }
@@ -131,7 +132,7 @@ export default function ServicesManagementPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete services',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive',
       })
     }

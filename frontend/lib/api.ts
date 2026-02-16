@@ -572,6 +572,42 @@ const handleError = (error: unknown): string => {
   return error instanceof Error ? error.message : 'An unknown error occurred'
 }
 
+/**
+ * Returns a translation key for user-facing error messages.
+ * Use with t(key) so users see friendly messages instead of raw API/network errors.
+ * Returns null for validation/4xx errors where the backend message is safe to show.
+ */
+export function getApiErrorTranslationKey(error: unknown): string | null {
+  if (axios.isAxiosError(error)) {
+    const e = error as AxiosError<{ detail?: string }>
+    const status = e.response?.status
+    const msg = (e.message || '').toLowerCase()
+    const code = (e as any).code
+
+    if (code === 'ECONNREFUSED' || code === 'ERR_NETWORK' || msg.includes('network error')) {
+      return 'errors.connectionError'
+    }
+    if (status === 408 || code === 'ECONNABORTED' || msg.includes('timeout')) {
+      return 'errors.timeout'
+    }
+    if (status != null && status >= 500) {
+      return 'errors.connectionError'
+    }
+    if (status === 404 || status === 400 || status === 422) {
+      return null
+    }
+    return 'errors.generic'
+  }
+  if (error instanceof Error) {
+    const m = error.message.toLowerCase()
+    if (m.includes('network') || m.includes('connection') || m.includes('fetch') || m.includes('failed to fetch')) {
+      return 'errors.connectionError'
+    }
+    if (m.includes('timeout')) return 'errors.timeout'
+  }
+  return 'errors.generic'
+}
+
 // API Functions
 export const apiClient = {
   // Health check

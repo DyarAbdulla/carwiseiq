@@ -52,6 +52,11 @@
     "errorMessage": "An unexpected error occurred",
     "tryAgain": "Try again"
   },
+  "errors": {
+    "connectionError": "Unable to connect to server. Please check your internet and try again.",
+    "timeout": "The request took too long. Please try again.",
+    "generic": "Something went wrong. Please try again."
+  },
   "footer": {
     "brand": "CarWiseIQ",
     "description": "AI-powered car price prediction with advanced machine learning",

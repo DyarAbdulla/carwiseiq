@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +12,7 @@ import { Search, Edit2, Trash2, Play, Bell, BellOff } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/hooks/use-toast'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ export default function SavedSearchesPage() {
   const locale = useLocale()
   const { isAuthenticated, loading: authLoading } = useAuth()
   const { toast } = useToast()
+  const t = useTranslations()
 
   const [searches, setSearches] = useState<SavedSearch[]>([])
   const [loading, setLoading] = useState(true)
@@ -64,7 +66,7 @@ export default function SavedSearchesPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to load saved searches',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive'
       })
     } finally {
@@ -82,7 +84,7 @@ export default function SavedSearchesPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete search',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive'
       })
     }
@@ -112,7 +114,7 @@ export default function SavedSearchesPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update search',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive'
       })
     }

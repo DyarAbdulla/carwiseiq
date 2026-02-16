@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,12 +22,14 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { Plus, Edit, Trash2, Search, Building2 } from 'lucide-react'
 
 export default function ProvidersManagementPage() {
   const router = useRouter()
   const locale = useLocale()
   const { toast } = useToast()
+  const t = useTranslations()
 
   const [providers, setProviders] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
@@ -61,7 +63,7 @@ export default function ProvidersManagementPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to load data',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive',
       })
     } finally {
@@ -82,7 +84,7 @@ export default function ProvidersManagementPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to load providers',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive',
       })
     }
@@ -101,7 +103,7 @@ export default function ProvidersManagementPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete provider',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive',
       })
     }

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { PasswordStrength } from '@/components/common/PasswordStrength'
 import { LoadingButton } from '@/components/common/LoadingButton'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -48,6 +49,7 @@ const SELL_REASON_MESSAGE = 'Create account to sell your car'
 export default function RegisterPage() {
   const t = useTranslations('auth')
   const tCommon = useTranslations('common')
+  const tRoot = useTranslations()
   const locale = useLocale() || 'en'
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -84,12 +86,11 @@ export default function RegisterPage() {
         options: { redirectTo },
       })
       if (error) {
-        toast({ title: tCommon('error'), description: error.message, variant: 'destructive' })
+        toast({ title: tCommon('error'), description: getUserFacingApiError(error, tRoot), variant: 'destructive' })
         return
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : 'Google sign-up failed.'
-      toast({ title: tCommon('error'), description: msg, variant: 'destructive' })
+      toast({ title: tCommon('error'), description: getUserFacingApiError(e, tRoot), variant: 'destructive' })
     } finally {
       setIsGoogleLoading(false)
     }
@@ -130,8 +131,7 @@ export default function RegisterPage() {
       router.push(returnUrl)
       router.refresh()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : (t('registerError') || 'Registration failed')
-      toast({ title: tCommon('error'), description: msg, variant: 'destructive' })
+      toast({ title: tCommon('error'), description: getUserFacingApiError(e, tRoot), variant: 'destructive' })
     }
   }
 

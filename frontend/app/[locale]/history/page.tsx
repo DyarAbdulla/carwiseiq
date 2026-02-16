@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast'
 import { motion } from 'framer-motion'
 import type { ActivityType } from '@/lib/activityLogger'
 import { getLocalActivities } from '@/lib/activityLogger'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 
 interface ActivityLog {
   id: string
@@ -54,6 +55,7 @@ export default function ActivityHistoryPage() {
   const t = useTranslations('feedback.history')
   const tCommon = useTranslations('common')
   const tAuth = useTranslations('auth')
+  const tRoot = useTranslations()
   const locale = useLocale()
   const router = useRouter()
   const { toast } = useToast()
@@ -121,10 +123,9 @@ export default function ActivityHistoryPage() {
         // Non-critical
       }
     } catch (error: unknown) {
-      console.error('Error loading history:', error)
       toast({
         title: tCommon?.('error') || 'Error',
-        description: error instanceof Error ? error.message : 'Failed to load activity history',
+        description: getUserFacingApiError(error, tRoot),
         variant: 'destructive',
       })
     } finally {

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { apiClient } from '@/lib/api'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { useToast } from '@/hooks/use-toast'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -67,6 +68,7 @@ export default function ServicesPage() {
   const t = useTranslations('home')
   const tCommon = useTranslations('common')
   const tListing = useTranslations('listing')
+  const tRoot = useTranslations()
   const locale = useLocale()
   const { toast } = useToast()
   const [showComingSoon, setShowComingSoon] = useState(true)
@@ -118,10 +120,9 @@ export default function ServicesPage() {
         setLocations([])
       }
     } catch (error: any) {
-      console.error('❌ [ServicesPage] Error loading services:', error)
       toast({
         title: tCommon('error'),
-        description: error.message || t('services.failedLoadServices'),
+        description: getUserFacingApiError(error, tRoot),
         variant: 'destructive',
       })
       setServices([])

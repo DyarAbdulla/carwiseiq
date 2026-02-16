@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { LoadingButton } from '@/components/common/LoadingButton'
 import { PasswordStrength } from '@/components/common/PasswordStrength'
 import { GoogleIcon } from '@/components/GoogleIcon'
@@ -75,6 +76,7 @@ export function AuthModal({ open, onOpenChange, returnUrl, defaultTab = 'signin'
 
   const t = useTranslations('auth')
   const tCommon = useTranslations('common')
+  const tRoot = useTranslations()
   const locale = useLocale() || 'en'
   const router = useRouter()
   const { toast } = useToast()
@@ -114,12 +116,11 @@ export function AuthModal({ open, onOpenChange, returnUrl, defaultTab = 'signin'
         options: { redirectTo },
       })
       if (error) {
-        toast({ title: tCommon('error'), description: error.message, variant: 'destructive' })
+        toast({ title: tCommon('error'), description: getUserFacingApiError(error, tRoot), variant: 'destructive' })
         return
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : (isRegister ? 'Google sign-up failed.' : 'Google sign-in failed.')
-      toast({ title: tCommon('error'), description: msg, variant: 'destructive' })
+      toast({ title: tCommon('error'), description: getUserFacingApiError(e, tRoot), variant: 'destructive' })
     } finally {
       setIsGoogleLoading(false)
     }
@@ -177,8 +178,7 @@ export function AuthModal({ open, onOpenChange, returnUrl, defaultTab = 'signin'
         router.refresh()
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : (t('loginError') || 'Login failed.')
-      toast({ title: tCommon('error'), description: msg, variant: 'destructive' })
+      toast({ title: tCommon('error'), description: getUserFacingApiError(e, tRoot), variant: 'destructive' })
     }
   }
 
@@ -217,8 +217,7 @@ export function AuthModal({ open, onOpenChange, returnUrl, defaultTab = 'signin'
       router.push(`/${locale}`)
       router.refresh()
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : (t('registerError') || 'Registration failed')
-      toast({ title: tCommon('error'), description: msg, variant: 'destructive' })
+      toast({ title: tCommon('error'), description: getUserFacingApiError(e, tRoot), variant: 'destructive' })
     }
   }
 

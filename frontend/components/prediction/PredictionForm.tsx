@@ -13,6 +13,7 @@ import { Slider } from '@/components/ui/slider'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { apiClient } from '@/lib/api'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { SAMPLE_CAR, YEAR_RANGE, MILEAGE_RANGE, CONDITIONS, FUEL_TYPES } from '@/lib/constants'
 import type { CarFeatures } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
@@ -84,6 +85,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
   }, [formId, onSubmit])
 
   const t = useTranslations('predict.form')
+  const tRoot = useTranslations()
   const toastHook = useToast()
   const { toast } = toastHook || { toast: () => { } }
   const [currentStep, setCurrentStep] = useState(1)
@@ -1281,10 +1283,9 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
       // Call the parent's onSubmit callback - signature: onSubmit(values)
       await onSubmit(cleanedData)
     } catch (error) {
-      console.error('❌ [PredictionForm] Error calling onSubmit:', { formId, error, errorStack: error instanceof Error ? error.stack : undefined })
       toast({
         title: "Submission Error",
-        description: error instanceof Error ? error.message : 'Failed to submit form',
+        description: getUserFacingApiError(error, tRoot),
         variant: "destructive",
       })
     }

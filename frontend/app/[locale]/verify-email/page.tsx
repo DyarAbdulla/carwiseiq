@@ -1,18 +1,20 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Mail, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
+import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 
 export default function VerifyEmailPage() {
   const router = useRouter()
   const locale = useLocale()
   const searchParams = useSearchParams()
   const { toast } = useToast()
+  const t = useTranslations()
 
   const [email, setEmail] = useState('')
   const [verifying, setVerifying] = useState(false)
@@ -47,7 +49,7 @@ export default function VerifyEmailPage() {
     } catch (error: any) {
       toast({
         title: 'Verification failed',
-        description: error.message || 'Invalid or expired verification token',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive'
       })
     } finally {
@@ -75,7 +77,7 @@ export default function VerifyEmailPage() {
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to resend verification email',
+        description: getUserFacingApiError(error, t),
         variant: 'destructive'
       })
     } finally {
