@@ -916,25 +916,16 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
                     <FieldTooltip content={FIELD_TOOLTIPS.location}>
                       <Label htmlFor="location" className="text-white font-medium text-sm drop-shadow-sm">{t('location')}</Label>
                     </FieldTooltip>
-                    <Select
+                    <SearchableSelect
+                      id="location"
                       value={form.watch('location') || ''}
                       onValueChange={(value) => form.setValue('location', value)}
-                    >
-                      <SelectTrigger className="border-white/20 bg-black/30 backdrop-blur-sm h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300">
-                        <SelectValue placeholder="Select location" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px] bg-[#1a1d29] border-[#2a2d3a]">
-                        {locations.length > 0 ? (
-                          (locations || []).map((location) => (
-                            <SelectItem key={location} value={location} className="text-white">
-                              {location}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="p-2 text-center text-[#94a3b8]">No locations available</div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                      options={locations || []}
+                      placeholder="Select location"
+                      searchPlaceholder="Type to search cities..."
+                      emptyMessage="No locations available"
+                      className="border-white/20 bg-black/30 backdrop-blur-sm h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50"
+                    />
                   </div>
                 </div>
               </motion.div>

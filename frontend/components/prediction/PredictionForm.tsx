@@ -1916,41 +1916,24 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
               <FieldTooltip content={FIELD_TOOLTIPS.location}>
                 <Label htmlFor={`${formId || 'form'}-location`}>{t('location')}</Label>
               </FieldTooltip>
-              <Select
+              <SearchableSelect
                 key="location-select"
                 id={`${formId || 'form'}-location`}
                 name="location"
                 value={form.watch('location') || ''}
                 onValueChange={(value) => {
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log('[PredictionForm] Location selected:', value)
-                  }
                   form.setValue('location', value, { shouldValidate: true, shouldDirty: true, shouldTouch: true })
                   form.clearErrors('location')
-                  // Trigger Step 3 validation to update form state
                   if (currentStep === 3) {
                     form.trigger(['condition', 'location'])
                   }
                 }}
+                options={displayLocations || []}
+                placeholder={initialLoading ? "Loading locations..." : "Select location"}
+                searchPlaceholder="Type to search cities..."
+                emptyMessage="No locations available"
                 disabled={initialLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={initialLoading ? "Loading locations..." : "Select location"} />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {initialLoading ? (
-                    <div className="p-2 text-center text-[#94a3b8]">Loading locations...</div>
-                  ) : displayLocations.length > 0 ? (
-                    (displayLocations || []).map((location) => (
-                      <SelectItem key={location} value={location} className="text-white">
-                        {location}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-2 text-center text-[#94a3b8]">No locations available</div>
-                  )}
-                </SelectContent>
-              </Select>
+              />
               {form.formState.errors.location && (
                 <p className="text-sm text-red-400">{form.formState.errors.location.message}</p>
               )}

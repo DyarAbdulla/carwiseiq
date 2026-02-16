@@ -907,28 +907,16 @@ export function PredictionFormWizard({ onSubmit, loading = false, prefillData = 
           <FieldTooltip content={FIELD_TOOLTIPS.location}>
             <Label htmlFor="location">{t('location')}</Label>
           </FieldTooltip>
-          <Select
+          <SearchableSelect
+            id="location"
             value={form.watch('location') || ''}
             onValueChange={(value) => form.setValue('location', value)}
+            options={locations || []}
+            placeholder={initialLoading ? "Loading locations..." : "Select location"}
+            searchPlaceholder="Type to search cities..."
+            emptyMessage="No locations available"
             disabled={initialLoading}
-          >
-            <SelectTrigger className="h-12 md:h-10">
-              <SelectValue placeholder={initialLoading ? "Loading locations..." : "Select location"} />
-            </SelectTrigger>
-            <SelectContent className="max-h-[300px]">
-              {initialLoading ? (
-                <div className="p-2 text-center text-[#94a3b8]">Loading locations...</div>
-              ) : locations.length > 0 ? (
-                (locations || []).map((location) => (
-                  <SelectItem key={location} value={location} className="text-white">
-                    {location}
-                  </SelectItem>
-                ))
-              ) : (
-                <div className="p-2 text-center text-[#94a3b8]">No locations available</div>
-              )}
-            </SelectContent>
-          </Select>
+          />
           {form.formState.errors.location && (
             <p className="text-sm text-red-400">{form.formState.errors.location.message}</p>
           )}
