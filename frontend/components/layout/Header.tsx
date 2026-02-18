@@ -325,18 +325,6 @@ export function Header() {
                   </div>
 
                   <div className="px-3 py-3 space-y-1">
-                    {/* Sell Car - prominent at top of mobile menu (always visible) */}
-                    <SellCarCTA
-                      as="span"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "flex items-center justify-center gap-3 rounded-xl px-4 py-3 min-h-[48px] w-full text-base font-semibold transition-all shadow-lg mx-0 my-2",
-                        "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30"
-                      )}
-                      showIcon
-                    >
-                      <span>{t('nav.sellCar') || t('nav.sell') || 'Sell Car'}</span>
-                    </SellCarCTA>
                     {/* User Profile Summary at Top */}
                     {isAuthenticated && user && (
                       <div className="px-3 py-3 mb-3 backdrop-blur-md bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
