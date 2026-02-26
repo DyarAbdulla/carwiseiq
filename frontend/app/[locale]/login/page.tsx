@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { useForm } from 'react-hook-form'
@@ -29,7 +29,7 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>
 
-export default function LoginPage() {
+function LoginPageContent() {
   const [mounted, setMounted] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [emailNotConfirmedFor, setEmailNotConfirmedFor] = useState<string | null>(null)
@@ -388,5 +388,13 @@ export default function LoginPage() {
         </Card>
       </div>
     </ErrorBoundary>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-[#94a3b8]">Loading…</div>}>
+      <LoginPageContent />
+    </Suspense>
   )
 }

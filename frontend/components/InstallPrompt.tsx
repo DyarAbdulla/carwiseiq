@@ -1,15 +1,22 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 
 const STORAGE_KEY = "carwiseiq-pwa-prompt"
 const VISIT_COUNT_KEY = "carwiseiq-visit-count"
 
-export function InstallPrompt() {
-  const t = useTranslations("pwa")
+// Hardcoded English - component is rendered outside NextIntlClientProvider (root layout)
+const PWA_TEXT = {
+  title: "Add to Home Screen",
+  description: "Install CarWiseIQ for quick access and a better experience.",
+  install: "Install",
+  notNow: "Not now",
+  dismiss: "Dismiss",
+}
+
+export default function InstallPrompt() {
   const [show, setShow] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
 
@@ -58,16 +65,16 @@ export function InstallPrompt() {
       <div className="flex items-start gap-3">
         <div className="flex-1">
           <h3 id="pwa-prompt-title" className="font-semibold text-slate-900 dark:text-white mb-1">
-            {t("title")}
+            {PWA_TEXT.title}
           </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-300">{t("description")}</p>
+          <p className="text-sm text-slate-600 dark:text-slate-300">{PWA_TEXT.description}</p>
           <div className="flex gap-2 mt-3">
             <Button
               size="sm"
               onClick={handleInstall}
               className="min-h-[44px] bg-indigo-600 hover:bg-indigo-500 touch-manipulation"
             >
-              {t("install")}
+              {PWA_TEXT.install}
             </Button>
             <Button
               size="sm"
@@ -75,7 +82,7 @@ export function InstallPrompt() {
               onClick={handleDismiss}
               className="min-h-[44px] touch-manipulation"
             >
-              {t("notNow")}
+              {PWA_TEXT.notNow}
             </Button>
           </div>
         </div>
@@ -83,7 +90,7 @@ export function InstallPrompt() {
           type="button"
           onClick={handleDismiss}
           className="min-h-[44px] min-w-[44px] rounded-full hover:bg-slate-100 dark:hover:bg-white/10 flex items-center justify-center touch-manipulation"
-          aria-label={t("dismiss")}
+          aria-label={PWA_TEXT.dismiss}
         >
           <X className="h-5 w-5" />
         </button>

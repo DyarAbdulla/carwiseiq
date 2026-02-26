@@ -1,3 +1,5 @@
+'use client'
+
 export { SkeletonCard, SkeletonCardCompact } from "./SkeletonCard"
 export { SkeletonText } from "./SkeletonText"
 export { SkeletonForm, SkeletonFormField } from "./SkeletonForm"

@@ -1,12 +1,10 @@
 import type { Metadata, Viewport } from 'next'
-import dynamic from 'next/dynamic'
 import { inter } from '@/lib/fonts'
 import './globals.css'
-
-const PWARegister = dynamic(() => import('@/components/PWARegister'), { ssr: false, loading: () => null })
-const InstallPrompt = dynamic(() => import('@/components/InstallPrompt'), { ssr: false, loading: () => null })
+import ClientOnlyProviders from '@/components/ClientOnlyProviders'
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://carwiseiq.com'),
   title: 'CarWiseIQ - AI Car Valuation for Kurdistan & Iraq',
   description: 'Get accurate AI-powered car price estimates for Iraq and Kurdistan. Compare vehicles, find market values, and buy or sell smarter.',
   manifest: '/manifest.json',
@@ -100,8 +98,7 @@ export default function RootLayout({
             `,
           }}
         />
-        <PWARegister />
-        <InstallPrompt />
+        <ClientOnlyProviders />
         {children}
       </body>
     </html>

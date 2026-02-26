@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
@@ -450,7 +450,7 @@ function CarPreviewImage({
   )
 }
 
-export default function PredictPage() {
+function PredictPageContent() {
   // All hooks must be called before any conditional returns
   const [mounted, setMounted] = useState(false)
   const [prediction, setPrediction] = useState<PredictionResponse | null>(null)
@@ -1144,3 +1144,10 @@ export default function PredictPage() {
   )
 }
 
+export default function PredictPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center"><PredictionResultSkeleton /></div>}>
+      <PredictPageContent />
+    </Suspense>
+  )
+}

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import Link from 'next/link'
@@ -1288,6 +1288,9 @@ function MyListingsContent() {
 }
 
 export default function MyListingsPage() {
-  // Wrapper just renders content - auth is handled deterministically inside MyListingsContent
-  return <MyListingsContent />
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center"><LoadingSpinner /></div>}>
+      <MyListingsContent />
+    </Suspense>
+  )
 }

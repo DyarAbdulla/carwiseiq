@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -9,7 +9,7 @@ import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 
-export default function VerifyEmailPage() {
+function VerifyEmailPageContent() {
   const router = useRouter()
   const locale = useLocale()
   const searchParams = useSearchParams()
@@ -134,5 +134,13 @@ export default function VerifyEmailPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-[#94a3b8]">Loading…</div>}>
+      <VerifyEmailPageContent />
+    </Suspense>
   )
 }

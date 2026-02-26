@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -13,7 +13,7 @@ import { LoadingButton } from '@/components/common/LoadingButton'
 import { PasswordStrength } from '@/components/common/PasswordStrength'
 import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 
-export default function ResetPasswordPage() {
+function ResetPasswordPageContent() {
   const router = useRouter()
   const locale = useLocale()
   const searchParams = useSearchParams()
@@ -160,5 +160,13 @@ export default function ResetPasswordPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-[#94a3b8]">Loading…</div>}>
+      <ResetPasswordPageContent />
+    </Suspense>
   )
 }

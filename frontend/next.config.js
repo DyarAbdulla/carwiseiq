@@ -107,8 +107,8 @@ const nextConfig = {
   },
 
   experimental: {
+    // lucide-react removed - can cause "Unsupported Server Component type: Module" with static export
     optimizePackageImports: [
-      'lucide-react',
       '@radix-ui/react-select',
       '@radix-ui/react-dropdown-menu',
       'recharts',

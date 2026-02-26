@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { supabase } from '@/lib/supabase'
@@ -41,7 +41,7 @@ async function syncSupabaseTokenToRestAPI(supabaseToken: string) {
   }
 }
 
-export default function AuthCallbackPage() {
+function AuthCallbackPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const locale = useLocale() || 'en'
@@ -147,5 +147,13 @@ export default function AuthCallbackPage() {
     <div className="flex min-h-[calc(100vh-200px)] items-center justify-center p-6 bg-[#0f1117]">
       <div className="text-[#94a3b8]">Completing sign in…</div>
     </div>
+  )
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[calc(100vh-200px)] items-center justify-center p-6 bg-[#0f1117]"><div className="text-[#94a3b8]">Loading…</div></div>}>
+      <AuthCallbackPageContent />
+    </Suspense>
   )
 }

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { useForm } from 'react-hook-form'
@@ -46,7 +46,7 @@ type RegisterForm = z.infer<typeof registerSchema>
 
 const SELL_REASON_MESSAGE = 'Create account to sell your car'
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const t = useTranslations('auth')
   const tCommon = useTranslations('common')
   const tRoot = useTranslations()
@@ -325,5 +325,13 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-[#94a3b8]">Loading…</div>}>
+      <RegisterPageContent />
+    </Suspense>
   )
 }

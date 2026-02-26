@@ -1,5 +1,5 @@
 "use client"
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, Suspense } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -55,7 +55,7 @@ interface ListingCard {
   description?: string
 }
 
-export default function ComparePage() {
+function ComparePageContent() {
   const searchParams = useSearchParams()
   const listingIds = searchParams?.get('ids')?.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) || []
   const isMarketplaceComparison = listingIds.length > 0
@@ -1505,5 +1505,13 @@ export default function ComparePage() {
         )}
       </div>
     </motion.div>
+  )
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center"><CompareSkeleton /></div>}>
+      <ComparePageContent />
+    </Suspense>
   )
 }

@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
@@ -36,7 +36,7 @@ function conditionLabel(c: string): string {
   return c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()
 }
 
-export default function BuySellPage() {
+function BuySellPageContent() {
   const searchParams = useSearchParams()
   const carId = searchParams?.get('id') ?? undefined
 
@@ -620,5 +620,13 @@ export default function BuySellPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function BuySellPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center"><ListingCardSkeleton /></div>}>
+      <BuySellPageContent />
+    </Suspense>
   )
 }
