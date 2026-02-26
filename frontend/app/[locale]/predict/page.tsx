@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -488,7 +489,32 @@ export default function PredictPage() {
     setMounted(true)
   }, [])
 
-  // Check for prefill data from budget finder
+  const searchParams = useSearchParams()
+
+  // Prefill from URL params (e.g. from HeroValuationForm or PopularCars)
+  useEffect(() => {
+    const make = searchParams?.get('make')
+    const model = searchParams?.get('model')
+    const year = searchParams?.get('year')
+    const mileage = searchParams?.get('mileage')
+    if (make && model) {
+      setPrefillData({
+        make,
+        model,
+        year: year ? parseInt(year, 10) : new Date().getFullYear(),
+        mileage: mileage ? parseInt(mileage, 10) : 50000,
+        trim: '',
+        engine_size: 2.0,
+        cylinders: 4,
+        condition: 'Good',
+        fuel_type: 'Gasoline',
+        location: '',
+        color: '',
+      })
+    }
+  }, [searchParams])
+
+  // Check for prefill data from budget finder (sessionStorage)
   useEffect(() => {
     if (typeof window !== 'undefined' && window.sessionStorage) {
       try {

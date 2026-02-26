@@ -215,6 +215,28 @@ img[width][height],
   animation: skeleton-shimmer 1.2s ease-in-out infinite;
 }
 
+/* Reusable skeleton shimmer - use on any loading placeholder */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 75%
+  );
+  background-size: 200% 100%;
+}
+
 @keyframes skeleton-shimmer {
 
   0%,
@@ -224,6 +246,13 @@ img[width][height],
 
   50% {
     background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer,
+  .car-card-image-wrap:not(.loaded) {
+    animation: none;
   }
 }
 

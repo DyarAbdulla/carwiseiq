@@ -35,6 +35,10 @@ const ChatBot = dynamic(
   () => import('@/components/chat/ChatBot').then((m) => ({ default: m.default })),
   { ssr: false, loading: () => null }
 );
+const WhatsAppButton = dynamic(
+  () => import('@/components/WhatsAppButton').then((m) => ({ default: m.WhatsAppButton })),
+  { ssr: false, loading: () => null }
+);
 
 export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'ar' }, { locale: 'ku' }]
@@ -114,6 +118,7 @@ export default async function LocaleLayout({
                 </div>
                 <CookieConsent />
                 <ChatBot />
+                <WhatsAppButton />
               </PredictLoadingProvider>
             </ToastProvider>
           </ThemeProvider>

@@ -12,7 +12,7 @@ import type { CarFeatures, PredictionResponse } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatCurrency, formatFuelEconomy } from '@/lib/utils'
 import Image from 'next/image'
-import { ListingCardSkeleton } from '@/components/common/LoadingSkeleton'
+import { CompareSkeleton } from '@/components/skeletons'
 import { getCarSpecs } from '@/lib/carSpecifications'
 import { ComparisonChart } from '@/components/compare/ComparisonChart'
 import { SpecificationTable } from '@/components/compare/SpecificationTable'
@@ -952,11 +952,7 @@ export default function ComparePage() {
         {isMarketplaceComparison && (
           <>
             {loadingListings ? (
-              <div className="space-y-6">
-                <ListingCardSkeleton />
-                <ListingCardSkeleton />
-                <ListingCardSkeleton />
-              </div>
+              <CompareSkeleton />
             ) : listings.length === 0 ? (
               <div className="py-12 text-center">
                 <p className="text-white/70">No listings found for comparison</p>

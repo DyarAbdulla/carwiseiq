@@ -7,9 +7,22 @@ const PWARegister = dynamic(() => import('@/components/PWARegister'), { ssr: fal
 const InstallPrompt = dynamic(() => import('@/components/InstallPrompt'), { ssr: false, loading: () => null })
 
 export const metadata: Metadata = {
-  title: 'CarWiseIQ | AI-Powered Car Valuations',
-  description: 'AI-powered car price prediction with advanced machine learning',
+  title: 'CarWiseIQ - AI Car Valuation for Kurdistan & Iraq',
+  description: 'Get accurate AI-powered car price estimates for Iraq and Kurdistan. Compare vehicles, find market values, and buy or sell smarter.',
   manifest: '/manifest.json',
+  openGraph: {
+    title: 'CarWiseIQ - AI Car Valuation for Kurdistan & Iraq',
+    description: 'Get accurate AI-powered car price estimates for Iraq and Kurdistan.',
+    url: process.env.NEXT_PUBLIC_SITE_URL || 'https://carwiseiq.com',
+    siteName: 'CarWiseIQ',
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CarWiseIQ - AI Car Valuation for Kurdistan & Iraq',
+    description: 'Get accurate AI-powered car price estimates for Iraq and Kurdistan.',
+  },
   applicationName: 'CarWiseIQ',
   appleWebApp: {
     capable: true,

@@ -27,6 +27,13 @@ import {
 } from '@/components/ui/dialog'
 import { apiClient } from '@/lib/api'
 import { listingImageUrl } from '@/lib/utils'
+import { SkeletonCardCompact } from '@/components/skeletons'
+import { HeroValuationForm } from '@/components/HeroValuationForm'
+import { StatsCounter } from '@/components/StatsCounter'
+import { TestimonialsCarousel } from '@/components/TestimonialsCarousel'
+import { ComparePromo } from '@/components/ComparePromo'
+import { PopularCars } from '@/components/PopularCars'
+import { BlogSection } from '@/components/BlogSection'
 import dynamic from 'next/dynamic'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
@@ -75,39 +82,31 @@ const HeroSection = memo(function HeroSection({ t, locale, tCommon, onLearnMoreC
             {t('heroSubheadline')}
           </motion.p>
 
-          {/* Call to Action Buttons */}
+          {/* Inline Valuation Form */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: 'easeOut' }}
+            className="w-full"
+          >
+            <HeroValuationForm />
+          </motion.div>
+
+          {/* Secondary CTA: Sell My Car */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
-            className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto"
+            className="flex justify-center"
           >
-            {/* Primary Button: Get Price Estimate */}
-            <Link
-              href={`/${locale}/predict`}
-              aria-label="Get price estimate"
-              className="w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950 rounded-xl"
+            <SellCarCTA
+              variant="outline"
+              size="lg"
+              showIcon={false}
+              className="border-2 border-slate-300 dark:border-white/30 bg-white/80 dark:bg-white/5 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-400 dark:hover:border-white/40 text-slate-900 dark:text-white min-h-[48px] sm:min-h-[52px] px-6 py-4 text-base font-semibold rounded-xl touch-manipulation"
             >
-              <Button
-                size="lg"
-                className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/30 min-h-[48px] sm:min-h-[52px] px-6 py-4 sm:px-8 sm:py-6 text-base sm:text-lg font-semibold transition-all duration-300 touch-manipulation active:scale-[0.98]"
-              >
-                <ArrowRight className="h-5 w-5 mr-2 rtl:mr-0 rtl:ml-2" aria-hidden="true" />
-                {tCommon('getPriceNow') || 'Get Price Estimate'}
-              </Button>
-            </Link>
-
-            {/* Secondary Button: Sell My Car */}
-            <div className="w-full sm:w-auto focus-within:ring-2 focus-within:ring-white/20 focus-within:ring-offset-2 focus-within:ring-offset-slate-950 rounded-xl">
-              <SellCarCTA
-                variant="outline"
-                size="lg"
-                showIcon={false}
-                className="w-full sm:w-auto border-2 border-slate-300 dark:border-white/30 bg-white/80 dark:bg-white/5 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-400 dark:hover:border-white/40 hover:shadow-lg hover:shadow-white/10 text-slate-900 dark:text-white min-h-[48px] sm:min-h-[52px] px-6 py-4 sm:px-8 sm:py-6 text-base sm:text-lg font-semibold transition-all duration-300 rounded-xl touch-manipulation active:scale-[0.98]"
-              >
-                {t('nav.sellCar') || 'Sell My Car'}
-              </SellCarCTA>
-            </div>
+              {t('nav.sellCar') || 'Sell My Car'}
+            </SellCarCTA>
           </motion.div>
         </div>
       </div>
@@ -823,7 +822,7 @@ const BestDealsSection = memo(function BestDealsSection({ t, locale }: { t: (k: 
         <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
           {loading
             ? Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="car-card-image-wrap shrink-0 w-[260px] h-[180px] rounded-2xl" />
+              <SkeletonCardCompact key={i} />
             ))
             : deals.length === 0
               ? (
@@ -1108,11 +1107,26 @@ export default function HomePage() {
             }}
           />
 
-          {/* 2. Bento Grid - Feature Discovery Zone (Market Pulse, Budget Finder, Compare Cars) */}
+          {/* 2. Stats Counter */}
+          <StatsCounter />
+
+          {/* 3. Compare Promo */}
+          <ComparePromo />
+
+          {/* 4. Popular Cars */}
+          <PopularCars />
+
+          {/* 5. Bento Grid */}
           <BentoGridSection t={t} locale={locale} />
 
-          {/* 4. Trust Bar */}
+          {/* 6. Trust Bar */}
           <TrustBarSection t={t} />
+
+          {/* 7. Testimonials */}
+          <TestimonialsCarousel />
+
+          {/* 8. Blog Section */}
+          <BlogSection />
 
           {/* Learn More Modal — Footer is in layout */}
           <ErrorBoundary>

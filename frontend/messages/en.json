@@ -431,6 +431,33 @@
     "allIraq": "Covering All Iraq & Kurdistan",
     "trustBarAccuracy": "99% Model Accuracy",
     "popularBrandsLabel": "Popular brands",
+    "heroForm": {
+      "make": "Make",
+      "makePlaceholder": "Make",
+      "model": "Model",
+      "modelPlaceholder": "Model",
+      "year": "Year",
+      "mileage": "Mileage",
+      "mileagePlaceholder": "Mileage (km)",
+      "cta": "Get Free Valuation"
+    },
+    "stats": {
+      "carsValued": "Cars Valued",
+      "happyUsers": "Happy Users",
+      "accuracyRate": "Accuracy Rate"
+    },
+    "testimonials": {
+      "title": "What Our Users Say",
+      "t1": { "name": "Ahmad K.", "location": "Erbil", "text": "Accurate and fast. Helped me sell my Camry at the right price." },
+      "t2": { "name": "Sara M.", "location": "Baghdad", "text": "Best car valuation tool in Iraq. Very reliable." },
+      "t3": { "name": "Dyar A.", "location": "Sulaymaniyah", "text": "Used it to compare 3 cars before buying. Saved me a lot!" },
+      "t4": { "name": "Omar H.", "location": "Basra", "text": "Simple and effective. Recommended to all my friends." }
+    },
+    "comparePromo": {
+      "headline": "Not sure which car? Compare side-by-side",
+      "subtext": "Compare prices, features, and values instantly",
+      "cta": "Compare Cars"
+    },
     "nav": {
       "predict": "Predict Car Price",
       "predictSubtitle": "Get an instant AI estimate.",
@@ -1670,5 +1697,24 @@
     "sessionEndedDesc": "That device has been signed out",
     "signedOutAll": "Signed out",
     "signedOutAllDesc": "All other devices have been signed out"
+  },
+  "blog": {
+    "title": "Car Buying Tips",
+    "subtitle": "Expert advice for buying and selling cars in Iraq & Kurdistan",
+    "post1": "How to know used car value",
+    "post2": "10 important things before buying a car",
+    "post3": "Best family cars in Kurdistan",
+    "content1": "Understanding used car value requires checking market prices, vehicle condition, mileage, and regional demand. CarWiseIQ uses AI to analyze thousands of listings and give you an accurate estimate.",
+    "content2": "Before buying: 1) Get a vehicle history check, 2) Inspect for accidents, 3) Test drive, 4) Check maintenance records, 5) Verify ownership, 6) Get a pre-purchase inspection, 7) Compare prices, 8) Negotiate, 9) Understand total cost, 10) Use CarWiseIQ for valuation.",
+    "content3": "Popular family cars in Kurdistan include Toyota Camry, Hyundai Sonata, Kia Optima, and Nissan Altima. These offer reliability, space, and good resale value in the regional market.",
+    "back": "Back to blog",
+    "readMore": "Read tips"
+  },
+  "pwa": {
+    "title": "Add to Home Screen",
+    "description": "Install CarWiseIQ for quick access and a better experience.",
+    "install": "Install",
+    "notNow": "Not now",
+    "dismiss": "Dismiss"
   }
 }

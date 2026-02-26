@@ -14,6 +14,9 @@ export function formatCurrency(value: number, currency: string = "USD"): string 
   }).format(value)
 }
 
+/** Re-export formatPrice for IQD/USD with locale support (use from @/lib/formatters for full options) */
+export { formatPrice, formatPriceWithToggle } from "./formatters"
+
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(value)
 }

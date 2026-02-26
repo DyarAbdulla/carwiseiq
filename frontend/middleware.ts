@@ -1,14 +1,15 @@
 import createMiddleware from 'next-intl/middleware';
 import { locales, defaultLocale } from './i18n';
 import { NextRequest, NextResponse } from 'next/server';
+import { detectLocaleFromRequest } from './lib/detectLocale';
 
 const intlMiddleware = createMiddleware({
   locales,
   defaultLocale,
-  localeDetection: true, // Use Accept-Language and NEXT_LOCALE cookie on first visit
+  localeDetection: true,
 });
 
-export default function middleware(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Exclude Next.js internals and static assets - CRITICAL for preventing 404s
@@ -19,6 +20,20 @@ export default function middleware(request: NextRequest) {
     /\.(.*)$/.test(pathname) // Matches any file with extension (e.g., .js, .css, .png)
   ) {
     return NextResponse.next();
+  }
+
+  // Geolocation-based locale: on first visit (no locale in path, no NEXT_LOCALE cookie), detect from IP
+  const isRoot = pathname === '/' || pathname === '';
+  const hasLocaleCookie = request.cookies.has('NEXT_LOCALE');
+  if (isRoot && !hasLocaleCookie) {
+    try {
+      const detected = await detectLocaleFromRequest(request);
+      const response = NextResponse.redirect(new URL(`/${detected}`, request.url));
+      response.cookies.set('NEXT_LOCALE', detected, { path: '/', maxAge: 60 * 60 * 24 * 365 });
+      return response;
+    } catch {
+      // Fall through to default intl middleware
+    }
   }
 
   // Redirect removed /stats and /docs to home (/:locale)
@@ -33,7 +48,7 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${adminLegacyMatch[1]}`, request.url));
   }
 
-  // Let next-intl handle "/" -> redirect to detected or preferred locale (Accept-Language / NEXT_LOCALE)
+  // Let next-intl handle locale routing
   return intlMiddleware(request);
 }
 
