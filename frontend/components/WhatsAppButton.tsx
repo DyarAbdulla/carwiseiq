@@ -22,7 +22,7 @@ export function WhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contact us on WhatsApp"
-      className="fixed bottom-24 sm:bottom-28 z-[999] right-4 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#25D366] shadow-lg flex items-center justify-center hover:bg-[#20BD5A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2 focus:ring-offset-slate-950 tap-highlight-transparent"
+      className="fixed bottom-28 sm:bottom-36 z-[999] right-4 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#25D366] shadow-lg flex items-center justify-center hover:bg-[#20BD5A] transition-colors focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2 focus:ring-offset-slate-950 tap-highlight-transparent"
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ delay: 1, type: "spring", stiffness: 200 }}
