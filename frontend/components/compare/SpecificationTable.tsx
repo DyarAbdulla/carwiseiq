@@ -30,13 +30,13 @@ export function SpecificationTable({
   if (!rows?.length || !columnLabels?.length) return null
 
   const format = (row: SpecRow, v: string | number | null) => {
-    if (v == null) return '—'
+    if (v == null || v === 'N/A') return 'N/A'
     let s: string
     if (row.format) s = row.format(v)
     else if (typeof v === 'number' && row.label?.toLowerCase().includes('price')) s = formatCurrency(v)
     else s = String(v)
-    if (row.suffix && !s.endsWith(row.suffix)) s = s + row.suffix
-    return s || '—'
+    if (row.suffix && !s.endsWith(row.suffix) && s !== 'N/A') s = s + row.suffix
+    return s || 'N/A'
   }
 
   return (

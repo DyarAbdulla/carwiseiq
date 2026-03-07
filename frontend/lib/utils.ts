@@ -47,6 +47,13 @@ export function formatFuelEconomy(cityMpg: number, highwayMpg: number): string {
 }
 
 /**
+ * Formats fuel economy when values are already in L/100km (e.g. from CarQuery API)
+ */
+export function formatFuelEconomyL100km(cityL100km: number, highwayL100km: number): string {
+  return `${cityL100km} / ${highwayL100km} L/100km`
+}
+
+/**
  * Creates a debounced function that delays invoking func until after wait milliseconds
  * have elapsed since the last time the debounced function was invoked.
  *

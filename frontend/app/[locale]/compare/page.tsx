@@ -10,10 +10,10 @@ import { useToast } from '@/hooks/use-toast'
 import { X, Plus, Download, Share2, Save, Trophy, TrendingDown, TrendingUp, Sparkles, Check, X as XIcon, Gauge, Fuel, Cog, Calendar, Shield, Loader2, Car } from 'lucide-react'
 import type { CarFeatures, PredictionResponse } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
-import { formatCurrency, formatFuelEconomy } from '@/lib/utils'
+import { formatCurrency, formatFuelEconomy, formatFuelEconomyL100km } from '@/lib/utils'
 import Image from 'next/image'
 import { CompareSkeleton } from '@/components/skeletons'
-import { getCarSpecs } from '@/lib/carSpecifications'
+import { useCarQuerySpecs } from '@/hooks/useCarQuerySpecs'
 import { ComparisonChart } from '@/components/compare/ComparisonChart'
 import { SpecificationTable } from '@/components/compare/SpecificationTable'
 import { ValueAnalysisSection } from '@/components/compare/ValueAnalysisSection'
@@ -246,17 +246,33 @@ function ComparePageContent() {
     }
   }, [cars, allCarsHavePredictions, hasMultipleCars])
 
-  // Specs from getCarSpecs for each car (prediction mode)
-  const specMaps = useMemo(() =>
-    cars.map(c => c.features ? getCarSpecs({
-      make: c.features.make,
-      model: c.features.model,
-      year: c.features.year,
-      engine_size: c.features.engine_size,
-      cylinders: c.features.cylinders,
-      fuel_type: c.features.fuel_type,
-    }) : null),
-    [cars])
+  // Cars/listings to fetch specs for (prediction vs marketplace)
+  const carsForSpecs = useMemo(
+    () =>
+      isMarketplaceComparison
+        ? listings.map((l) => ({
+            id: String(l.id),
+            features: {
+              make: l.make,
+              model: l.model,
+              year: l.year,
+            } as { make: string; model: string; year: number; engine_size?: number; cylinders?: number },
+          }))
+        : cars.map((c) => ({
+            id: c.id,
+            features: c.features
+              ? {
+                  make: c.features.make,
+                  model: c.features.model,
+                  year: c.features.year,
+                  engine_size: c.features.engine_size,
+                  cylinders: c.features.cylinders,
+                }
+              : null,
+          })),
+    [isMarketplaceComparison, listings, cars]
+  )
+  const { specMaps, loadingSpecs } = useCarQuerySpecs(carsForSpecs)
 
   // Chart data with price, performance, radar dimensions
   const chartData = useMemo(() => {
@@ -280,24 +296,23 @@ function ComparePageContent() {
     })
   }, [cars, comparisonMetrics, specMaps])
 
-  // Spec table rows for prediction comparison
+  // Spec table rows for prediction comparison (CarQuery API - N/A when not available)
   const specRows = useMemo(() => {
     if (!allCarsHavePredictions || !comparisonMetrics) return []
+    const na = null as string | null
     const rows = [
       { label: 'Make & Model', values: cars.map(c => c.features ? `${c.features.make} ${c.features.model}` : '—') },
       { label: 'Year', values: cars.map(c => c.features?.year ?? '—'), icon: Calendar },
       { label: 'Mileage', values: cars.map(c => c.features?.mileage ?? null), suffix: ' km', format: (v: string | number) => Number(v).toLocaleString() },
       { label: 'Condition', values: cars.map(c => c.features?.condition ?? '—') },
-      { label: 'Fuel Type', values: cars.map(c => c.features?.fuel_type ?? '—'), icon: Fuel },
-      { label: 'Engine', values: cars.map(c => c.features?.engine_size ? `${c.features.engine_size}L` : '—'), icon: Cog },
-      { label: 'Cylinders', values: cars.map(c => c.features?.cylinders ?? '—') },
-      { label: 'Horsepower', values: cars.map((_, i) => specMaps[i]?.horsepower ?? null), higherIsBetter: true, suffix: ' hp', icon: Gauge },
-      { label: 'Torque', values: cars.map((_, i) => specMaps[i]?.torque ?? null), higherIsBetter: true, suffix: ' lb-ft' },
-      { label: '0-60 mph', values: cars.map((_, i) => specMaps[i]?.acceleration ?? null), suffix: ' s' },
-      { label: 'Top Speed', values: cars.map((_, i) => specMaps[i]?.topSpeed ?? null), higherIsBetter: true, suffix: ' mph' },
-      { label: 'Transmission', values: cars.map((_, i) => specMaps[i]?.transmission ?? '—') },
-      { label: 'Drivetrain', values: cars.map((_, i) => specMaps[i]?.drivetrain ?? '—') },
-      { label: 'Fuel Economy', values: cars.map((_, i) => { const e = specMaps[i]?.fuelEconomy; return e ? formatFuelEconomy(e.city, e.highway) : '—' }) },
+      { label: 'Fuel Type', values: cars.map((c, i) => specMaps[i]?.fuelType ?? c.features?.fuel_type ?? na), icon: Fuel },
+      { label: 'Engine', values: cars.map((c, i) => { const s = specMaps[i]; const v = s?.engineSize ?? c.features?.engine_size; return v != null ? `${v}L` : na; }), icon: Cog },
+      { label: 'Cylinders', values: cars.map((c, i) => specMaps[i]?.cylinders ?? c.features?.cylinders ?? na) },
+      { label: 'Horsepower', values: cars.map((_, i) => specMaps[i]?.horsepower ?? na), higherIsBetter: true, suffix: ' hp', icon: Gauge },
+      { label: 'Torque', values: cars.map((_, i) => specMaps[i]?.torque ?? na), higherIsBetter: true, suffix: ' lb-ft' },
+      { label: 'Transmission', values: cars.map((_, i) => specMaps[i]?.transmission ?? na) },
+      { label: 'Drivetrain', values: cars.map((_, i) => specMaps[i]?.drivetrain ?? na) },
+      { label: 'Fuel Economy', values: cars.map((_, i) => { const e = specMaps[i]?.fuelEconomy; return e ? formatFuelEconomyL100km(e.city, e.highway) : na; }) },
       { label: 'Predicted Price', values: cars.map(c => c.prediction?.predicted_price ?? null), format: (v: string | number) => formatCurrency(Number(v)) },
       { label: 'Confidence', values: cars.map(c => c.prediction?.confidence_range ?? null), higherIsBetter: true, suffix: '%' },
       { label: 'Savings vs Highest', values: comparisonMetrics.savings, format: (v: string | number) => formatCurrency(Number(v)), suffix: '' },
@@ -818,21 +833,11 @@ function ComparePageContent() {
     return Array.from(featureSet).sort()
   }, [listings, isMarketplaceComparison])
 
-  // Marketplace: getCarSpecs, chart data, spec rows
-  const listingSpecMaps = useMemo(
-    () => listings.map(l => getCarSpecs({
-      make: l.make,
-      model: l.model,
-      year: l.year,
-      transmission: l.transmission,
-      fuel_type: l.fuel_type,
-    })),
-    [listings]
-  )
+  // Marketplace: uses specMaps from CarQuery (same hook as prediction)
   const listingChartData = useMemo(() => {
     if (!marketplaceMetrics || listings.length < 2) return []
     return listings.map((l, i) => {
-      const s = listingSpecMaps[i]
+      const s = specMaps[i]
       const fe = s?.fuelEconomy
       return {
         name: `${l.make} ${l.model}`,
@@ -845,18 +850,20 @@ function ComparePageContent() {
         isMostExpensive: i === marketplaceMetrics.mostExpensiveIndex,
       }
     })
-  }, [listings, marketplaceMetrics, listingSpecMaps])
+  }, [listings, marketplaceMetrics, specMaps])
   const listingSpecRows = useMemo(() => {
     if (!marketplaceMetrics || listings.length < 2) return []
+    const na = null as string | number | null
     const rows = [
       { label: 'Make & Model', values: listings.map(l => `${l.make} ${l.model}`) },
       { label: 'Year', values: listings.map(l => l.year) },
       { label: 'Mileage', values: listings.map(l => l.mileage), suffix: ' km', format: (v: string | number) => Number(v).toLocaleString() },
       { label: 'Condition', values: listings.map(l => l.condition) },
-      { label: 'Fuel Type', values: listings.map(l => l.fuel_type) },
-      { label: 'Transmission', values: listings.map(l => l.transmission) },
-      { label: 'Horsepower', values: listings.map((_, i) => listingSpecMaps[i]?.horsepower ?? null), higherIsBetter: true, suffix: ' hp' },
-      { label: 'Fuel Economy', values: listings.map((_, i) => { const e = listingSpecMaps[i]?.fuelEconomy; return e ? formatFuelEconomy(e.city, e.highway) : '—' }) },
+      { label: 'Fuel Type', values: listings.map((l, i) => specMaps[i]?.fuelType ?? l.fuel_type ?? na) },
+      { label: 'Transmission', values: listings.map((l, i) => specMaps[i]?.transmission ?? l.transmission ?? na) },
+      { label: 'Engine', values: listings.map((_, i) => { const v = specMaps[i]?.engineSize; return v != null ? `${v}L` : na; }) },
+      { label: 'Horsepower', values: listings.map((_, i) => specMaps[i]?.horsepower ?? na), higherIsBetter: true, suffix: ' hp' },
+      { label: 'Fuel Economy', values: listings.map((_, i) => { const e = specMaps[i]?.fuelEconomy; return e ? formatFuelEconomyL100km(e.city, e.highway) : na; }) },
       { label: 'Price', values: listings.map(l => l.price), format: (v: string | number) => formatCurrency(Number(v)) },
       { label: 'Savings vs Highest', values: marketplaceMetrics.savings, format: (v: string | number) => formatCurrency(Number(v)) },
     ]
@@ -864,7 +871,7 @@ function ComparePageContent() {
       return rows.filter(r => new Set(r.values.map(x => String(x ?? ''))).size > 1)
     }
     return rows
-  }, [listings, marketplaceMetrics, listingSpecMaps, highlightDifferencesOnly])
+  }, [listings, marketplaceMetrics, specMaps, highlightDifferencesOnly])
 
   // Export data for PDF (prediction or marketplace)
   const exportData = useMemo(() => {
@@ -973,22 +980,30 @@ function ComparePageContent() {
                         name: `${l.make} ${l.model}`,
                         index: i,
                         price: l.price,
-                        horsepower: listingSpecMaps[i]?.horsepower,
-                        fuelEconomy: listingSpecMaps[i]?.fuelEconomy ? (listingSpecMaps[i]!.fuelEconomy!.city + listingSpecMaps[i]!.fuelEconomy!.highway) / 2 : undefined,
+                        horsepower: specMaps[i]?.horsepower,
+                        fuelEconomy: specMaps[i]?.fuelEconomy ? (specMaps[i]!.fuelEconomy!.city + specMaps[i]!.fuelEconomy!.highway) / 2 : undefined,
                         savings: marketplaceMetrics.savings[i],
-                        reliability: listingSpecMaps[i]?.reliabilityRating,
+                        reliability: undefined,
                       }))}
                       bestDealIndex={marketplaceMetrics.bestDealIndex}
                       savings={marketplaceMetrics.savings}
-                      bestForPerformance={listings.reduce((b, _, i) => ((listingSpecMaps[i]?.horsepower ?? 0) > (listingSpecMaps[b]?.horsepower ?? 0) ? i : b), 0)}
-                      bestForEconomy={listings.reduce((b, _, i) => { const e = listingSpecMaps[i]?.fuelEconomy; const x = listingSpecMaps[b]?.fuelEconomy; return (e ? (e.city + e.highway) / 2 : 0) > (x ? (x.city + x.highway) / 2 : 0) ? i : b; }, 0)}
-                      bestForReliability={listings.reduce((b, _, i) => ((listingSpecMaps[i]?.reliabilityRating ?? 0) > (listingSpecMaps[b]?.reliabilityRating ?? 0) ? i : b), 0)}
+                      bestForPerformance={listings.reduce((b, _, i) => ((specMaps[i]?.horsepower ?? 0) > (specMaps[b]?.horsepower ?? 0) ? i : b), 0)}
+                      bestForEconomy={listings.reduce((b, _, i) => { const e = specMaps[i]?.fuelEconomy; const x = specMaps[b]?.fuelEconomy; const ei = e ? (e.city + e.highway) / 2 : Infinity; const xi = x ? (x.city + x.highway) / 2 : Infinity; return ei < xi ? i : b; }, 0)}
+                      bestForReliability={0}
                     />
                     {listingChartData.length > 0 && <ComparisonChart data={listingChartData} />}
                     {listingSpecRows.length > 0 && (
                       <div className="mb-6">
                         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                          <h3 className="text-xl font-semibold text-white">Specifications & Comparison</h3>
+                          <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+                            Specifications & Comparison
+                            {loadingSpecs && (
+                              <span className="inline-flex items-center gap-1.5 text-sm font-normal text-indigo-400">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Loading specs…
+                              </span>
+                            )}
+                          </h3>
                           <div className="flex items-center gap-2">
                             <Switch id="mk-hl-diff" checked={highlightDifferencesOnly} onCheckedChange={v => setHighlightDifferencesOnly(!!v)} />
                             <Label htmlFor="mk-hl-diff" className="text-sm text-[#94a3b8] cursor-pointer">Highlight differences only</Label>
@@ -1005,7 +1020,7 @@ function ComparePageContent() {
                       </div>
                     )}
                     <ValueAnalysisSection
-                      cars={listings.map((l, i) => ({ name: `${l.make} ${l.model}`, price: l.price, horsepower: listingSpecMaps[i]?.horsepower ?? 0, mileage: l.mileage }))}
+                      cars={listings.map((l, i) => ({ name: `${l.make} ${l.model}`, price: l.price, horsepower: specMaps[i]?.horsepower ?? 0, mileage: l.mileage }))}
                       bestDealIndex={marketplaceMetrics.bestDealIndex}
                     />
                     <OwnershipCostsSection
@@ -1013,8 +1028,8 @@ function ComparePageContent() {
                         name: `${l.make} ${l.model}`,
                         price: l.price,
                         mileage: l.mileage,
-                        fuelEconomyCity: listingSpecMaps[i]?.fuelEconomy?.city ?? 25,
-                        fuelEconomyHighway: listingSpecMaps[i]?.fuelEconomy?.highway ?? 33,
+                        fuelEconomyCity: specMaps[i]?.fuelEconomy?.city ?? 25,
+                        fuelEconomyHighway: specMaps[i]?.fuelEconomy?.highway ?? 33,
                         fuelType: l.fuel_type,
                       }))}
                       bestDealIndex={marketplaceMetrics.bestDealIndex}
@@ -1176,13 +1191,13 @@ function ComparePageContent() {
                       horsepower: specMaps[i]?.horsepower,
                       fuelEconomy: specMaps[i]?.fuelEconomy ? (specMaps[i]!.fuelEconomy!.city + specMaps[i]!.fuelEconomy!.highway) / 2 : undefined,
                       savings: comparisonMetrics.savings[i],
-                      reliability: specMaps[i]?.reliabilityRating,
+                      reliability: undefined,
                     }))}
                     bestDealIndex={comparisonMetrics.bestDealIndex}
                     savings={comparisonMetrics.savings}
                     bestForPerformance={cars.reduce((best, c, i) => ((specMaps[i]?.horsepower ?? 0) > (specMaps[best]?.horsepower ?? 0) ? i : best), 0)}
-                    bestForEconomy={cars.reduce((best, c, i) => { const e = specMaps[i]?.fuelEconomy; const b = specMaps[best]?.fuelEconomy; return (e ? (e.city + e.highway) / 2 : 0) > (b ? (b.city + b.highway) / 2 : 0) ? i : best; }, 0)}
-                    bestForReliability={cars.reduce((best, c, i) => ((specMaps[i]?.reliabilityRating ?? 0) > (specMaps[best]?.reliabilityRating ?? 0) ? i : best), 0)}
+                    bestForEconomy={cars.reduce((best, c, i) => { const e = specMaps[i]?.fuelEconomy; const b = specMaps[best]?.fuelEconomy; const ei = e ? (e.city + e.highway) / 2 : Infinity; const bi = b ? (b.city + b.highway) / 2 : Infinity; return ei < bi ? i : best; }, 0)}
+                    bestForReliability={0}
                   />
                 </motion.div>
               )}
@@ -1203,7 +1218,15 @@ function ComparePageContent() {
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 space-y-6">
                   <div className="mb-6">
                     <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                      <h3 className="text-xl font-semibold text-white">Specifications & Comparison</h3>
+                      <h3 className="text-xl font-semibold text-white flex items-center gap-2">
+                        Specifications & Comparison
+                        {loadingSpecs && (
+                          <span className="inline-flex items-center gap-1.5 text-sm font-normal text-indigo-400">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading specs…
+                          </span>
+                        )}
+                      </h3>
                       <div className="flex items-center gap-2">
                         <Switch id="highlight-diff" checked={highlightDifferencesOnly} onCheckedChange={v => setHighlightDifferencesOnly(!!v)} />
                         <Label htmlFor="highlight-diff" className="text-sm text-[#94a3b8] cursor-pointer">Highlight differences only</Label>
