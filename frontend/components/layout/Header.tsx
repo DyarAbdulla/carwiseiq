@@ -153,7 +153,10 @@ export function Header() {
             {tCommon('appNameShort')}
           </span>
           {new Date() < new Date('2026-03-20') && (
-            <span className="text-yellow-400 text-sm ml-2 hidden sm:inline">🌙 Ramadan Mubarak</span>
+            <>
+              <span className="text-yellow-400 text-base ml-1.5 sm:hidden" aria-label="Ramadan Mubarak">🌙</span>
+              <span className="text-yellow-400 text-sm ml-2 hidden sm:inline">🌙 Ramadan Mubarak</span>
+            </>
           )}
         </Link>
 
