@@ -19,6 +19,10 @@ interface SpecificationTableProps {
   showIcons?: boolean
 }
 
+function isAllNA(row: SpecRow): boolean {
+  return row.values.every((v) => v == null || v === 'N/A' || v === '')
+}
+
 export function SpecificationTable({
   columnLabels,
   rows,
@@ -28,6 +32,9 @@ export function SpecificationTable({
   showIcons,
 }: SpecificationTableProps) {
   if (!rows?.length || !columnLabels?.length) return null
+
+  const visibleRows = rows.filter((row) => !isAllNA(row))
+  if (!visibleRows.length) return null
 
   const format = (row: SpecRow, v: string | number | null) => {
     if (v == null || v === 'N/A') return 'N/A'
@@ -70,7 +77,7 @@ export function SpecificationTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, ri) => (
+          {visibleRows.map((row, ri) => (
             <tr 
               key={ri} 
               className="border-b border-white/5 hover:bg-white/5 transition-colors group"
