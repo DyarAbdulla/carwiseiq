@@ -152,6 +152,9 @@ export function Header() {
           <span className="font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent hidden sm:inline truncate">
             {tCommon('appNameShort')}
           </span>
+          {new Date() < new Date('2026-03-20') && (
+            <span className="text-yellow-400 text-sm ml-2 hidden sm:inline">🌙 Ramadan Mubarak</span>
+          )}
         </Link>
 
         {/* Desktop nav (hidden on mobile) */}
