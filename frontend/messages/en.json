@@ -1487,7 +1487,11 @@
         "title": "Platform Changes and Termination",
         "description": "Platform modification rights:",
         "rights": "Modify, suspend, or discontinue any feature at any time|Change these terms with or without notice|Terminate the platform entirely|Remove or ban users at our discretion",
+        "note": "We will attempt to provide reasonable notice of major changes when possible. Continued use after changes constitutes acceptance.",
         "acceptance": "We will attempt to provide reasonable notice of major changes when possible. Continued use after changes constitutes acceptance."
+      },
+      "faq": {
+        "title": "Frequently Asked Questions"
       },
       "privacy": {
         "title": "Privacy",
