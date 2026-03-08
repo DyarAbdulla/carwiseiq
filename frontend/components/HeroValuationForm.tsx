@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { apiClient } from "@/lib/api"
 import { Car } from "lucide-react"
+import { SellCarCTA } from "@/components/SellCarCTA"
 
 const currentYear = new Date().getFullYear()
 const YEARS = Array.from({ length: 15 }, (_, i) => currentYear - i)
@@ -22,6 +23,7 @@ export function HeroValuationForm() {
   const router = useRouter()
   const locale = useLocale() || "en"
   const t = useTranslations("home.heroForm")
+  const tHome = useTranslations("home")
   const tCommon = useTranslations("common")
 
   const [makes, setMakes] = useState<string[]>([])
@@ -66,7 +68,7 @@ export function HeroValuationForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-2xl mx-auto mt-6 sm:mt-8 p-4 sm:p-6 rounded-2xl bg-white/10 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl"
+      className="w-full max-w-2xl mx-auto mt-6 sm:mt-8 p-4 sm:p-6 pb-24 sm:pb-6 rounded-2xl bg-white/10 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl"
       dir="ltr"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -145,14 +147,24 @@ export function HeroValuationForm() {
           />
         </div>
       </div>
-      <Button
-        type="submit"
-        size="lg"
-        className="w-full mt-4 sm:mt-5 min-h-[48px] sm:min-h-[52px] bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-base sm:text-lg font-semibold shadow-lg touch-manipulation"
-      >
-        <Car className="h-5 w-5 mr-2 rtl:mr-0 rtl:ml-2" aria-hidden />
-        {t("cta")}
-      </Button>
+      <div className="flex flex-row gap-3 mt-4 sm:mt-5">
+        <Button
+          type="submit"
+          size="lg"
+          className="flex-1 min-h-[48px] sm:min-h-[52px] bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-base sm:text-lg font-semibold shadow-lg touch-manipulation"
+        >
+          <Car className="h-5 w-5 mr-2 rtl:mr-0 rtl:ml-2" aria-hidden />
+          {t("cta")}
+        </Button>
+        <SellCarCTA
+          variant="outline"
+          size="lg"
+          showIcon={false}
+          className="flex-1 min-h-[48px] sm:min-h-[52px] border-2 border-slate-300 dark:border-white/30 bg-white/80 dark:bg-white/5 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-400 dark:hover:border-white/40 text-slate-900 dark:text-white text-base sm:text-lg font-semibold rounded-xl touch-manipulation"
+        >
+          {tHome("nav.sellCar") || "Sell Car"}
+        </SellCarCTA>
+      </div>
     </form>
   )
 }

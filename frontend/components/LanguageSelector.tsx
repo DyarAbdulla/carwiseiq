@@ -87,10 +87,11 @@ export function LanguageSelector({ variant = 'dropdown' }: LanguageSelectorProps
   const orderedLocales = isRTL ? [...locales].reverse() : locales
 
   // Inline: LTR → EN | KU | AR; RTL → AR | KU | EN (glassmorphism)
+  // Light mode: ensure EN/KU/AR text has proper contrast (text-slate-900 on light bg)
   if (variant === 'inline') {
     return (
       <div
-        className="flex items-center gap-0.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md px-1 py-1"
+        className="flex items-center gap-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-md px-1 py-1"
         role="group"
         aria-label="Language"
       >
@@ -99,17 +100,17 @@ export function LanguageSelector({ variant = 'dropdown' }: LanguageSelectorProps
           const isSelected = locale === loc
           return (
             <span key={loc} className="flex items-center gap-0.5">
-              {i > 0 && <span className="text-slate-500/60 dark:text-slate-400/60 text-xs" aria-hidden>|</span>}
+              {i > 0 && <span className="text-slate-400 dark:text-slate-500/60 text-xs" aria-hidden>|</span>}
               <button
                 type="button"
                 onClick={() => switchLocale(loc)}
                 className={cn(
                   "min-h-[44px] min-w-[44px] px-3 rounded-full text-xs font-medium transition-colors",
-                  "hover:bg-white/10 hover:border-white/10",
+                  "hover:bg-slate-200 dark:hover:bg-white/10",
                   "focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:ring-offset-2 focus:ring-offset-transparent",
                   isSelected
-                    ? "bg-white/10 text-white dark:text-slate-100"
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-200 dark:hover:text-slate-300"
+                    ? "bg-indigo-100 dark:bg-white/10 text-indigo-900 dark:text-slate-100"
+                    : "text-slate-600 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
                 )}
                 aria-label={`${code} - ${(() => { try { return t(loc) } catch { return loc } })()}`}
                 aria-pressed={isSelected}

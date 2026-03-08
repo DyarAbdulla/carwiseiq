@@ -91,23 +91,6 @@ const HeroSection = memo(function HeroSection({ t, locale, tCommon, onLearnMoreC
           >
             <HeroValuationForm />
           </motion.div>
-
-          {/* Secondary CTA: Sell My Car */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
-            className="flex justify-center"
-          >
-            <SellCarCTA
-              variant="outline"
-              size="lg"
-              showIcon={false}
-              className="border-2 border-slate-300 dark:border-white/30 bg-white/80 dark:bg-white/5 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-400 dark:hover:border-white/40 text-slate-900 dark:text-white min-h-[48px] sm:min-h-[52px] px-6 py-4 text-base font-semibold rounded-xl touch-manipulation"
-            >
-              {t('nav.sellCar') || 'Sell My Car'}
-            </SellCarCTA>
-          </motion.div>
         </div>
       </div>
     </section>

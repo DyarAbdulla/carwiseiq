@@ -59,6 +59,9 @@
   },
   "nav": {
     "menu": "لیست",
+    "groupMain": "سەرەکی",
+    "groupMarketplace": "بازاڕ",
+    "groupTools": "ئامرازەکان",
     "home": "سەرەکی",
     "buySell": "کڕین و فرۆشتن",
     "favorites": "دڵخوازەکان",

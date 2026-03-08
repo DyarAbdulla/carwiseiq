@@ -59,6 +59,9 @@
   },
   "nav": {
     "menu": "القائمة",
+    "groupMain": "رئيسي",
+    "groupMarketplace": "السوق",
+    "groupTools": "أدوات",
     "home": "الرئيسية",
     "buySell": "بيع وشراء",
     "favorites": "المفضلة",
