@@ -378,7 +378,7 @@ export function Header() {
                       <span>{theme === 'dark' ? tCommon('themeLight') : tCommon('themeDark')}</span>
                     </button>
 
-                    {/* Auth: Sign In + Register (guest) OR Admin, My Listings, My Account, Settings (logged in) */}
+                    {/* Auth: Sign In + Register (guest) OR My Listings, My Account (logged in) */}
                     {!isAuthenticated ? (
                       <div className="flex flex-col gap-2">
                         <button
@@ -395,6 +395,17 @@ export function Header() {
                           <User className="h-5 w-5 shrink-0" />
                           <span>{tAuth('register')}</span>
                         </button>
+                        <SellCarCTA
+                          as="span"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
+                            "border border-purple-300 dark:border-purple-500/50 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-500/10"
+                          )}
+                          showIcon={false}
+                        >
+                          <span>{t('nav.sellCar')}</span>
+                        </SellCarCTA>
                       </div>
                     ) : (
                       <>
@@ -422,6 +433,17 @@ export function Header() {
                           <User className="h-5 w-5 shrink-0 text-slate-400" />
                           <span>{tAuth('myAccount')}</span>
                         </Link>
+                        <SellCarCTA
+                          as="span"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={cn(
+                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
+                            "border border-purple-300 dark:border-purple-500/50 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-500/10"
+                          )}
+                          showIcon={false}
+                        >
+                          <span>{t('nav.sellCar')}</span>
+                        </SellCarCTA>
                       </>
                     )}
 
@@ -469,21 +491,6 @@ export function Header() {
                         </button>
                       </>
                     )}
-
-                    {/* Prominent Sell Car Button at Bottom */}
-                    <div className="sticky bottom-0 pt-3 pb-3 mt-3 border-t border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl">
-                      <SellCarCTA
-                        as="span"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center justify-center gap-3 rounded-xl px-3 py-4 min-h-[56px] w-full text-base font-semibold transition-all shadow-lg",
-                          "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-600/30"
-                        )}
-                        showIcon
-                      >
-                        <span>{t('nav.sellCar')}</span>
-                      </SellCarCTA>
-                    </div>
                   </div>
                 </motion.div>
               </div>
