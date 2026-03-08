@@ -4,8 +4,6 @@
 # Dynamic routes: redirect detail URL to list page with id in query (static export has no [id] pages)
 /en/buy-sell/:id /en/buy-sell?id=:id 302
 /ar/buy-sell/:id /ar/buy-sell?id=:id 302
+/ku/buy-sell/:id /ku/buy-sell?id=:id 302
 
-# www -> non-www (or vice versa; adjust to your preference)
-https://www.carwiseiq.com/* https://carwiseiq.com/:splat 301
-http://www.carwiseiq.com/* https://carwiseiq.com/:splat 301
-http://carwiseiq.com/* https://carwiseiq.com/:splat 301
+# www redirect: configure in Cloudflare Dashboard > Domain > Redirect Rules (not in _redirects)

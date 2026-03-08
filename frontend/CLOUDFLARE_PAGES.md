@@ -38,3 +38,19 @@ In **Settings → Environment variables** (Production and Preview):
 | **NEXT_PUBLIC_API_BASE_URL** | your API URL (e.g. `https://api.carwiseiq.com` for production) |
 
 No `NODE_OPTIONS` or `@cloudflare/next-on-pages` is needed for static export.
+
+## www redirect (avoid "Failed to publish Function")
+
+Do **not** use absolute URLs in `_redirects` (e.g. `https://www.carwiseiq.com/*`). Cloudflare may interpret them as Functions and fail. Instead:
+
+1. **Cloudflare Dashboard** → Your domain → **Rules** → **Redirect Rules** → Add rule:
+   - When: `(http.host eq "www.carwiseiq.com")`
+   - Then: Dynamic redirect → `https://carwiseiq.com${uri.path}${uri.query}` (301)
+
+2. Or use **Custom domains** → Add `www.carwiseiq.com` as secondary → redirect to primary.
+
+## Static export: no Functions
+
+- No `/functions` folder (Cloudflare Pages Functions)
+- `middleware.ts` runs at build time only; not deployed as a Function
+- `app/api/*` routes are **not** built with static export; ChatBot uses `NEXT_PUBLIC_API_BASE_URL` pointing to your backend
