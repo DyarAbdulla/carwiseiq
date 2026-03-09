@@ -30,7 +30,6 @@ import { listingImageUrl } from '@/lib/utils'
 import { SkeletonCardCompact } from '@/components/skeletons'
 import { HeroValuationForm } from '@/components/HeroValuationForm'
 import { StatsCounter } from '@/components/StatsCounter'
-import { TestimonialsCarousel } from '@/components/TestimonialsCarousel'
 import { ComparePromo } from '@/components/ComparePromo'
 import { PopularCars } from '@/components/PopularCars'
 import { BlogSection } from '@/components/BlogSection'
@@ -1105,10 +1104,7 @@ export default function HomePage() {
           {/* 6. Trust Bar */}
           <TrustBarSection t={t} />
 
-          {/* 7. Testimonials */}
-          <TestimonialsCarousel />
-
-          {/* 8. Blog Section */}
+          {/* 7. Blog Section */}
           <BlogSection />
 
           {/* Learn More Modal — Footer is in layout */}
