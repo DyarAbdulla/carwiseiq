@@ -395,7 +395,14 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
     }
   }, [listingId, loadListing, toast, t, tCommon])
 
-
+  // Normalize images - MUST be before early returns to satisfy Rules of Hooks (same hook count every render)
+  const images = useMemo(() => {
+    if (!listing) return []
+    const raw = listing.images || []
+    return raw.map((img: unknown) =>
+      typeof img === 'string' ? { url: img } : { url: (img as { url?: string })?.url ?? '' }
+    ).filter((img: { url: string }) => img.url)
+  }, [listing?.images])
 
   if (loading) {
     return (
@@ -446,13 +453,6 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
     )
   }
 
-  // Normalize images (memoized to reduce re-renders)
-  const images = useMemo(() => {
-    const raw = listing.images || []
-    return raw.map((img: unknown) =>
-      typeof img === 'string' ? { url: img } : { url: (img as { url?: string })?.url ?? '' }
-    ).filter((img: { url: string }) => img.url)
-  }, [listing.images])
   const rawImages = listing.images || []
   const safeIndex = Math.min(selectedImageIndex, Math.max(0, images.length - 1))
   const currentImage = images[safeIndex] || images[0] || null
