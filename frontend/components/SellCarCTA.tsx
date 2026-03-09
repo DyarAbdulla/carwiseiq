@@ -55,11 +55,11 @@ export function SellCarCTA({
   const registerPath = `/${locale}/register?reason=sell&returnUrl=${encodeURIComponent(sellCarPath)}`
 
   const handleClick = () => {
-    onClick?.()
     if (!user) {
       setAuthPromptOpen(true)
       return
     }
+    onClick?.()
     router.push(sellCarPath)
   }
 
@@ -102,11 +102,13 @@ export function SellCarCTA({
 
   const goToLogin = () => {
     setAuthPromptOpen(false)
+    onClick?.()
     router.push(loginPath)
   }
 
   const goToRegister = () => {
     setAuthPromptOpen(false)
+    onClick?.()
     router.push(registerPath)
   }
 
@@ -133,7 +135,7 @@ export function SellCarCTA({
             className="bg-indigo-600 hover:bg-indigo-500 text-white"
             onClick={goToRegister}
           >
-            {t('createAccount')}
+            {t('register')}
           </Button>
         </DialogFooter>
       </DialogContent>
