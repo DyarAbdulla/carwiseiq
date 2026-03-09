@@ -38,13 +38,6 @@ const navItems = [
   { href: '/history', labelKey: 'nav.history' },
 ]
 
-// Mobile menu groups: Main, Marketplace, Tools (with AI Assistant, Batch, History)
-const mobileNavGroups = [
-  { titleKey: 'nav.groupMain', items: [{ href: '/', labelKey: 'nav.home', icon: Car }, { href: '/predict', labelKey: 'nav.predict' }, { href: '/compare', labelKey: 'nav.compare' }] },
-  { titleKey: 'nav.groupMarketplace', items: [{ href: '/buy-sell', labelKey: 'nav.buySell' }, { href: '/favorites', labelKey: 'nav.favorites' }] },
-  { titleKey: 'nav.groupTools', items: [{ action: 'openChatbot', labelKey: 'nav.aiAssistant', icon: MessageCircle }, { href: '/services', labelKey: 'nav.services', icon: Sparkles }, { href: '/batch', labelKey: 'nav.batch' }, { href: '/history', labelKey: 'nav.history' }] },
-]
-
 export function Header() {
   const [mounted, setMounted] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -320,16 +313,16 @@ export function Header() {
                   animate={{ x: 0 }}
                   exit={{ x: isRTL ? '-100%' : '100%' }}
                   transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-                  className={cn("h-[100dvh] min-h-[100vh] w-[100vw] max-w-[360px] backdrop-blur-xl bg-white/95 dark:bg-slate-950/95 bg-gradient-to-b from-white/98 via-white/95 to-white/98 dark:from-slate-950/98 dark:via-slate-950/95 dark:to-slate-950/98 text-slate-900 dark:text-white shadow-2xl pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] overflow-y-auto overscroll-contain pointer-events-auto touch-manipulation tap-highlight-transparent", isRTL ? 'border-r border-slate-200 dark:border-white/20' : 'border-l border-slate-200 dark:border-white/20')}
+                  className={cn("h-[100dvh] min-h-[100vh] w-[100vw] max-w-[360px] flex flex-col backdrop-blur-xl bg-white/95 dark:bg-slate-950/95 bg-gradient-to-b from-white/98 via-white/95 to-white/98 dark:from-slate-950/98 dark:via-slate-950/95 dark:to-slate-950/98 text-slate-900 dark:text-white shadow-2xl pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pointer-events-auto touch-manipulation tap-highlight-transparent", isRTL ? 'border-r border-slate-200 dark:border-white/20' : 'border-l border-slate-200 dark:border-white/20')}
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
                   {/* Sticky header: title + close */}
-                  <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-3 backdrop-blur-xl bg-white/90 dark:bg-slate-950/90 border-b border-slate-200 dark:border-white/10">
-                    <span className="text-base font-semibold text-slate-900 dark:text-white">{t('nav.menu') || 'Menu'}</span>
+                  <div className="shrink-0 flex items-center justify-between px-3 py-2 backdrop-blur-xl bg-white/90 dark:bg-slate-950/90 border-b border-slate-200 dark:border-white/10">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-white">{t('nav.menu') || 'Menu'}</span>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-11 min-h-[44px] min-w-[44px] w-11 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 touch-manipulation"
+                      className="h-10 min-h-[44px] min-w-[44px] w-10 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 touch-manipulation"
                       onClick={() => setMobileMenuOpen(false)}
                       aria-label={tCommon('closeMenu')}
                     >
@@ -337,176 +330,189 @@ export function Header() {
                     </Button>
                   </div>
 
-                  {/* Ramadan greeting at top of mobile menu */}
-                  {new Date() < new Date('2026-03-20') && (
-                    <div className="px-3 pt-3 pb-2">
-                      <p className="text-center text-amber-500 dark:text-amber-400 font-medium text-sm py-2 px-3 rounded-xl bg-amber-500/10 dark:bg-amber-500/10">
+                  {/* Scrollable content: max-h + overflow + pb for browser bar */}
+                  <div className="flex-1 min-h-0 max-h-[80vh] overflow-y-auto overscroll-contain px-3 py-2 pb-20 space-y-2">
+                    {/* Ramadan banner (small) */}
+                    {new Date() < new Date('2026-03-20') && (
+                      <p className="text-center text-amber-500 dark:text-amber-400 text-xs font-medium py-1.5 px-2 rounded-lg bg-amber-500/10">
                         🌙 Ramadan Mubarak
                       </p>
-                    </div>
-                  )}
-
-                  <div className="px-3 py-3 space-y-1">
-                    {/* User Profile Summary at Top */}
-                    {isAuthenticated && user && (
-                      <div className="px-3 py-3 mb-3 backdrop-blur-md bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-                        <div className="flex items-center gap-3">
-                          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
-                            {user.email?.charAt(0).toUpperCase() || 'U'}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-slate-900 dark:text-white font-semibold text-sm truncate">{user.email || tAuth('user')}</p>
-                            {isAdmin && <Badge variant="warning" className="mt-1 shrink-0 text-[10px]">ADMIN</Badge>}
-                          </div>
-                        </div>
-                      </div>
                     )}
-                    {/* Top: Language + Theme */}
-                    <div className="px-3 py-2">
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 block mb-2">{tCommon('language')}</span>
-                      <LanguageSelector variant="inline" />
-                    </div>
-                    <button
-                      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                      className={cn(
-                        "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] w-full text-sm font-medium transition-colors",
-                        "hover:bg-slate-100 dark:hover:bg-white/10 active:bg-slate-100 dark:active:bg-white/10 text-slate-700 dark:text-slate-200"
-                      )}
-                      aria-label={theme === 'dark' ? tCommon('themeLight') : tCommon('themeDark')}
-                    >
-                      {theme === 'dark' ? <Sun className="h-5 w-5 shrink-0 text-slate-400" /> : <Moon className="h-5 w-5 shrink-0 text-slate-400" />}
-                      <span>{theme === 'dark' ? tCommon('themeLight') : tCommon('themeDark')}</span>
-                    </button>
 
-                    {/* Auth: Sign In + Register (guest) OR My Listings, My Account (logged in) */}
+                    {/* Language + Theme inline (compact) */}
+                    <div className="flex items-center gap-2 py-1">
+                      <LanguageSelector variant="inlineCompact" />
+                      <button
+                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-400"
+                        aria-label={theme === 'dark' ? tCommon('themeLight') : tCommon('themeDark')}
+                      >
+                        {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                      </button>
+                    </div>
+
+                    {/* Sign In / Register (side by side) */}
                     {!isAuthenticated ? (
-                      <div className="flex flex-col gap-2">
+                      <div className="flex gap-2 py-1">
                         <button
                           onClick={() => openAuth('signin')}
-                          className="flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] w-full text-start text-sm font-medium bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
+                          className="flex-1 py-2 px-3 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white"
                         >
-                          <User className="h-5 w-5 shrink-0" />
-                          <span>{tAuth('signIn')}</span>
+                          {tAuth('signIn')}
                         </button>
                         <button
                           onClick={() => openAuth('register')}
-                          className="flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] w-full text-start text-sm font-medium border border-slate-200 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
+                          className="flex-1 py-2 px-3 rounded-lg text-sm font-medium border border-slate-200 dark:border-white/20 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
                         >
-                          <User className="h-5 w-5 shrink-0" />
-                          <span>{tAuth('register')}</span>
+                          {tAuth('register')}
                         </button>
-                        <SellCarCTA
-                          as="button"
-                          variant="outline"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-3 rounded-lg border border-purple-500 bg-purple-500/10 text-purple-400 min-h-[48px] w-full justify-start text-sm font-medium hover:bg-purple-500/20 transition-colors cursor-pointer"
-                          showIcon
-                        >
-                          {t('nav.sellCar')}
-                        </SellCarCTA>
                       </div>
                     ) : (
-                      <>
+                      <div className="flex gap-2 py-1">
                         <Link
                           href={`/${locale}/my-listings`}
                           onClick={() => setMobileMenuOpen(false)}
                           className={cn(
-                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
-                            "hover:bg-white/10 active:bg-white/10",
-                            basePathname.startsWith('/my-listings') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-200"
+                            "flex-1 py-2 px-3 rounded-lg text-sm font-medium text-center transition-colors",
+                            basePathname.startsWith('/my-listings') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
                           )}
                         >
-                          <List className="h-5 w-5 shrink-0 text-slate-400" />
-                          <span>{t('nav.myListings')}</span>
+                          {t('nav.myListings')}
                         </Link>
                         <Link
                           href={`/${locale}/profile`}
                           onClick={() => setMobileMenuOpen(false)}
                           className={cn(
-                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
-                            "hover:bg-white/10 active:bg-white/10",
-                            basePathname.startsWith('/profile') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-200"
+                            "flex-1 py-2 px-3 rounded-lg text-sm font-medium text-center transition-colors",
+                            basePathname.startsWith('/profile') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10"
                           )}
                         >
-                          <User className="h-5 w-5 shrink-0 text-slate-400" />
-                          <span>{tAuth('myAccount')}</span>
+                          {tAuth('myAccount')}
                         </Link>
-                        <SellCarCTA
-                          as="button"
-                          variant="outline"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-2 px-4 py-3 rounded-lg border border-purple-500 bg-purple-500/10 text-purple-400 min-h-[48px] w-full justify-start text-sm font-medium hover:bg-purple-500/20 transition-colors cursor-pointer"
-                          showIcon
-                        >
-                          {t('nav.sellCar')}
-                        </SellCarCTA>
-                      </>
+                      </div>
                     )}
 
-                    {/* Main nav - grouped: Main, Marketplace, Tools */}
-                    <nav className="space-y-4">
-                      {mobileNavGroups.map((group) => (
-                        <div key={group.titleKey}>
-                          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-3 mb-1.5">
-                            {tKey(t, group.titleKey)}
-                          </p>
-                          <div className="space-y-1">
-                            {group.items.map((item) => {
-                              const action = 'action' in item ? item.action : null
-                              const href = 'href' in item ? item.href : null
-                              if (action === 'openChatbot') {
-                                return (
-                                  <button
-                                    key="ai-assistant"
-                                    onClick={() => {
-                                      window.dispatchEvent(new CustomEvent('open-chatbot'))
-                                      setMobileMenuOpen(false)
-                                    }}
-                                    className={cn(
-                                      "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] w-full text-start text-sm font-medium transition-colors",
-                                      "hover:bg-slate-100 dark:hover:bg-white/10 active:bg-slate-100 dark:active:bg-white/10",
-                                      "text-slate-700 dark:text-slate-300"
-                                    )}
-                                  >
-                                    {'icon' in item && item.icon && <item.icon className="h-5 w-5 shrink-0 text-purple-500 dark:text-purple-400" />}
-                                    <span>{tKey(t, item.labelKey)}</span>
-                                  </button>
-                                )
-                              }
-                              return (
-                                <Link
-                                  key={item.href}
-                                  href={`/${locale}${item.href}`}
-                                  onClick={() => { handleNavClick(item.href); setMobileMenuOpen(false) }}
-                                  className={cn(
-                                    "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
-                                    "hover:bg-slate-100 dark:hover:bg-white/10 active:bg-slate-100 dark:active:bg-white/10",
-                                    isActiveNav(item.href) ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300"
-                                  )}
-                                >
-                                  {'icon' in item && item.icon && <item.icon className={cn("h-5 w-5 shrink-0", isActiveNav(item.href) ? "text-indigo-600 dark:text-white" : "text-slate-500 dark:text-slate-400")} />}
-                                  <span>{tKey(t, item.labelKey)}</span>
-                                </Link>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      ))}
+                    <div className="border-t border-slate-200/80 dark:border-white/10 my-1" role="separator" />
+
+                    {/* Nav items: Home, Predict, Compare, Buy & Sell, Sell Car */}
+                    <nav className="space-y-0.5">
+                      <Link
+                        href={`/${locale}/`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActiveNav('/') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                        )}
+                      >
+                        {tKey(t, 'nav.home')}
+                      </Link>
+                      <Link
+                        href={`/${locale}/predict`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActiveNav('/predict') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                        )}
+                      >
+                        {tKey(t, 'nav.predict')}
+                      </Link>
+                      <Link
+                        href={`/${locale}/compare`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActiveNav('/compare') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                        )}
+                      >
+                        {tKey(t, 'nav.compare')}
+                      </Link>
+                      <Link
+                        href={`/${locale}/buy-sell`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActiveNav('/buy-sell') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                        )}
+                      >
+                        {tKey(t, 'nav.buySell')}
+                      </Link>
+                      <SellCarCTA
+                        as="button"
+                        variant="outline"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center w-full rounded-lg px-3 py-2 text-sm font-medium border border-purple-500/50 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer justify-start"
+                        showIcon={false}
+                      >
+                        {t('nav.sellCar')}
+                      </SellCarCTA>
                     </nav>
 
-                    {/* Bottom: divider + Logout when authenticated */}
+                    <div className="border-t border-slate-200/80 dark:border-white/10 my-1" role="separator" />
+
+                    {/* AI Assistant, Favorites, History, Services, Batch */}
+                    <nav className="space-y-0.5">
+                      <button
+                        onClick={() => {
+                          window.dispatchEvent(new CustomEvent('open-chatbot'))
+                          setMobileMenuOpen(false)
+                        }}
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 w-full text-start text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                      >
+                        <MessageCircle className="h-4 w-4 shrink-0 text-purple-500 dark:text-purple-400" />
+                        {tKey(t, 'nav.aiAssistant')}
+                      </button>
+                      <Link
+                        href={`/${locale}/favorites`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActiveNav('/favorites') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                        )}
+                      >
+                        {tKey(t, 'nav.favorites')}
+                      </Link>
+                      <Link
+                        href={`/${locale}/history`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActiveNav('/history') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                        )}
+                      >
+                        {tKey(t, 'nav.history')}
+                      </Link>
+                      <Link
+                        href={`/${locale}/services`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActiveNav('/services') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                        )}
+                      >
+                        {tKey(t, 'nav.services')}
+                      </Link>
+                      <Link
+                        href={`/${locale}/batch`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                          isActiveNav('/batch') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                        )}
+                      >
+                        {tKey(t, 'nav.batch')}
+                      </Link>
+                    </nav>
+
+                    {/* Logout when authenticated */}
                     {isAuthenticated && (
                       <>
-                        <div className="border-t border-slate-200 dark:border-white/10 my-3" role="separator" />
+                        <div className="border-t border-slate-200/80 dark:border-white/10 my-1" role="separator" />
                         <button
                           onClick={() => { handleLogoutClick(); setMobileMenuOpen(false) }}
-                          className={cn(
-                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] w-full text-start text-sm font-medium transition-colors",
-                            "hover:bg-white/10 active:bg-white/10 text-slate-200"
-                          )}
+                          className="flex items-center gap-2 rounded-lg px-3 py-2 w-full text-start text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10"
                         >
-                          <LogOut className="h-5 w-5 shrink-0 text-slate-400" />
-                          <span>{tAuth('logout')}</span>
+                          <LogOut className="h-4 w-4 shrink-0" />
+                          {tAuth('logout')}
                         </button>
                       </>
                     )}

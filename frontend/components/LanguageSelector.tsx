@@ -23,7 +23,7 @@ const localeCodes: Record<string, string> = {
   ar: 'AR',
 }
 
-export type LanguageSelectorVariant = 'dropdown' | 'inline'
+export type LanguageSelectorVariant = 'dropdown' | 'inline' | 'inlineCompact'
 
 function getPathWithoutLocale(pathname: string, locale: string): string {
   const prefix = `/${locale}`
@@ -88,10 +88,15 @@ export function LanguageSelector({ variant = 'dropdown' }: LanguageSelectorProps
 
   // Inline: LTR → EN | KU | AR; RTL → AR | KU | EN (glassmorphism)
   // Light mode: ensure EN/KU/AR text has proper contrast (text-slate-900 on light bg)
-  if (variant === 'inline') {
+  // inlineCompact: smaller for mobile menu (EN | KU | AR)
+  const isCompact = variant === 'inlineCompact'
+  if (variant === 'inline' || variant === 'inlineCompact') {
     return (
       <div
-        className="flex items-center gap-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-md px-1 py-1"
+        className={cn(
+          "flex items-center gap-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-md",
+          isCompact ? "px-0.5 py-0.5" : "px-1 py-1"
+        )}
         role="group"
         aria-label="Language"
       >
@@ -105,7 +110,8 @@ export function LanguageSelector({ variant = 'dropdown' }: LanguageSelectorProps
                 type="button"
                 onClick={() => switchLocale(loc)}
                 className={cn(
-                  "min-h-[44px] min-w-[44px] px-3 rounded-full text-xs font-medium transition-colors",
+                  "rounded-full text-xs font-medium transition-colors",
+                  isCompact ? "min-h-[32px] min-w-[32px] px-2" : "min-h-[44px] min-w-[44px] px-3",
                   "hover:bg-slate-200 dark:hover:bg-white/10",
                   "focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:ring-offset-2 focus:ring-offset-transparent",
                   isSelected
