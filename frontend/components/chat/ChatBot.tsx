@@ -10,6 +10,18 @@ interface Message {
   content: string;
 }
 
+/** Strip markdown symbols (** etc) from AI responses for clean display */
+function stripMarkdown(text: string): string {
+  if (!text || typeof text !== 'string') return ''
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/_(.+?)_/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    .trim()
+}
+
 export default function ChatBot() {
   const locale = useLocale();
   const [isOpen, setIsOpen] = useState(false);
@@ -23,30 +35,51 @@ export default function ChatBot() {
     en: {
       title: 'CarWiseIQ Assistant',
       subtitle: 'Ask me anything!',
-      welcome: 'Hello! 👋 How can I help you today?',
-      hint: 'Ask about car prices, features, or how to use CarWiseIQ',
+      welcome: "Hi! 👋 I'm here to help with car valuations and buying/selling. What can I help you with?",
+      hint: 'Tap a suggestion below or type your question',
       placeholder: 'Type your message...',
       error: 'Sorry, something went wrong. Please try again.',
-      thinking: 'Thinking...'
+      thinking: 'Thinking...',
+      quickReplies: [
+        '💰 How much is my car worth?',
+        '🚗 How to sell my car?',
+        '🔍 Find cars under $15,000',
+        '📊 Compare two cars',
+        '❓ How does CarWiseIQ work?',
+      ],
     },
     ku: {
       title: 'یاریدەدەری CarWiseIQ',
       subtitle: 'پرسیارەکانت بکە، وەڵامت دەدەمەوە!',
-      welcome: 'سڵاو! 👋 چۆن دەتوانم یارمەتیت بدەم؟',
-      hint: 'دەربارەی نرخی ئۆتۆمبێل، تایبەتمەندییەکان، یان چۆنیەتی بەکارهێنانی CarWiseIQ بپرسە',
+      welcome: 'سڵاو! 👋 من لێرەم بۆ یارمەتیدان لە نرخاندن و کڕین و فرۆشتنی ئۆتۆمبێل. چۆن دەتوانم یارمەتیت بدەم؟',
+      hint: 'یەکێک لە پرسیارەکان هەڵبژێرە یان پرسیارەکەت بنووسە',
       placeholder: 'پەیامەکەت بنووسە...',
       error: 'ببورە، هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵ بدەوە.',
-      thinking: 'بیردەکەمەوە...'
+      thinking: 'بیردەکەمەوە...',
+      quickReplies: [
+        '💰 ئۆتۆمبێڵەکەم چەند دەبێت؟',
+        '🚗 چۆن ئۆتۆمبێڵ بفرۆشم؟',
+        '🔍 ئۆتۆمبێڵ لە خوار ١٥٠٠٠$',
+        '📊 دوو ئۆتۆمبێڵ بەراورد بکە',
+        '❓ CarWiseIQ چۆن کاردەکات؟',
+      ],
     },
     ar: {
       title: 'مساعد CarWiseIQ',
       subtitle: 'اسألني وسأجيبك!',
-      welcome: 'مرحباً! 👋 كيف يمكنني مساعدتك؟',
-      hint: 'اسأل عن أسعار السيارات أو الميزات أو كيفية استخدام CarWiseIQ',
+      welcome: 'مرحباً! 👋 أنا هنا لمساعدتك في تقييم وشراء وبيع السيارات. كيف يمكنني مساعدتك؟',
+      hint: 'اختر اقتراحاً أدناه أو اكتب سؤالك',
       placeholder: 'اكتب رسالتك...',
       error: 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.',
-      thinking: 'جاري التفكير...'
-    }
+      thinking: 'جاري التفكير...',
+      quickReplies: [
+        '💰 كم تساوي سيارتي؟',
+        '🚗 كيف أبيع سيارتي؟',
+        '🔍 سيارات أقل من ١٥٠٠٠$',
+        '📊 قارن سيارتين',
+        '❓ كيف يعمل CarWiseIQ؟',
+      ],
+    },
   };
 
   const t = translations[locale as keyof typeof translations] || translations.en;
@@ -83,11 +116,12 @@ export default function ChatBot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  const sendMessage = async (text?: string) => {
+    const messageToSend = (text ?? input.trim()).trim()
+    if (!messageToSend || isLoading) return
 
-    const userMessage = input.trim();
-    setInput('');
+    const userMessage = messageToSend
+    if (!text) setInput('')
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
@@ -231,7 +265,9 @@ export default function ChatBot() {
                       : `${colors.messageBg} ${colors.text} ${colors.border} border ` + (isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm')
                   }`}
                 >
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.content}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {msg.role === 'assistant' ? stripMarkdown(msg.content) : msg.content}
+                  </p>
                 </div>
               </div>
             ))}
@@ -256,6 +292,22 @@ export default function ChatBot() {
 
           {/* Input Area */}
           <div className={`flex-shrink-0 p-4 border-t ${colors.border} ${colors.bg}`}>
+            {/* Quick reply suggestions - show when no messages yet */}
+            {messages.length === 0 && t.quickReplies && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {t.quickReplies.map((reply: string, idx: number) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => sendMessage(reply)}
+                    disabled={isLoading}
+                    className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors border ${colors.border} ${colors.inputBg} ${colors.text} hover:bg-purple-600/20 hover:border-purple-500/50 hover:text-purple-400 disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? 'text-right' : 'text-left'}`}
+                  >
+                    {reply}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <input
                 type="text"
