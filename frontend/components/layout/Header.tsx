@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
-import { Car, Menu, X, User, LogOut, Sun, Moon, LayoutDashboard, List, ChevronDown, UserCircle, Sparkles } from 'lucide-react'
+import { Car, Menu, X, User, LogOut, Sun, Moon, LayoutDashboard, List, ChevronDown, UserCircle, Sparkles, MessageCircle } from 'lucide-react'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
@@ -38,11 +38,11 @@ const navItems = [
   { href: '/history', labelKey: 'nav.history' },
 ]
 
-// Mobile menu groups: Main, Marketplace, Tools (with Batch/History in More)
+// Mobile menu groups: Main, Marketplace, Tools (with AI Assistant, Batch, History)
 const mobileNavGroups = [
   { titleKey: 'nav.groupMain', items: [{ href: '/', labelKey: 'nav.home', icon: Car }, { href: '/predict', labelKey: 'nav.predict' }, { href: '/compare', labelKey: 'nav.compare' }] },
   { titleKey: 'nav.groupMarketplace', items: [{ href: '/buy-sell', labelKey: 'nav.buySell' }, { href: '/favorites', labelKey: 'nav.favorites' }] },
-  { titleKey: 'nav.groupTools', items: [{ href: '/services', labelKey: 'nav.services', icon: Sparkles }, { href: '/batch', labelKey: 'nav.batch' }, { href: '/history', labelKey: 'nav.history' }] },
+  { titleKey: 'nav.groupTools', items: [{ action: 'openChatbot', labelKey: 'nav.aiAssistant', icon: MessageCircle }, { href: '/services', labelKey: 'nav.services', icon: Sparkles }, { href: '/batch', labelKey: 'nav.batch' }, { href: '/history', labelKey: 'nav.history' }] },
 ]
 
 export function Header() {
@@ -451,21 +451,44 @@ export function Header() {
                             {tKey(t, group.titleKey)}
                           </p>
                           <div className="space-y-1">
-                            {group.items.map((item) => (
-                              <Link
-                                key={item.href}
-                                href={`/${locale}${item.href}`}
-                                onClick={() => { handleNavClick(item.href); setMobileMenuOpen(false) }}
-                                className={cn(
-                                  "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
-                                  "hover:bg-slate-100 dark:hover:bg-white/10 active:bg-slate-100 dark:active:bg-white/10",
-                                  isActiveNav(item.href) ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300"
-                                )}
-                              >
-                                {'icon' in item && item.icon && <item.icon className={cn("h-5 w-5 shrink-0", isActiveNav(item.href) ? "text-indigo-600 dark:text-white" : "text-slate-500 dark:text-slate-400")} />}
-                                <span>{tKey(t, item.labelKey)}</span>
-                              </Link>
-                            ))}
+                            {group.items.map((item) => {
+                              const action = 'action' in item ? item.action : null
+                              const href = 'href' in item ? item.href : null
+                              if (action === 'openChatbot') {
+                                return (
+                                  <button
+                                    key="ai-assistant"
+                                    onClick={() => {
+                                      window.dispatchEvent(new CustomEvent('open-chatbot'))
+                                      setMobileMenuOpen(false)
+                                    }}
+                                    className={cn(
+                                      "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] w-full text-start text-sm font-medium transition-colors",
+                                      "hover:bg-slate-100 dark:hover:bg-white/10 active:bg-slate-100 dark:active:bg-white/10",
+                                      "text-slate-700 dark:text-slate-300"
+                                    )}
+                                  >
+                                    {'icon' in item && item.icon && <item.icon className="h-5 w-5 shrink-0 text-purple-500 dark:text-purple-400" />}
+                                    <span>{tKey(t, item.labelKey)}</span>
+                                  </button>
+                                )
+                              }
+                              return (
+                                <Link
+                                  key={item.href}
+                                  href={`/${locale}${item.href}`}
+                                  onClick={() => { handleNavClick(item.href); setMobileMenuOpen(false) }}
+                                  className={cn(
+                                    "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
+                                    "hover:bg-slate-100 dark:hover:bg-white/10 active:bg-slate-100 dark:active:bg-white/10",
+                                    isActiveNav(item.href) ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300"
+                                  )}
+                                >
+                                  {'icon' in item && item.icon && <item.icon className={cn("h-5 w-5 shrink-0", isActiveNav(item.href) ? "text-indigo-600 dark:text-white" : "text-slate-500 dark:text-slate-400")} />}
+                                  <span>{tKey(t, item.labelKey)}</span>
+                                </Link>
+                              )
+                            })}
                           </div>
                         </div>
                       ))}

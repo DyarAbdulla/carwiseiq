@@ -152,17 +152,26 @@ export default function ChatBot() {
     setIsLoading(false);
   };
 
+  // Listen for open request from mobile menu
+  useEffect(() => {
+    const handler = () => setIsOpen(true)
+    window.addEventListener('open-chatbot', handler)
+    return () => window.removeEventListener('open-chatbot', handler)
+  }, [])
+
   return (
     <>
-      {/* Chat Button */}
+      {/* Chat Button - Desktop only (md: and above); mobile uses menu item */}
       {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-20 right-6 z-50 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 animate-pulse hover:animate-none"
-          aria-label="Open chat"
-        >
-          <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
-        </button>
+        <div className="hidden md:flex fixed bottom-6 right-6 z-50">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 animate-pulse hover:animate-none"
+            aria-label="Open chat"
+          >
+            <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+          </button>
+        </div>
       )}
 
       {/* Chat Modal - Full screen on mobile, floating widget on desktop; Vazirmatn for RTL */}
