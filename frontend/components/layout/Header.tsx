@@ -396,15 +396,13 @@ export function Header() {
                           <span>{tAuth('register')}</span>
                         </button>
                         <SellCarCTA
-                          as="span"
+                          as="button"
+                          variant="outline"
                           onClick={() => setMobileMenuOpen(false)}
-                          className={cn(
-                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
-                            "border border-purple-300 dark:border-purple-500/50 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-500/10"
-                          )}
-                          showIcon={false}
+                          className="flex items-center gap-2 px-4 py-3 rounded-lg border border-purple-500 bg-purple-500/10 text-purple-400 min-h-[48px] w-full justify-start text-sm font-medium hover:bg-purple-500/20 transition-colors cursor-pointer"
+                          showIcon
                         >
-                          <span>{t('nav.sellCar')}</span>
+                          {t('nav.sellCar')}
                         </SellCarCTA>
                       </div>
                     ) : (
@@ -434,15 +432,13 @@ export function Header() {
                           <span>{tAuth('myAccount')}</span>
                         </Link>
                         <SellCarCTA
-                          as="span"
+                          as="button"
+                          variant="outline"
                           onClick={() => setMobileMenuOpen(false)}
-                          className={cn(
-                            "flex items-center gap-3 rounded-xl px-3 py-3 min-h-[48px] text-sm font-medium transition-colors",
-                            "border border-purple-300 dark:border-purple-500/50 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-500/10"
-                          )}
-                          showIcon={false}
+                          className="flex items-center gap-2 px-4 py-3 rounded-lg border border-purple-500 bg-purple-500/10 text-purple-400 min-h-[48px] w-full justify-start text-sm font-medium hover:bg-purple-500/20 transition-colors cursor-pointer"
+                          showIcon
                         >
-                          <span>{t('nav.sellCar')}</span>
+                          {t('nav.sellCar')}
                         </SellCarCTA>
                       </>
                     )}
