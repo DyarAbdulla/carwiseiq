@@ -179,6 +179,7 @@
     "condition": "Condition",
     "features": "Features",
     "description": "Description",
+    "seller": "Seller",
     "sellerNotesLabel": "Seller's notes (original)",
     "vin": "VIN",
     "priceHistory": "Price History",

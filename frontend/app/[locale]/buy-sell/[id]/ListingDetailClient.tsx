@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import {
-  Phone, MapPin, Calendar, ChevronLeft, ChevronRight, Flag, MessageCircle, Pencil, CheckCircle2, XCircle,
-  Gauge, Fuel, Settings, Palette, Award, ShieldCheck
+  Phone, MapPin, Calendar, ChevronLeft, ChevronRight, Flag, MessageCircle,
+  Gauge, Fuel, Settings, Palette, Award
 } from 'lucide-react'
 import { FavoriteButton } from '@/components/marketplace/FavoriteButton'
 import { SimilarCarsRecommendations } from '@/components/marketplace/SimilarCarsRecommendations'
@@ -426,53 +426,69 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
     }
   }
 
+  const isSamePhone = contactPhone && contactWhatsApp && String(contactPhone).replace(/\D/g, '') === String(contactWhatsApp).replace(/\D/g, '')
+  const sellerName = listing.seller_name || listing.seller?.full_name || (listing.fromSupabase && listing.user_id ? null : null)
+
   const contactSellerCard = (
-    <div className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-2xl p-5 md:p-6 mb-6">
-      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 md:mb-5">{t('contactSeller')}</h3>
-      <div className="space-y-4 mb-5">
-        <div className="text-sm text-slate-700 dark:text-gray-300 space-y-2.5">
-          <p className="flex items-center gap-2 text-sm md:text-base">
+    <div className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-2xl p-4 md:p-6 mb-6">
+      <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mb-3 md:mb-5">{t('contactSeller')}</h3>
+      {sellerName && (
+        <p className="text-slate-700 dark:text-gray-300 text-sm mb-3"><span className="text-slate-500 dark:text-gray-500 font-medium">{t('seller')}:</span> {sellerName}</p>
+      )}
+      <div className="space-y-3 mb-4">
+        <div className="text-sm text-slate-700 dark:text-gray-300 space-y-2">
+          <p className="flex items-center gap-2 text-sm">
             <Calendar className="h-4 w-4 shrink-0 text-gray-400" />
             <span>{new Date(listing.created_at).toLocaleDateString()}</span>
           </p>
-          <p className="flex items-center gap-2 text-sm md:text-base">
+          <p className="flex items-center gap-2 text-sm">
             <MapPin className="h-4 w-4 shrink-0 text-gray-400" />
             <span>{[listing.location_city, listing.location_state, listing.location_country].filter(Boolean).join(', ') || listing.location || '—'}</span>
           </p>
         </div>
         {hasContact ? (
-          <div className="space-y-3 md:space-y-4">
-            {contactPhone && (
+          <div className="space-y-2">
+            {isSamePhone ? (
               <div>
-                <p className="text-gray-400 dark:text-gray-500 text-xs mb-2 font-medium uppercase tracking-wide">{t('phone')}</p>
-                <a href={telLink} className="flex items-center gap-2 text-white dark:text-white font-semibold text-base md:text-lg hover:text-indigo-400 focus:outline-none focus:underline transition-colors">
-                  <Phone className="h-5 w-5 shrink-0 text-emerald-400" />
-                  {formatPhoneDisplay(contactPhone)}
-                </a>
+                <p className="text-gray-400 dark:text-gray-500 text-xs mb-1 font-medium uppercase tracking-wide">{t('phone')} / WhatsApp</p>
+                <p className="text-slate-900 dark:text-white font-semibold text-base">{formatPhoneDisplay(contactPhone)}</p>
               </div>
-            )}
-            {contactWhatsApp && (
-              <div>
-                <p className="text-slate-600 dark:text-gray-400 text-xs mb-2 font-medium uppercase tracking-wide">WhatsApp</p>
-                <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-base md:text-lg hover:text-emerald-600 dark:hover:text-emerald-400 focus:outline-none focus:underline transition-colors">
-                  <MessageCircle className="h-5 w-5 shrink-0 text-emerald-400" />
-                  {formatPhoneDisplay(contactWhatsApp)}
-                </a>
-              </div>
+            ) : (
+              <>
+                {contactPhone && (
+                  <div>
+                    <p className="text-gray-400 dark:text-gray-500 text-xs mb-1 font-medium uppercase tracking-wide">{t('phone')}</p>
+                    <a href={telLink} className="flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-base hover:text-indigo-400 focus:outline-none focus:underline transition-colors">
+                      <Phone className="h-5 w-5 shrink-0 text-emerald-400" />
+                      {formatPhoneDisplay(contactPhone)}
+                    </a>
+                  </div>
+                )}
+                {contactWhatsApp && (
+                  <div>
+                    <p className="text-gray-400 dark:text-gray-500 text-xs mb-1 font-medium uppercase tracking-wide">WhatsApp</p>
+                    <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-base hover:text-emerald-600 dark:hover:text-emerald-400 focus:outline-none focus:underline transition-colors">
+                      <MessageCircle className="h-5 w-5 shrink-0 text-emerald-400" />
+                      {formatPhoneDisplay(contactWhatsApp)}
+                    </a>
+                  </div>
+                )}
+              </>
             )}
           </div>
         ) : (
-          <p className="text-gray-400 text-sm py-3">{t('contactNotAvailable')}</p>
+          <p className="text-gray-400 text-sm py-2">{t('contactNotAvailable')}</p>
         )}
       </div>
-      <div className="pt-4 border-t border-white/10 space-y-3 pb-8 md:pb-0">
-        <p className="text-amber-400/90 text-xs flex items-start gap-2 leading-relaxed" style={{ fontSize: 'clamp(12px, 3vw, 14px)' }}>
+      <div className="pt-3 border-t border-white/10 space-y-2 pb-4 md:pb-0">
+        <p className="text-amber-400/90 text-xs flex items-start gap-2 leading-relaxed">
           <span className="text-base">⚠</span>
           <span>{t('safetyTip')}</span>
         </p>
-        <Button variant="outline" className="w-full border-white/10 text-gray-300 hover:bg-white/5 h-10 md:h-11 min-h-[44px] touch-manipulation">
-          <Flag className="h-4 w-4 mr-2" />{t('reportListing')}
-        </Button>
+        <button className="text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300 text-sm font-medium flex items-center gap-1.5 transition-colors">
+          <Flag className="h-3.5 w-3.5 shrink-0" />
+          {t('reportListing')}
+        </button>
       </div>
     </div>
   )
@@ -486,20 +502,32 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-radial from-indigo-500/15 via-purple-500/10 to-transparent blur-3xl" />
         </div>
 
-        {/* Back to Marketplace Button */}
+        {/* Back button - top left, always visible on mobile */}
         <Link
           href={`/${locale}/buy-sell`}
-          className="!fixed md:!absolute top-20 left-4 md:top-6 md:left-6 !z-[100] group"
+          className="!fixed md:!absolute top-20 left-3 sm:left-4 md:top-6 md:left-6 !z-[100] group"
         >
-          <button className="flex items-center gap-2 bg-slate-800/80 backdrop-blur-md hover:bg-slate-900/90 border border-white/30 hover:border-white/40 rounded-full px-4 py-2.5 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-w-[44px] min-h-[44px] touch-manipulation">
+          <button className="flex items-center gap-2 bg-slate-800/90 backdrop-blur-md hover:bg-slate-900/95 border border-white/20 hover:border-white/30 rounded-full px-3 py-2.5 sm:px-4 sm:py-2.5 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-w-[44px] min-h-[44px] touch-manipulation">
             <ChevronLeft className="w-5 h-5 text-white flex-shrink-0" />
             <span className="hidden sm:inline text-white font-medium text-sm whitespace-nowrap">
-              {t('backToMarketplace') || 'Back to Marketplace'}
+              {t('backToMarketplace') || 'Back'}
             </span>
           </button>
         </Link>
 
-        <div className={`max-w-7xl mx-auto px-3 sm:px-6 md:px-8 pt-0 ${hasContact ? 'pb-40 md:pb-16' : 'pb-12 md:pb-16'} md:pt-0 scroll-smooth overflow-x-hidden`} style={hasContact ? { paddingBottom: 'max(10rem, 180px)' } : undefined}>
+        {/* Share button - top right, icon only (mobile only; desktop has it in overlay) */}
+        <div className="md:hidden !fixed top-20 right-3 sm:right-4 !z-[100]">
+          <div className="[&>button]:!min-w-[44px] [&>button]:!min-h-[44px] [&>button]:!p-2.5 [&>button]:rounded-full [&>button]:bg-slate-800/90 [&>button]:backdrop-blur-md [&>button]:border [&>button]:border-white/20 [&>button]:text-white [&>button]:touch-manipulation">
+            <SocialShareButtons
+              listing={{ id: listing.id, make: listing.make, model: listing.model, year: listing.year, price: listing.price }}
+              url={typeof window !== 'undefined' ? window.location.href : ''}
+              shareLabel={t('shareListing')}
+              iconOnly
+            />
+          </div>
+        </div>
+
+        <div className={`max-w-7xl mx-auto px-3 sm:px-6 md:px-8 pt-0 ${hasContact ? 'pb-36 md:pb-16' : 'pb-12 md:pb-16'} md:pt-0 scroll-smooth overflow-x-hidden`} style={hasContact ? { paddingBottom: 'max(9rem, 160px)' } : undefined}>
           {/* Owner Management Panel - Mobile Only - At Top */}
           {isOwner && (
             <div className="lg:hidden mb-6 mt-20 md:mt-0">
@@ -515,10 +543,10 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
             </div>
           )}
 
-          {/* Hero Image Section with Glassmorphism Overlay */}
-          <div className="relative w-full mb-6 md:mb-10">
+          {/* Hero Image Section - Full width on mobile (break out of padding) */}
+          <div className="relative w-full mb-4 md:mb-10 -mx-3 sm:-mx-6 md:mx-0">
             <div
-              className="relative aspect-video overflow-hidden rounded-2xl cursor-pointer group border border-white/10 shadow-2xl"
+              className="relative aspect-video overflow-hidden rounded-none md:rounded-2xl cursor-pointer group border-0 md:border border-white/10 shadow-2xl"
               onClick={() => {
                 if (images.length > 0) {
                   setIsLightboxOpen(true)
@@ -602,9 +630,8 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                 </div>
               )}
 
-              {/* Glassmorphism Info Overlay Card - Enhanced for mobile */}
-              <div className="absolute bottom-2 left-2 right-2 md:bottom-4 md:left-4 md:right-4 z-10 backdrop-blur-xl bg-gradient-to-t from-black/60 to-black/40 border border-white/20 rounded-xl p-3 md:p-4 shadow-2xl space-y-2">
-                {/* Top Row: Car Name & Favorite Button */}
+              {/* Desktop overlay: Car name, price, Favorite, Share */}
+              <div className="hidden md:block absolute bottom-2 left-2 right-2 md:bottom-4 md:left-4 md:right-4 z-10 backdrop-blur-xl bg-gradient-to-t from-black/60 to-black/40 border border-white/20 rounded-xl p-3 md:p-4 shadow-2xl space-y-2">
                 <div className="flex items-start justify-between gap-2 md:gap-3">
                   <div className="flex-1 min-w-0">
                     <h1 className="text-lg md:text-2xl font-bold text-white tracking-tight leading-tight">
@@ -627,8 +654,6 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                     )}
                   </div>
                 </div>
-
-                {/* Bottom Row: Price & Share Button */}
                 <div className="flex items-center justify-between gap-2 md:gap-3">
                   <div className="flex-1 min-w-0">
                     <p className="text-2xl md:text-3xl font-bold text-emerald-400 leading-tight" style={{ textShadow: '0 0 20px rgba(16, 185, 129, 0.5)' }}>
@@ -646,12 +671,39 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                   </div>
                 </div>
               </div>
+
+              {/* Mobile: Favorite button overlay (minimal) */}
+              {listing?.id && (
+                <div className="md:hidden absolute top-3 left-3 z-10">
+                  <div className="[&>button]:bg-black/50 [&>button]:hover:bg-black/60 [&>button]:backdrop-blur-md [&>button]:rounded-full [&>button]:p-2.5 [&>button]:min-w-[44px] [&>button]:min-h-[44px] [&>button]:border-0">
+                    <FavoriteButton
+                      listingId={listing.id}
+                      initialFavorite={isSaved}
+                      size="md"
+                      onToggle={(f) => setIsSaved(f)}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Thumbnail Strip - Enhanced with better spacing and shadows - Horizontal scrollable on mobile */}
+            {/* Mobile: Title & Price below image (not overlapping) */}
+            <div className="md:hidden px-3 sm:px-4 pt-4 pb-2 space-y-1">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
+                {listing.year} {listing.make} {listing.model}{listing.trim ? ` ${listing.trim}` : ''}
+              </h1>
+              {isSold && listing.sold_at && (
+                <p className="text-red-400 text-xs">{t('soldOn')}: {new Date(listing.sold_at).toLocaleDateString()}</p>
+              )}
+              <p className="text-2xl font-bold text-emerald-500 dark:text-emerald-400">
+                ${listing.price?.toLocaleString()}
+              </p>
+            </div>
+
+            {/* Thumbnail Strip - Smaller on mobile, horizontal scroll */}
             {images.length > 1 && (
-              <div className="w-full mt-4 py-4 flex gap-3 overflow-x-auto overflow-y-hidden bg-black/20 backdrop-blur-md rounded-2xl [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/20 scroll-smooth snap-x snap-mandatory touch-pan-x">
-                <div className="px-4 md:px-6 flex gap-3 min-w-max">
+              <div className="w-full mt-3 md:mt-4 py-3 md:py-4 flex gap-2 md:gap-3 overflow-x-auto overflow-y-hidden bg-black/10 md:bg-black/20 backdrop-blur-md rounded-xl md:rounded-2xl [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full scroll-smooth snap-x snap-mandatory touch-pan-x">
+                <div className="px-3 md:px-6 flex gap-2 md:gap-3 min-w-max">
                   {images.map((img: { url?: string }, idx: number) => {
                     const u = img?.url
                     const src = u ? listingImageUrl(u) : ''
@@ -665,9 +717,9 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                           setSelectedImageIndex(idx)
                           setIsLightboxOpen(true)
                         }}
-                        className={`flex-shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden transition-all duration-200 min-h-[80px] min-w-[80px] ${isActive
-                          ? 'border-[3px] border-purple-500 ring-2 ring-purple-500/50 shadow-lg shadow-purple-500/50 scale-105'
-                          : 'border-2 border-white/20 hover:border-white/40 active:scale-95 md:hover:scale-105 shadow-md'
+                        className={`flex-shrink-0 w-14 h-14 md:w-24 md:h-24 rounded-lg md:rounded-xl overflow-hidden transition-all duration-200 min-h-[56px] min-w-[56px] md:min-h-[80px] md:min-w-[80px] ${isActive
+                          ? 'border-2 md:border-[3px] border-purple-500 ring-2 ring-purple-500/50 shadow-lg shadow-purple-500/50 scale-105'
+                          : 'border border-white/20 hover:border-white/40 active:scale-95 md:hover:scale-105 shadow-md'
                           }`}
                         aria-label={t('viewImage', { current: idx + 1, total: images.length })}
                       >
@@ -696,17 +748,17 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
             )}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-3 sm:gap-6 md:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 sm:gap-6 md:gap-8">
             {/* Left Column: Key facts, Features, Description, VIN, Price history, Similar */}
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {/* Contact Seller - Mobile Only (shown before car details on mobile) */}
               <div key="contact-seller-mobile" className="lg:hidden mb-6">{contactSellerCard}</div>
 
-              {/* Key facts - Enhanced Glass Tiles Grid */}
+              {/* Key facts - Compact 2-col grid on mobile, add Condition/Color/Location */}
               <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-3 sm:p-5 md:p-6 shadow-sm mb-6 lg:mb-0">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-5">{t('carDetails') || 'Car Details'}</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
-                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
+                <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mb-3 md:mb-5">{t('carDetails') || 'Car Details'}</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
+                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
                         <Calendar className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
@@ -715,7 +767,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                     <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('year')}</p>
                     <p className="text-slate-900 dark:text-white font-bold text-lg md:text-xl">{listing.year}</p>
                   </div>
-                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
+                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
                         <Gauge className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
@@ -724,7 +776,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                     <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('mileage')}</p>
                     <p className="text-slate-900 dark:text-white font-bold text-base md:text-xl leading-tight">{listing.mileage?.toLocaleString()} {listing.mileage_unit || 'km'}</p>
                   </div>
-                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
+                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
                         <Fuel className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
@@ -733,7 +785,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                     <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('fuelType')}</p>
                     <p className="text-slate-900 dark:text-white font-bold text-base md:text-xl">{listing.fuel_type || '—'}</p>
                   </div>
-                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
+                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
                         <Settings className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
@@ -742,7 +794,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                     <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('transmission')}</p>
                     <p className="text-slate-900 dark:text-white font-bold text-base md:text-xl">{listing.transmission || '—'}</p>
                   </div>
-                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
+                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
                         <Award className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
@@ -756,7 +808,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                       }`}>{listing.condition}</span>
                   </div>
                   {listing.color && (
-                    <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
+                    <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
                           <Palette className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
@@ -766,6 +818,15 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                       <p className="text-slate-900 dark:text-white font-bold text-base md:text-xl">{listing.color}</p>
                     </div>
                   )}
+                  <div className="backdrop-blur-md bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 md:p-5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all duration-300 group shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center group-hover:bg-indigo-500/30 transition-colors">
+                        <MapPin className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
+                      </div>
+                    </div>
+                    <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('location')}</p>
+                    <p className="text-slate-900 dark:text-white font-bold text-sm md:text-xl leading-tight">{[listing.location_city, listing.location_state, listing.location_country].filter(Boolean).join(', ') || listing.location || '—'}</p>
+                  </div>
                 </div>
               </div>
 
@@ -845,18 +906,18 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
           </div>
         </div>
 
-        {/* Sticky Action Bar - Mobile Only - Fixed at bottom with proper styling */}
+        {/* Sticky Action Bar - Mobile Only - Call & WhatsApp same size, side by side */}
         {hasContact && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl bg-gradient-to-t from-gray-900/98 via-gray-900/95 to-gray-900/95 border-t border-white/20 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] safe-area-inset-bottom">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl bg-gradient-to-t from-gray-900/98 via-gray-900/95 to-gray-900/95 border-t border-white/20 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] pb-[env(safe-area-inset-bottom)]">
             <div className="max-w-7xl mx-auto flex gap-3">
               {contactPhone && (
-                <Button asChild className="flex-1 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 active:scale-95 min-h-[52px] h-[52px] text-base font-semibold shadow-lg shadow-emerald-500/30 touch-manipulation rounded-xl">
-                  <a href={telLink} className="flex items-center justify-center"><Phone className="h-5 w-5 mr-2" />{t('callNow')}</a>
+                <Button asChild className="flex-1 min-w-0 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 active:scale-95 min-h-[48px] h-12 text-base font-semibold shadow-lg shadow-emerald-500/30 touch-manipulation rounded-xl">
+                  <a href={telLink} className="flex items-center justify-center gap-2 w-full"><Phone className="h-5 w-5 shrink-0" />{t('callNow')}</a>
                 </Button>
               )}
               {contactWhatsApp && (
-                <Button asChild variant="outline" className="flex-1 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 active:scale-95 min-h-[52px] h-[52px] text-base font-semibold touch-manipulation rounded-xl">
-                  <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center"><MessageCircle className="h-5 w-5 mr-2" />WhatsApp</a>
+                <Button asChild variant="outline" className="flex-1 min-w-0 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 active:scale-95 min-h-[48px] h-12 text-base font-semibold touch-manipulation rounded-xl">
+                  <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full"><MessageCircle className="h-5 w-5 shrink-0" />WhatsApp</a>
                 </Button>
               )}
             </div>

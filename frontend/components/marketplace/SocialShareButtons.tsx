@@ -14,6 +14,7 @@ import {
   Mail, Copy, QrCode, X
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { cn } from '@/lib/utils'
 // QR Code generation - using dynamic import
 
 interface SocialShareButtonsProps {
@@ -27,9 +28,11 @@ interface SocialShareButtonsProps {
   url: string
   /** Translated label for the Share button (e.g. "Share", "هاوبەشکردن", "مشاركة") */
   shareLabel?: string
+  /** Show only the Share icon (no text) - for mobile header */
+  iconOnly?: boolean
 }
 
-export function SocialShareButtons({ listing, url, shareLabel = 'Share' }: SocialShareButtonsProps) {
+export function SocialShareButtons({ listing, url, shareLabel = 'Share', iconOnly = false }: SocialShareButtonsProps) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const toastHook = useToast()
@@ -89,9 +92,10 @@ export function SocialShareButtons({ listing, url, shareLabel = 'Share' }: Socia
         onClick={() => setShareDialogOpen(true)}
         variant="outline"
         className="backdrop-blur-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all"
+        aria-label={shareLabel}
       >
-        <Share2 className="h-4 w-4 mr-2" />
-        {shareLabel}
+        <Share2 className={cn('h-4 w-4', !iconOnly && 'mr-2')} />
+        {!iconOnly && shareLabel}
       </Button>
 
       <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
