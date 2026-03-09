@@ -154,8 +154,8 @@ export function Header() {
           </span>
           {new Date() < new Date('2026-03-20') && (
             <>
-              <span className="text-yellow-400 text-base ml-1.5 sm:hidden" aria-label="Ramadan Mubarak">🌙</span>
-              <span className="text-yellow-400 text-sm ml-2 hidden sm:inline">🌙 Ramadan Mubarak</span>
+              <span className="text-yellow-400 text-base ml-1.5 sm:hidden" aria-label={tCommon('ramadanMubarak')}>🌙</span>
+              <span className="text-yellow-400 text-sm ml-2 hidden sm:inline">🌙 {tCommon('ramadanMubarak')}</span>
             </>
           )}
         </Link>
@@ -335,7 +335,7 @@ export function Header() {
                     {/* Ramadan banner (small) */}
                     {new Date() < new Date('2026-03-20') && (
                       <p className="text-center text-amber-500 dark:text-amber-400 text-xs font-medium py-1.5 px-2 rounded-lg bg-amber-500/10">
-                        🌙 Ramadan Mubarak
+                        🌙 {tCommon('ramadanMubarak')}
                       </p>
                     )}
 

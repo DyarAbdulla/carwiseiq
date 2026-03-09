@@ -47,6 +47,7 @@
     "themeDark": "الوضع الليلي",
     "openMenu": "القائمة",
     "closeMenu": "إغلاق",
+    "ramadanMubarak": "رمضان مبارك",
     "language": "اللغة",
     "errorTitle": "عذراً!",
     "errorMessage": "حدث خطأ غير متوقع، حاول مرة أخرى.",
@@ -59,9 +60,6 @@
   },
   "nav": {
     "menu": "القائمة",
-    "groupMain": "رئيسي",
-    "groupMarketplace": "السوق",
-    "groupTools": "أدوات",
     "home": "الرئيسية",
     "buySell": "بيع وشراء",
     "favorites": "المفضلة",

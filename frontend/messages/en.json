@@ -47,6 +47,7 @@
     "themeDark": "Switch to dark mode",
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
+    "ramadanMubarak": "Ramadan Mubarak",
     "language": "Language",
     "errorTitle": "Something went wrong!",
     "errorMessage": "An unexpected error occurred",
@@ -109,9 +110,6 @@
   },
   "nav": {
     "menu": "Menu",
-    "groupMain": "Main",
-    "groupMarketplace": "Marketplace",
-    "groupTools": "Tools",
     "home": "Home",
     "buySell": "Buy & Sell",
     "favorites": "Favorites",
