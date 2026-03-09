@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -13,7 +13,24 @@ import {
   Gauge, Fuel, Cog, Palette, Award
 } from 'lucide-react'
 import { FavoriteButton } from '@/components/marketplace/FavoriteButton'
-import { SimilarCarsRecommendations } from '@/components/marketplace/SimilarCarsRecommendations'
+import dynamic from 'next/dynamic'
+
+const SimilarCarsRecommendations = dynamic(
+  () => import('@/components/marketplace/SimilarCarsRecommendations').then((m) => ({ default: m.SimilarCarsRecommendations })),
+  {
+    loading: () => (
+      <div className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-2xl p-6" role="status" aria-label="Loading similar cars">
+        <div className="skeleton-shimmer h-6 w-40 rounded mb-4" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="skeleton-shimmer h-48 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    ),
+    ssr: false,
+  }
+)
 import { SocialShareButtons } from '@/components/marketplace/SocialShareButtons'
 import { ListingDetailSkeleton } from '@/components/common/LoadingSkeleton'
 import { ListingStructuredData } from '@/components/common/StructuredData'
@@ -32,6 +49,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
+
+/** Tiny gray blur placeholder for lazy images */
+const BLUR_DATA_URL = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZTZlNmU2Ii8+PC9zdmc+'
 
 function isNumericId(id: string): boolean {
   return /^\d+$/.test(String(id || '').trim())
@@ -129,6 +149,65 @@ type ListingDetailClientProps = {
   listingIdOverride?: string
 }
 
+/** Memoized thumbnail for gallery - lazy loads, reduces re-renders */
+const ThumbnailItem = memo(function ThumbnailItem({
+  src,
+  isVideo,
+  isActive,
+  onClick,
+  ariaLabel,
+}: {
+  src: string
+  isVideo: boolean
+  isActive: boolean
+  onClick: () => void
+  ariaLabel: string
+}) {
+  if (isVideo) {
+    return (
+      <button
+        onClick={onClick}
+        className={`flex-shrink-0 w-14 h-14 md:w-24 md:h-24 rounded-lg md:rounded-xl overflow-hidden transition-all duration-200 min-h-[56px] min-w-[56px] md:min-h-[80px] md:min-w-[80px] ${isActive
+          ? 'border-2 md:border-[3px] border-purple-500 ring-2 ring-purple-500/50 shadow-lg shadow-purple-500/50 scale-105'
+          : 'border border-white/20 hover:border-white/40 active:scale-95 md:hover:scale-105 shadow-md'
+        }`}
+        style={{ willChange: isActive ? 'transform' : undefined }}
+        aria-label={ariaLabel}
+      >
+        <video src={src} muted playsInline className="w-full h-full object-cover" />
+      </button>
+    )
+  }
+  return (
+    <button
+      onClick={onClick}
+      className={`flex-shrink-0 w-14 h-14 md:w-24 md:h-24 rounded-lg md:rounded-xl overflow-hidden transition-all duration-200 min-h-[56px] min-w-[56px] md:min-h-[80px] md:min-w-[80px] ${isActive
+        ? 'border-2 md:border-[3px] border-purple-500 ring-2 ring-purple-500/50 shadow-lg shadow-purple-500/50 scale-105'
+        : 'border border-white/20 hover:border-white/40 active:scale-95 md:hover:scale-105 shadow-md'
+      }`}
+      style={{ willChange: isActive ? 'transform' : undefined }}
+      aria-label={ariaLabel}
+    >
+      <img
+        src={src}
+        alt=""
+        width={96}
+        height={96}
+        loading="lazy"
+        decoding="async"
+        className="w-full h-full object-cover"
+        onError={(e) => {
+          const el = e.target as HTMLImageElement
+          if (el?.src && el.src !== '/images/cars/default-car.jpg') {
+            el.src = '/images/cars/default-car.jpg'
+            el.onerror = null
+          }
+        }}
+      />
+    </button>
+  )
+})
+
 export default function ListingDetailPage(props: ListingDetailClientProps = {}) {
   const { listingIdOverride } = props
   const params = useParams()
@@ -156,6 +235,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
 
   const [loadError, setLoadError] = useState<string | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const loadingForIdRef = useRef<string | null>(null)
 
   const loadListing = useCallback(async () => {
     if (!listingId || !String(listingId).trim()) {
@@ -164,6 +244,10 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
       toast({ title: tCommon('error'), description: t('invalidId'), variant: 'destructive' })
       return
     }
+
+    // Prevent duplicate in-flight requests for same listingId
+    if (loadingForIdRef.current === listingId) return
+    loadingForIdRef.current = listingId
 
     // Cancel previous request if any
     if (abortControllerRef.current) {
@@ -271,6 +355,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
       }
     } finally {
       clearTimeout(timeoutId)
+      loadingForIdRef.current = null
       // CRITICAL: Always set loading to false, even if aborted
       setLoading(false)
       if (process.env.NODE_ENV === 'development') {
@@ -282,6 +367,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
   // Reset state when listing ID changes (critical for client-side navigation)
   // Prevents stale data/images from previous listing when navigating between listings
   useEffect(() => {
+    loadingForIdRef.current = null
     setHeroImageError(false)
     setSelectedImageIndex(0)
     setListing(null)
@@ -360,11 +446,14 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
     )
   }
 
-  // Normalize images: handle both {url} objects and string URLs (API vs Supabase)
+  // Normalize images (memoized to reduce re-renders)
+  const images = useMemo(() => {
+    const raw = listing.images || []
+    return raw.map((img: unknown) =>
+      typeof img === 'string' ? { url: img } : { url: (img as { url?: string })?.url ?? '' }
+    ).filter((img: { url: string }) => img.url)
+  }, [listing.images])
   const rawImages = listing.images || []
-  const images = rawImages.map((img: unknown) =>
-    typeof img === 'string' ? { url: img } : { url: (img as { url?: string })?.url ?? '' }
-  ).filter((img: { url: string }) => img.url)
   const safeIndex = Math.min(selectedImageIndex, Math.max(0, images.length - 1))
   const currentImage = images[safeIndex] || images[0] || null
   const heroUrl = currentImage?.url || listing.cover_image || (typeof rawImages[0] === 'string' ? rawImages[0] : (rawImages[0] as { url?: string })?.url)
@@ -546,10 +635,11 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
             </div>
           )}
 
-          {/* Hero Image Section - Full width on mobile (break out of padding) */}
+          {/* Hero Image Section - Full width on mobile */}
           <div className="relative w-full mb-4 md:mb-10 -mx-3 sm:-mx-6 md:mx-0">
             <div
               className="relative aspect-video overflow-hidden rounded-none md:rounded-2xl cursor-pointer group border-0 md:border border-white/10 shadow-2xl"
+              style={{ willChange: 'transform' }}
               onClick={() => {
                 if (images.length > 0) {
                   setIsLightboxOpen(true)
@@ -586,7 +676,9 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                         priority
-                        quality={90}
+                        quality={85}
+                        placeholder="blur"
+                        blurDataURL={BLUR_DATA_URL}
                         unoptimized={heroResolved.startsWith('blob:') || heroResolved.startsWith('data:')}
                         onError={() => {
                           console.error('[ListingDetail] Hero image load error:', heroResolved)
@@ -703,47 +795,30 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
               </p>
             </div>
 
-            {/* Thumbnail Strip - Smaller on mobile, horizontal scroll */}
+            {/* Thumbnail Strip - Lazy loaded, memoized thumbnails */}
             {images.length > 1 && (
               <div className="w-full mt-3 md:mt-4 py-3 md:py-4 flex gap-2 md:gap-3 overflow-x-auto overflow-y-hidden bg-black/10 md:bg-black/20 backdrop-blur-md rounded-xl md:rounded-2xl [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full scroll-smooth snap-x snap-mandatory touch-pan-x">
                 <div className="px-3 md:px-6 flex gap-2 md:gap-3 min-w-max">
                   {images.map((img: { url?: string }, idx: number) => {
                     const u = img?.url
                     const src = u ? listingImageUrl(u) : ''
-                    const isV = isVideoUrl(u)
-                    const isActive = idx === selectedImageIndex
+                    if (!src) {
+                      return (
+                        <div key={idx} className="flex-shrink-0 w-14 h-14 md:w-24 md:h-24 rounded-lg md:rounded-xl bg-gray-700/50 flex items-center justify-center text-gray-400 text-xs min-h-[56px] min-w-[56px] md:min-h-[80px] md:min-w-[80px]">—</div>
+                      )
+                    }
                     return (
-                      <button
+                      <ThumbnailItem
                         key={idx}
-                        onClick={(e) => {
-                          e.stopPropagation()
+                        src={src}
+                        isVideo={isVideoUrl(u)}
+                        isActive={idx === selectedImageIndex}
+                        onClick={() => {
                           setSelectedImageIndex(idx)
                           setIsLightboxOpen(true)
                         }}
-                        className={`flex-shrink-0 w-14 h-14 md:w-24 md:h-24 rounded-lg md:rounded-xl overflow-hidden transition-all duration-200 min-h-[56px] min-w-[56px] md:min-h-[80px] md:min-w-[80px] ${isActive
-                          ? 'border-2 md:border-[3px] border-purple-500 ring-2 ring-purple-500/50 shadow-lg shadow-purple-500/50 scale-105'
-                          : 'border border-white/20 hover:border-white/40 active:scale-95 md:hover:scale-105 shadow-md'
-                          }`}
-                        aria-label={t('viewImage', { current: idx + 1, total: images.length })}
-                      >
-                        {src ? (
-                          isV ? (
-                            <video src={src} muted playsInline className="w-full h-full object-cover" />
-                          ) : (
-                            <img
-                              src={src}
-                              alt=""
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = '/images/cars/default-car.jpg'
-                                  ; (e.target as HTMLImageElement).onerror = null
-                              }}
-                            />
-                          )
-                        ) : (
-                          <div className="w-full h-full bg-gray-700/50 flex items-center justify-center text-gray-400 text-xs">—</div>
-                        )}
-                      </button>
+                        ariaLabel={t('viewImage', { current: idx + 1, total: images.length })}
+                      />
                     )
                   })}
                 </div>
