@@ -158,7 +158,8 @@ def init_db():
         'role': 'TEXT DEFAULT "user"',
         'terms_accepted': 'BOOLEAN DEFAULT 0',
         'terms_accepted_at': 'TIMESTAMP',
-        'cookie_consent': 'TEXT'
+        'cookie_consent': 'TEXT',
+        'is_banned': 'BOOLEAN DEFAULT 0',
     }
     
     for col_name, col_type in new_columns.items():

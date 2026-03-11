@@ -1867,6 +1867,22 @@ export const apiClient = {
     }
   },
 
+  async respondToFeedback(feedbackId: number, adminResponse: string): Promise<void> {
+    try {
+      await authApi.patch(`/api/admin/feedback/${feedbackId}`, { admin_response: adminResponse })
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async deleteFeedback(feedbackId: number): Promise<void> {
+    try {
+      await authApi.delete(`/api/admin/feedback/${feedbackId}`)
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
   async getUsersList(params: {
     page?: number
     page_size?: number
@@ -1884,6 +1900,22 @@ export const apiClient = {
     try {
       const response = await authApi.get(`/api/admin/users/${userId}`)
       return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async banUser(userId: number): Promise<void> {
+    try {
+      await authApi.patch(`/api/admin/users/${userId}/ban`)
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async unbanUser(userId: number): Promise<void> {
+    try {
+      await authApi.patch(`/api/admin/users/${userId}/unban`)
     } catch (error) {
       throw new Error(handleError(error))
     }
@@ -1940,16 +1972,17 @@ export const apiClient = {
     page_size?: number
     status?: string
     search?: string
+    source?: 'sqlite' | 'supabase' | 'both'
   }): Promise<{ items: any[]; total: number }> {
     try {
-      const response = await authApi.get('/api/admin/listings', { params })
+      const response = await authApi.get('/api/admin/listings', { params: { ...params, source: params.source ?? 'both' } })
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
     }
   },
 
-  async adminPatchListing(id: number, body: { status: string }): Promise<void> {
+  async adminPatchListing(id: number | string, body: { status: string }): Promise<void> {
     try {
       await authApi.patch(`/api/admin/listings/${id}`, body)
     } catch (error) {
@@ -1957,7 +1990,7 @@ export const apiClient = {
     }
   },
 
-  async adminDeleteListing(id: number): Promise<void> {
+  async adminDeleteListing(id: number | string): Promise<void> {
     try {
       await authApi.delete(`/api/admin/listings/${id}`)
     } catch (error) {
@@ -2552,10 +2585,10 @@ export const apiClient = {
     }
   },
 
-  // Admin Services API
+  // Admin Services API (use authApi for admin token)
   async adminGetServices(params?: { status?: string; location_id?: string; page?: number; page_size?: number }): Promise<any> {
     try {
-      const response = await api.get('/api/admin/services', { params })
+      const response = await authApi.get('/api/admin/services', { params })
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
@@ -2564,7 +2597,7 @@ export const apiClient = {
 
   async adminGetService(serviceId: string): Promise<any> {
     try {
-      const response = await api.get(`/api/admin/services/${serviceId}`)
+      const response = await authApi.get(`/api/admin/services/${serviceId}`)
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
@@ -2573,7 +2606,7 @@ export const apiClient = {
 
   async adminCreateService(serviceData: any): Promise<any> {
     try {
-      const response = await api.post('/api/admin/services', serviceData)
+      const response = await authApi.post('/api/admin/services', serviceData)
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
@@ -2582,7 +2615,7 @@ export const apiClient = {
 
   async adminUpdateService(serviceId: string, serviceData: any): Promise<any> {
     try {
-      const response = await api.put(`/api/admin/services/${serviceId}`, serviceData)
+      const response = await authApi.put(`/api/admin/services/${serviceId}`, serviceData)
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
@@ -2591,7 +2624,7 @@ export const apiClient = {
 
   async adminDeleteService(serviceId: string): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await api.delete(`/api/admin/services/${serviceId}`)
+      const response = await authApi.delete(`/api/admin/services/${serviceId}`)
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
@@ -2627,7 +2660,7 @@ export const apiClient = {
 
   async adminGetLocations(): Promise<{ locations: any[]; count: number }> {
     try {
-      const response = await api.get('/api/admin/locations')
+      const response = await authApi.get('/api/admin/locations')
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
@@ -2636,7 +2669,7 @@ export const apiClient = {
 
   async adminCreateLocation(locationData: any): Promise<any> {
     try {
-      const response = await api.post('/api/admin/locations', locationData)
+      const response = await authApi.post('/api/admin/locations', locationData)
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
@@ -2645,7 +2678,7 @@ export const apiClient = {
 
   async adminUpdateLocation(locationId: string, locationData: any): Promise<any> {
     try {
-      const response = await api.put(`/api/admin/locations/${locationId}`, locationData)
+      const response = await authApi.put(`/api/admin/locations/${locationId}`, locationData)
       return response.data
     } catch (error) {
       throw new Error(handleError(error))
@@ -2654,7 +2687,7 @@ export const apiClient = {
 
   async adminDeleteLocation(locationId: string): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await api.delete(`/api/admin/locations/${locationId}`)
+      const response = await authApi.delete(`/api/admin/locations/${locationId}`)
       return response.data
     } catch (error) {
       throw new Error(handleError(error))

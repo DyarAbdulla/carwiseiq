@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-// Select component not needed - using native select
+import { Textarea } from '@/components/ui/textarea'
 import { apiClient } from '@/lib/api'
-import { Search, Download, Eye } from 'lucide-react'
+import { Search, Download, Eye, MessageSquare, Trash2 } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -32,6 +32,9 @@ export default function FeedbackManagementPage() {
   })
   const [selectedFeedback, setSelectedFeedback] = useState<any>(null)
   const [detailOpen, setDetailOpen] = useState(false)
+  const [respondText, setRespondText] = useState('')
+  const [responding, setResponding] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     loadFeedback()
@@ -67,9 +70,40 @@ export default function FeedbackManagementPage() {
     try {
       const detail = await apiClient.getFeedbackDetail(feedbackId)
       setSelectedFeedback(detail)
+      setRespondText(detail.admin_response || '')
       setDetailOpen(true)
     } catch (error) {
       console.error('Error loading feedback detail:', error)
+    }
+  }
+
+  const handleRespond = async () => {
+    if (!selectedFeedback || !respondText.trim()) return
+    setResponding(true)
+    try {
+      await apiClient.respondToFeedback(selectedFeedback.id, respondText.trim())
+      const updated = await apiClient.getFeedbackDetail(selectedFeedback.id)
+      setSelectedFeedback(updated)
+      loadFeedback()
+    } catch (error) {
+      console.error('Error responding:', error)
+    } finally {
+      setResponding(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!selectedFeedback || !confirm('Delete this feedback? This cannot be undone.')) return
+    setDeleting(true)
+    try {
+      await apiClient.deleteFeedback(selectedFeedback.id)
+      setDetailOpen(false)
+      setSelectedFeedback(null)
+      loadFeedback()
+    } catch (error) {
+      console.error('Error deleting:', error)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -163,7 +197,7 @@ export default function FeedbackManagementPage() {
                       <TableHead className="text-gray-300">Car</TableHead>
                       <TableHead className="text-gray-300">Rating</TableHead>
                       <TableHead className="text-gray-300">Accuracy</TableHead>
-                      <TableHead className="text-gray-300">Confidence</TableHead>
+                      <TableHead className="text-gray-300">Comments</TableHead>
                       <TableHead className="text-gray-300">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -195,8 +229,8 @@ export default function FeedbackManagementPage() {
                             <span className="text-gray-500">No feedback</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-gray-300 capitalize">
-                          {item.confidence_level || '-'}
+                        <TableCell className="text-gray-300 max-w-[150px] truncate" title={item.other_details || ''}>
+                          {item.other_details || '-'}
                         </TableCell>
                         <TableCell>
                           <Button
@@ -305,6 +339,43 @@ export default function FeedbackManagementPage() {
                       <strong>Details:</strong> {selectedFeedback.other_details}
                     </p>
                   )}
+                  {selectedFeedback.admin_response && (
+                    <div className="mt-3 p-3 bg-blue-900/20 rounded border border-blue-700/50">
+                      <strong>Admin Response:</strong>
+                      <p className="mt-1 text-gray-300">{selectedFeedback.admin_response}</p>
+                      {selectedFeedback.admin_responded_at && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(selectedFeedback.admin_responded_at).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="mt-4 space-y-3">
+                <label className="block text-sm font-medium text-gray-300">Respond to feedback</label>
+                <Textarea
+                  value={respondText}
+                  onChange={(e) => setRespondText(e.target.value)}
+                  placeholder="Type your response..."
+                  className="bg-gray-700 border-gray-600 text-white min-h-[80px]"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleRespond}
+                    disabled={responding || !respondText.trim()}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {responding ? 'Saving...' : 'Save Response'}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {deleting ? 'Deleting...' : <><Trash2 className="h-4 w-4 mr-1" /> Delete</>}
+                  </Button>
                 </div>
               </div>
             </div>

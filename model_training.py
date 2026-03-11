@@ -16,8 +16,19 @@ from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 import pickle
 import os
 import sys
+import argparse
 import warnings
 warnings.filterwarnings('ignore')
+
+# Parse args for data file (supports merged dataset with Audi data)
+def _parse_args():
+    ap = argparse.ArgumentParser(description="Train car price prediction model")
+    ap.add_argument("--data-file", type=str, default="cleaned_car_data.csv",
+                    help="Path to training CSV (default: cleaned_car_data.csv). Use merged_car_data.csv after merge_audi_dataset.py")
+    return ap.parse_args()
+
+_args = _parse_args()
+DATA_FILE = _args.data_file
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -64,13 +75,13 @@ print("=" * 80)
 print("STEP 1: Loading and preparing data...")
 print("=" * 80)
 
-# Load cleaned data
-if not os.path.exists('cleaned_car_data.csv'):
-    print("ERROR: cleaned_car_data.csv not found!")
-    print("Please run data_cleaning.py first.")
+# Load cleaned data (supports merged dataset with Audi Kurdistan data)
+if not os.path.exists(DATA_FILE):
+    print(f"ERROR: {DATA_FILE} not found!")
+    print("Run data_cleaning.py first, or merge_audi_dataset.py to include Audi data.")
     exit(1)
 
-df = pd.read_csv('cleaned_car_data.csv')
+df = pd.read_csv(DATA_FILE)
 print(f"Dataset loaded: {df.shape[0]} rows, {df.shape[1]} columns")
 
 # Store original metrics for comparison

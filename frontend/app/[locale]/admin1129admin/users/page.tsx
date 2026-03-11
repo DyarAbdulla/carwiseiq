@@ -1,10 +1,12 @@
 "use client"
 import { useState, useEffect } from 'react'
+import { useLocale } from 'next-intl'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
-import { Search, Trash2, Eye, Ban } from 'lucide-react'
+import { Search, Trash2, Eye, Ban, Unlock } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -25,6 +27,9 @@ export default function UserManagementPage() {
   const [search, setSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false)
+  const [userDetail, setUserDetail] = useState<any>(null)
+  const locale = useLocale()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -70,6 +75,43 @@ export default function UserManagementPage() {
         description: error.message || 'Failed to delete user',
         variant: 'destructive',
       })
+    }
+  }
+
+  const handleViewDetail = async (user: any) => {
+    try {
+      const detail = await apiClient.getUserDetail(user.id)
+      setUserDetail(detail)
+      setSelectedUser(user)
+      setDetailDialogOpen(true)
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to load user details',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const handleBan = async (user: any) => {
+    try {
+      await apiClient.banUser(user.id)
+      toast({ title: 'Success', description: 'User banned' })
+      loadUsers()
+      if (detailDialogOpen && selectedUser?.id === user.id) setDetailDialogOpen(false)
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to ban user', variant: 'destructive' })
+    }
+  }
+
+  const handleUnban = async (user: any) => {
+    try {
+      await apiClient.unbanUser(user.id)
+      toast({ title: 'Success', description: 'User unbanned' })
+      loadUsers()
+      if (detailDialogOpen && selectedUser?.id === user.id) setDetailDialogOpen(false)
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to unban user', variant: 'destructive' })
     }
   }
 
@@ -139,8 +181,8 @@ export default function UserManagementPage() {
                           {user.feedback_count || 0}
                         </TableCell>
                         <TableCell>
-                          <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">
-                            {user.status || 'Active'}
+                          <span className={`px-2 py-1 rounded text-xs ${user.is_banned ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                            {user.status || (user.is_banned ? 'Banned' : 'Active')}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -148,17 +190,33 @@ export default function UserManagementPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                // TODO: View user details
-                                toast({
-                                  title: 'Coming soon',
-                                  description: 'User detail view coming soon',
-                                })
-                              }}
+                              onClick={() => handleViewDetail(user)}
                               className="text-blue-400 hover:text-blue-300"
+                              title="View details"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
+                            {user.is_banned ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleUnban(user)}
+                                className="text-green-400 hover:text-green-300"
+                                title="Unban user"
+                              >
+                                <Unlock className="h-4 w-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleBan(user)}
+                                className="text-orange-400 hover:text-orange-300"
+                                title="Ban user"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="sm"
@@ -167,6 +225,7 @@ export default function UserManagementPage() {
                                 setDeleteDialogOpen(true)
                               }}
                               className="text-red-400 hover:text-red-300"
+                              title="Delete user"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -206,6 +265,35 @@ export default function UserManagementPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* User Detail Dialog */}
+      <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
+        <DialogContent className="bg-gray-800 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">User Details</DialogTitle>
+          </DialogHeader>
+          {userDetail && selectedUser && (
+            <div className="space-y-4 text-gray-300">
+              <p><strong>Email:</strong> {selectedUser.email}</p>
+              <p><strong>Join Date:</strong> {new Date(selectedUser.join_date).toLocaleDateString()}</p>
+              <p><strong>Predictions:</strong> {userDetail.predictions_count ?? selectedUser.predictions_count ?? 0}</p>
+              <p><strong>Feedback:</strong> {userDetail.feedback_count ?? selectedUser.feedback_count ?? 0}</p>
+              <p><strong>Status:</strong> {selectedUser.is_banned ? 'Banned' : 'Active'}</p>
+              <div className="flex gap-2 pt-2">
+                <Link href={`/${locale}/admin1129admin/listings?search=${encodeURIComponent(selectedUser.email)}`}>
+                  <Button variant="outline" className="border-gray-600">View Listings</Button>
+                </Link>
+                {selectedUser.is_banned ? (
+                  <Button onClick={() => handleUnban(selectedUser)} className="bg-green-600 hover:bg-green-700">Unban</Button>
+                ) : (
+                  <Button onClick={() => handleBan(selectedUser)} className="bg-orange-600 hover:bg-orange-700">Ban</Button>
+                )}
+                <Button onClick={() => { setDetailDialogOpen(false); setSelectedUser(selectedUser); setDeleteDialogOpen(true); }} variant="destructive" className="bg-red-600">Delete</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

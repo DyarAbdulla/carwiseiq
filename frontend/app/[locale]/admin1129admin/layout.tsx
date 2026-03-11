@@ -15,7 +15,8 @@ import {
   Shield,
   Bell,
   Wrench,
-  Building2
+  Building2,
+  Car
 } from 'lucide-react'
 import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
@@ -82,6 +83,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const menuItems = [
     { href: `/${locale}/admin1129admin/dashboard`, label: 'Dashboard', icon: LayoutDashboard },
     { href: `/${locale}/admin1129admin/feedback`, label: 'Feedback Management', icon: MessageSquare },
+    { href: `/${locale}/admin1129admin/listings`, label: 'Marketplace / Listings', icon: Car },
     { href: `/${locale}/admin1129admin/users`, label: 'User Management', icon: Users },
     { href: `/${locale}/admin1129admin/services`, label: 'Services Management', icon: Wrench },
     { href: `/${locale}/admin1129admin/services/providers`, label: 'Providers Management', icon: Building2 },

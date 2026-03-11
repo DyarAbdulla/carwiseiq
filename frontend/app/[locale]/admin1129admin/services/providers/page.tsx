@@ -119,9 +119,10 @@ export default function ProvidersManagementPage() {
   const getServiceName = (serviceId: string) => {
     const service = services.find(s => s.id === serviceId)
     if (!service) return serviceId
-    if (locale === 'ar' && service.name_ar) return service.name_ar
-    if (locale === 'ku' && service.name_ku) return service.name_ku
-    return service.name_en
+    const name = (locale === 'ar' && service.name_ar) ? service.name_ar
+      : (locale === 'ku' && service.name_ku) ? service.name_ku
+      : service.name_en || service.name_ar || service.name_ku
+    return name || serviceId
   }
 
   if (loading) {

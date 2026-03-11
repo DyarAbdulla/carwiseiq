@@ -10,7 +10,7 @@ import {
 import { MoreVertical, CheckCircle, RotateCcw, Trash2 } from 'lucide-react'
 
 interface AdminListingControlsProps {
-  listingId: number
+  listingId: number | string
   locale: string
   status?: string
   onMarkSold: () => void

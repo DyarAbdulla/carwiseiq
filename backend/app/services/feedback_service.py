@@ -59,6 +59,8 @@ def init_feedback_db():
             correct_year INTEGER,
             correct_price REAL,
             other_details TEXT,  -- Text field for "Other" feedback
+            admin_response TEXT,  -- Admin reply to feedback
+            admin_responded_at TIMESTAMP,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (prediction_id) REFERENCES predictions(id) ON DELETE CASCADE,
@@ -85,6 +87,17 @@ def init_feedback_db():
     cursor.execute("""
         CREATE INDEX IF NOT EXISTS idx_feedback_timestamp ON feedback(timestamp)
     """)
+
+    # Migration: add admin_response columns if missing
+    try:
+        cursor.execute("PRAGMA table_info(feedback)")
+        cols = [r[1] for r in cursor.fetchall()]
+        if 'admin_response' not in cols:
+            cursor.execute("ALTER TABLE feedback ADD COLUMN admin_response TEXT")
+        if 'admin_responded_at' not in cols:
+            cursor.execute("ALTER TABLE feedback ADD COLUMN admin_responded_at TIMESTAMP")
+    except Exception as e:
+        logger.warning(f"Migration for admin_response columns: {e}")
 
     conn.commit()
     conn.close()

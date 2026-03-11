@@ -35,13 +35,14 @@ export default function SettingsPage() {
     try {
       const result = await apiClient.triggerModelRetrain()
       toast({
-        title: 'Success',
+        title: result.status === 'completed' ? 'Success' : 'Retraining',
         description: result.message || 'Model retraining triggered',
       })
+      loadSettings()
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to trigger retraining',
+        description: error?.response?.data?.detail || error.message || 'Failed to trigger retraining',
         variant: 'destructive',
       })
     } finally {
@@ -101,7 +102,18 @@ export default function SettingsPage() {
               <option value="manual">Manual</option>
             </select>
           </div>
-          <div>
+          <div className="space-y-2">
+            {settings?.model?.last_retrain && (
+              <p className="text-sm text-gray-400">
+                Last retrain: {new Date(settings.model.last_retrain).toLocaleString()}
+              </p>
+            )}
+            {settings?.model?.retrain_status && settings.model.retrain_status !== 'idle' && (
+              <p className={`text-sm ${settings.model.retrain_status === 'completed' ? 'text-green-400' : settings.model.retrain_status === 'failed' ? 'text-red-400' : 'text-yellow-400'}`}>
+                Status: {settings.model.retrain_status}
+                {settings.model.retrain_message && ` - ${settings.model.retrain_message}`}
+              </p>
+            )}
             <Button
               onClick={handleRetrain}
               disabled={retraining}

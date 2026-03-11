@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback } from "react"
 import { useLocale } from "next-intl"
+import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -14,16 +15,17 @@ import { AdminListingControls } from "@/components/admin/AdminListingControls"
 import { Search, Car, Loader2, RefreshCw } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
-type StatusFilter = "all" | "active" | "sold" | "deleted"
+type StatusFilter = "all" | "active" | "sold" | "pending" | "deleted"
 
 export default function AdminListingsPage() {
   const [listings, setListings] = useState<any[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const searchParams = useSearchParams()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState(searchParams?.get("search") || "")
   const [page, setPage] = useState(1)
-  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [selected, setSelected] = useState<Set<number | string>>(new Set())
   const [acting, setActing] = useState(false)
   const locale = useLocale()
   const { toast } = useToast()
@@ -55,7 +57,7 @@ export default function AdminListingsPage() {
   }, [load])
 
   const onMarkSold = useCallback(
-    async (id: number) => {
+    async (id: number | string) => {
       await apiClient.adminPatchListing(id, { status: "sold" })
       load()
     },
@@ -63,7 +65,7 @@ export default function AdminListingsPage() {
   )
 
   const onMarkAvailable = useCallback(
-    async (id: number) => {
+    async (id: number | string) => {
       await apiClient.adminPatchListing(id, { status: "active" })
       load()
     },
@@ -71,14 +73,14 @@ export default function AdminListingsPage() {
   )
 
   const onDelete = useCallback(
-    async (id: number) => {
+    async (id: number | string) => {
       await apiClient.adminDeleteListing(id)
       load()
     },
     [load]
   )
 
-  const toggleSelect = (id: number) => {
+  const toggleSelect = (id: number | string) => {
     setSelected((s) => {
       const n = new Set(s)
       if (n.has(id)) n.delete(id)
@@ -89,7 +91,7 @@ export default function AdminListingsPage() {
 
   const selectAll = () => {
     if (selected.size === listings.length) setSelected(new Set())
-    else setSelected(new Set(listings.map((l) => l.id)))
+    else setSelected(new Set(listings.map((l: { id: number | string }) => l.id)))
   }
 
   const bulkMarkSold = async () => {
@@ -166,6 +168,7 @@ export default function AdminListingsPage() {
               <SelectItem value="all" className="text-white">All</SelectItem>
               <SelectItem value="active" className="text-white">Active</SelectItem>
               <SelectItem value="sold" className="text-white">Sold</SelectItem>
+              <SelectItem value="pending" className="text-white">Pending</SelectItem>
               <SelectItem value="deleted" className="text-white">Deleted</SelectItem>
             </SelectContent>
           </Select>

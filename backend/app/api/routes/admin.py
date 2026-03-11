@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_marketplace_listings_count(status: Optional[str] = None) -> int:
-    """Get count of marketplace listings"""
+    """Get count of marketplace listings (SQLite)"""
     try:
         conn = get_marketplace_db()
         cursor = conn.cursor()
@@ -43,6 +43,35 @@ def get_marketplace_listings_count(status: Optional[str] = None) -> int:
         return result["count"] if result else 0
     except Exception as e:
         logger.error(f"Error getting listings count: {e}")
+        return 0
+
+
+def get_supabase_listings_count(status: Optional[str] = None) -> int:
+    """Get count of Supabase car_listings (buy-sell marketplace)"""
+    try:
+        import os
+        import httpx
+        supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+        supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+        if not supabase_url or not supabase_key:
+            return 0
+        api_url = f"{supabase_url}/rest/v1/car_listings"
+        headers = {"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}", "Prefer": "count=exact"}
+        url = f"{api_url}?select=id"
+        if status == "active":
+            url += "&status=eq.active"
+        elif status == "sold":
+            url += "&is_sold=eq.true"
+        with httpx.Client(timeout=10) as client:
+            r = client.get(url, headers=headers)
+            if r.status_code != 200:
+                return 0
+            count_header = r.headers.get("content-range", "")
+            if "/" in count_header:
+                return int(count_header.split("/")[-1])
+        return 0
+    except Exception as e:
+        logger.error(f"Error getting Supabase listings count: {e}")
         return 0
 
 router = APIRouter()
@@ -246,9 +275,9 @@ async def get_dashboard_stats(admin: AdminResponse = Depends(require_admin)):
                 "total_feedback": int(accuracy["total_feedback"] or 0) if accuracy else 0
             },
             "listings": {
-                "active": get_marketplace_listings_count("active"),
-                "total": get_marketplace_listings_count(),
-                "sold": get_marketplace_listings_count("sold"),
+                "active": get_marketplace_listings_count("active") + get_supabase_listings_count("active"),
+                "total": get_marketplace_listings_count() + get_supabase_listings_count(),
+                "sold": get_marketplace_listings_count("sold") + get_supabase_listings_count("sold"),
                 "draft": get_marketplace_listings_count("draft"),
             },
             "recent_feedback": [
@@ -533,6 +562,7 @@ async def get_feedback_list(
         cursor.execute(f"""
             SELECT 
                 f.id, f.rating, f.is_accurate, f.feedback_type, f.timestamp,
+                f.admin_response, f.admin_responded_at,
                 p.id as prediction_id, p.car_features, p.predicted_price,
                 p.confidence_level,
                 u.email as user_email,
@@ -562,7 +592,9 @@ async def get_feedback_list(
                     "confidence_level": row["confidence_level"],
                     "feedback_reasons": json.loads(row["feedback_reasons"]) if row["feedback_reasons"] else [],
                     "correct_price": row["correct_price"],
-                    "other_details": row["other_details"]
+                    "other_details": row["other_details"],
+                    "admin_response": row.get("admin_response"),
+                    "admin_responded_at": row.get("admin_responded_at")
                 }
                 for row in rows
             ],
@@ -612,6 +644,8 @@ async def get_feedback_detail(
             "correct_year": row["correct_year"],
             "correct_price": row["correct_price"],
             "other_details": row["other_details"],
+            "admin_response": row.get("admin_response"),
+            "admin_responded_at": row.get("admin_responded_at"),
             "timestamp": row["timestamp"],
             "prediction": {
                 "id": row["prediction_id"],
@@ -625,6 +659,61 @@ async def get_feedback_detail(
         raise
     except Exception as e:
         logger.error(f"Error getting feedback detail: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class FeedbackRespondRequest(BaseModel):
+    admin_response: str
+
+
+@router.patch("/feedback/{feedback_id}")
+async def respond_to_feedback(
+    feedback_id: int,
+    request: FeedbackRespondRequest,
+    admin: AdminResponse = Depends(require_admin)
+):
+    """Admin respond to feedback"""
+    try:
+        conn = get_feedback_db()
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE feedback SET admin_response = ?, admin_responded_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (request.admin_response, feedback_id))
+        n = cursor.rowcount
+        conn.commit()
+        conn.close()
+        if n == 0:
+            raise HTTPException(status_code=404, detail="Feedback not found")
+        return {"message": "Response saved", "id": feedback_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error responding to feedback: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/feedback/{feedback_id}")
+async def delete_feedback(
+    feedback_id: int,
+    admin: AdminResponse = Depends(require_admin)
+):
+    """Delete feedback"""
+    try:
+        conn = get_feedback_db()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM feedback WHERE id = ?", (feedback_id,))
+        n = cursor.rowcount
+        conn.commit()
+        conn.close()
+        if n == 0:
+            raise HTTPException(status_code=404, detail="Feedback not found")
+        log_admin_action(admin.id, "delete_feedback", "feedback", feedback_id)
+        return {"message": "Feedback deleted", "id": feedback_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting feedback: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -655,7 +744,7 @@ async def get_users_list(
         offset = (page - 1) * page_size
         cursor.execute(f"""
             SELECT 
-                u.id, u.email, u.created_at,
+                u.id, u.email, u.created_at, u.is_banned,
                 COUNT(DISTINCT p.id) as predictions_count,
                 COUNT(DISTINCT f.id) as feedback_count
             FROM users u
@@ -677,7 +766,8 @@ async def get_users_list(
                     "join_date": row["created_at"],
                     "predictions_count": row["predictions_count"] or 0,
                     "feedback_count": row["feedback_count"] or 0,
-                    "status": "active"  # Placeholder
+                    "status": "banned" if row.get("is_banned") else "active",
+                    "is_banned": bool(row.get("is_banned"))
                 }
                 for row in rows
             ],
@@ -730,6 +820,54 @@ async def get_user_detail(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.patch("/users/{user_id}/ban")
+async def ban_user(
+    user_id: int,
+    admin: AdminResponse = Depends(require_permission("edit"))
+):
+    """Ban a user"""
+    try:
+        conn = get_user_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET is_banned = 1 WHERE id = ?", (user_id,))
+        n = cursor.rowcount
+        conn.commit()
+        conn.close()
+        if n == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        log_admin_action(admin.id, "ban_user", "user", user_id)
+        return {"message": "User banned successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error banning user: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/users/{user_id}/unban")
+async def unban_user(
+    user_id: int,
+    admin: AdminResponse = Depends(require_permission("edit"))
+):
+    """Unban a user"""
+    try:
+        conn = get_user_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET is_banned = 0 WHERE id = ?", (user_id,))
+        n = cursor.rowcount
+        conn.commit()
+        conn.close()
+        if n == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        log_admin_action(admin.id, "unban_user", "user", user_id)
+        return {"message": "User unbanned successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error unbanning user: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.delete("/users/{user_id}")
 async def delete_user(
     user_id: int,
@@ -750,89 +888,191 @@ async def delete_user(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Admin listings (marketplace management)
+# Admin listings (marketplace management) - supports SQLite and Supabase
 @router.get("/listings")
 async def get_admin_listings(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    status: Optional[str] = Query(None, regex="^(active|sold|draft|deleted)$"),
+    status: Optional[str] = Query(None, regex="^(active|sold|draft|deleted|pending)$"),
     search: Optional[str] = Query(None),
+    source: Optional[str] = Query("both", regex="^(sqlite|supabase|both)$"),
     admin: AdminResponse = Depends(require_permission("view")),
 ):
-    """List marketplace listings for admin."""
-    try:
-        conn = get_marketplace_db()
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        where_parts = ["1=1"]
-        params: List[Any] = []
-        if status:
-            where_parts.append("l.status = ?")
-            params.append(status)
-        if search:
-            where_parts.append("(l.make LIKE ? OR l.model LIKE ? OR l.description LIKE ?)")
-            q = f"%{search}%"
-            params.extend([q, q, q])
-        where_sql = " AND ".join(where_parts)
-        cursor.execute(f"SELECT COUNT(*) as total FROM listings l WHERE {where_sql}", params)
-        total = cursor.fetchone()[0]
-        offset = (page - 1) * page_size
-        cursor.execute(f"""
-            SELECT l.id, l.make, l.model, l.year, l.price, l.mileage, l.mileage_unit,
-                   l.condition, l.status, l.location_city, l.location_state, l.cover_image_id,
-                   l.created_at
-            FROM listings l
-            WHERE {where_sql}
-            ORDER BY l.created_at DESC
-            LIMIT ? OFFSET ?
-        """, params + [page_size, offset])
-        rows = cursor.fetchall()
-        items = []
-        for row in rows:
-            r = {k: row[k] for k in row.keys()}
-            cursor.execute(
-                "SELECT id, url, file_path FROM listing_images WHERE listing_id = ? ORDER BY display_order, id LIMIT 1",
-                (r["id"],),
-            )
-            img = cursor.fetchone()
-            if img:
-                r["cover_image"] = img["url"] if img["url"] else (f"/uploads/listings/{r['id']}/{img['file_path']}" if img["file_path"] else None)
-            else:
-                r["cover_image"] = None
-            items.append(r)
-        conn.close()
-        return {"items": items, "total": total, "page": page, "page_size": page_size}
-    except Exception as e:
-        logger.error(f"Error listing admin listings: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+    """List marketplace listings for admin. source: sqlite, supabase, or both."""
+    items: List[Dict[str, Any]] = []
+    total = 0
+
+    # Fetch from Supabase (car_listings - buy-sell)
+    if source in ("supabase", "both"):
+        try:
+            import os
+            import httpx
+            supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+            supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+            if supabase_url and supabase_key:
+                api_url = f"{supabase_url}/rest/v1/car_listings"
+                headers = {"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}", "Prefer": "count=exact"}
+                select = "id,user_id,title,make,model,year,price,mileage,transmission,fuel_type,condition,location,status,is_sold,images,created_at"
+                url = f"{api_url}?select={select}&order=created_at.desc"
+                if status == "active":
+                    url += "&status=eq.active"
+                elif status == "sold":
+                    url += "&is_sold=eq.true"
+                elif status == "pending":
+                    url += "&status=eq.pending"
+                if search:
+                    url += f"&or=(make.ilike.*{search}*,model.ilike.*{search}*,title.ilike.*{search}*)"
+                url += f"&limit={page_size}&offset={(page - 1) * page_size}"
+                with httpx.Client(timeout=15) as client:
+                    r = client.get(url, headers=headers)
+                    if r.status_code == 200:
+                        data = r.json()
+                        if not isinstance(data, list):
+                            data = []
+                        cr = r.headers.get("content-range", "")
+                        if "/" in cr:
+                            total = int(cr.split("/")[-1])
+                        else:
+                            total = len(data)
+                        for row in data:
+                            imgs = row.get("images") or []
+                            cover = None
+                            if imgs:
+                                cover = imgs[0] if isinstance(imgs[0], str) else (imgs[0].get("url") if isinstance(imgs[0], dict) else None)
+                            items.append({
+                                "id": row.get("id"),
+                                "make": row.get("make", ""),
+                                "model": row.get("model", ""),
+                                "year": row.get("year"),
+                                "price": row.get("price"),
+                                "mileage": row.get("mileage"),
+                                "mileage_unit": "km",
+                                "condition": row.get("condition"),
+                                "status": "sold" if row.get("is_sold") else (row.get("status") or "active"),
+                                "location_city": (row.get("location") or "").split(",")[0] if row.get("location") else "",
+                                "location_state": "",
+                                "cover_image": cover,
+                                "cover_thumbnail_url": cover,
+                                "created_at": row.get("created_at"),
+                                "user_id": row.get("user_id"),
+                                "from_supabase": True,
+                            })
+        except Exception as e:
+            logger.warning(f"Supabase listings fetch failed: {e}")
+
+    # Fetch from SQLite (when source=sqlite or when source=both and Supabase returned nothing)
+    if source == "sqlite" or (source == "both" and not items):
+        try:
+            conn = get_marketplace_db()
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            where_parts = ["1=1"]
+            params: List[Any] = []
+            if status:
+                where_parts.append("l.status = ?")
+                params.append(status)
+            if search:
+                where_parts.append("(l.make LIKE ? OR l.model LIKE ? OR l.description LIKE ?)")
+                q = f"%{search}%"
+                params.extend([q, q, q])
+            where_sql = " AND ".join(where_parts)
+            cursor.execute(f"SELECT COUNT(*) as total FROM listings l WHERE {where_sql}", params)
+            total = cursor.fetchone()[0]
+            offset = (page - 1) * page_size
+            cursor.execute(f"""
+                SELECT l.id, l.make, l.model, l.year, l.price, l.mileage, l.mileage_unit,
+                       l.condition, l.status, l.location_city, l.location_state, l.cover_image_id,
+                       l.created_at
+                FROM listings l
+                WHERE {where_sql}
+                ORDER BY l.created_at DESC
+                LIMIT ? OFFSET ?
+            """, params + [page_size, offset])
+            rows = cursor.fetchall()
+            for row in rows:
+                r = {k: row[k] for k in row.keys()}
+                cursor.execute(
+                    "SELECT id, url, file_path FROM listing_images WHERE listing_id = ? ORDER BY display_order, id LIMIT 1",
+                    (r["id"],),
+                )
+                img = cursor.fetchone()
+                if img:
+                    r["cover_image"] = img["url"] if img["url"] else (f"/uploads/listings/{r['id']}/{img['file_path']}" if img["file_path"] else None)
+                else:
+                    r["cover_image"] = None
+                r["from_supabase"] = False
+                items.append(r)
+            conn.close()
+        except Exception as e:
+            logger.error(f"Error listing admin listings: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=str(e))
+
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 
 class AdminListingPatch(BaseModel):
     status: Optional[str] = None
 
 
+def _is_uuid(s) -> bool:
+    if not isinstance(s, str):
+        return False
+    import re
+    return bool(re.match(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', s.lower()))
+
+
 @router.patch("/listings/{listing_id}")
 async def admin_patch_listing(
-    listing_id: int,
+    listing_id: str,
     body: AdminListingPatch,
     admin: AdminResponse = Depends(require_permission("edit")),
 ):
-    """Update listing status (e.g. mark sold/active)."""
+    """Update listing status (e.g. mark sold/active). Supports numeric ID (SQLite) or UUID (Supabase)."""
     if not body.status or body.status not in ("active", "sold", "draft", "deleted"):
         raise HTTPException(status_code=400, detail="status must be one of: active, sold, draft, deleted")
+    if _is_uuid(listing_id):
+        try:
+            import os
+            import httpx
+            supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+            supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+            if not supabase_url or not supabase_key:
+                raise HTTPException(status_code=404, detail="Supabase not configured")
+            payload = {"status": body.status}
+            if body.status == "sold":
+                payload["is_sold"] = True
+            elif body.status == "active":
+                payload["is_sold"] = False
+            api_url = f"{supabase_url}/rest/v1/car_listings"
+
+            with httpx.Client(timeout=10) as client:
+                r = client.patch(
+                    f"{api_url}?id=eq.{listing_id}",
+                    headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}", "Content-Type": "application/json"},
+                    json=payload,
+                )
+                if r.status_code not in (200, 204):
+                    raise HTTPException(status_code=404, detail="Listing not found")
+            return {"message": "Updated", "id": listing_id}
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error patching Supabase listing: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
     try:
+        lid = int(listing_id)
         conn = get_marketplace_db()
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE listings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (body.status, listing_id),
+            (body.status, lid),
         )
         n = cursor.rowcount
         conn.commit()
         conn.close()
         if n == 0:
             raise HTTPException(status_code=404, detail="Listing not found")
-        return {"message": "Updated", "id": listing_id}
+        return {"message": "Updated", "id": lid}
     except HTTPException:
         raise
     except Exception as e:
@@ -842,23 +1082,43 @@ async def admin_patch_listing(
 
 @router.delete("/listings/{listing_id}")
 async def admin_delete_listing(
-    listing_id: int,
+    listing_id: str,
     admin: AdminResponse = Depends(require_permission("edit")),
 ):
-    """Soft-delete a listing (status = deleted)."""
+    """Delete a listing. Supports numeric ID (SQLite) or UUID (Supabase)."""
+    if _is_uuid(listing_id):
+        try:
+            import os
+            import httpx
+            supabase_url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+            supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
+            if not supabase_url or not supabase_key:
+                raise HTTPException(status_code=404, detail="Supabase not configured")
+            api_url = f"{supabase_url}/rest/v1/car_listings"
+            with httpx.Client(timeout=10) as client:
+                r = client.delete(f"{api_url}?id=eq.{listing_id}", headers={"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}"})
+                if r.status_code not in (200, 204):
+                    raise HTTPException(status_code=404, detail="Listing not found")
+            return {"message": "Deleted", "id": listing_id}
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error deleting Supabase listing: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
     try:
+        lid = int(listing_id)
         conn = get_marketplace_db()
         cursor = conn.cursor()
         cursor.execute(
             "UPDATE listings SET status = 'deleted', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (listing_id,),
+            (lid,),
         )
         n = cursor.rowcount
         conn.commit()
         conn.close()
         if n == 0:
             raise HTTPException(status_code=404, detail="Listing not found")
-        return {"message": "Deleted", "id": listing_id}
+        return {"message": "Deleted", "id": lid}
     except HTTPException:
         raise
     except Exception as e:
@@ -866,15 +1126,48 @@ async def admin_delete_listing(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# System Settings (placeholder endpoints)
+# System Settings
+def _get_retrain_state_path():
+    import os
+    from pathlib import Path
+    base = Path(__file__).parent.parent.parent.parent
+    return base / "retrain_state.json"
+
+
+def _load_retrain_state():
+    try:
+        path = _get_retrain_state_path()
+        if path.exists():
+            with open(path) as f:
+                import json
+                return json.load(f)
+    except Exception:
+        pass
+    return {"last_retrain": None, "status": "idle", "message": None}
+
+
+def _save_retrain_state(data):
+    try:
+        path = _get_retrain_state_path()
+        with open(path, "w") as f:
+            import json
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        logger.warning(f"Could not save retrain state: {e}")
+
+
 @router.get("/settings")
 async def get_settings(admin: AdminResponse = Depends(require_permission("view"))):
     """Get system settings"""
+    retrain_state = _load_retrain_state()
     return {
         "model": {
             "version": "v2",
             "accuracy_threshold": 85.0,
-            "retraining_schedule": "weekly"
+            "retraining_schedule": "weekly",
+            "last_retrain": retrain_state.get("last_retrain"),
+            "retrain_status": retrain_state.get("status", "idle"),
+            "retrain_message": retrain_state.get("message"),
         },
         "feedback": {
             "collection_enabled": True,
@@ -887,8 +1180,32 @@ async def get_settings(admin: AdminResponse = Depends(require_permission("view")
 async def trigger_model_retrain(admin: AdminResponse = Depends(require_permission("edit"))):
     """Trigger model retraining"""
     log_admin_action(admin.id, "trigger_retrain", "model")
-    # TODO: Implement actual retraining trigger
-    return {"message": "Model retraining triggered", "status": "queued"}
+    _save_retrain_state({"last_retrain": datetime.utcnow().isoformat() + "Z", "status": "running", "message": "Retraining started"})
+    try:
+        from app.services.model_retrainer import retrain_model_with_feedback
+        result = retrain_model_with_feedback(min_feedback_samples=50)
+        if result.get("success"):
+            _save_retrain_state({
+                "last_retrain": datetime.utcnow().isoformat() + "Z",
+                "status": "completed",
+                "message": f"Model retrained successfully ({result.get('samples_used', 0)} samples)"
+            })
+            return {"message": "Model retraining completed", "status": "completed", "details": result}
+        else:
+            _save_retrain_state({
+                "last_retrain": _load_retrain_state().get("last_retrain"),
+                "status": "failed",
+                "message": result.get("message", "Insufficient feedback samples")
+            })
+            return {"message": result.get("message", "Retraining failed"), "status": "failed", "details": result}
+    except Exception as e:
+        logger.error(f"Retrain failed: {e}", exc_info=True)
+        _save_retrain_state({
+            "last_retrain": _load_retrain_state().get("last_retrain"),
+            "status": "failed",
+            "message": str(e)
+        })
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Reports
