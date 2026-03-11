@@ -116,7 +116,10 @@ export default function ProvidersManagementPage() {
     return matchesSearch
   })
 
-  const getServiceName = (serviceId: string) => {
+  const getServiceName = (providerOrId: { service_id?: string; service_name?: string } | string) => {
+    if (typeof providerOrId === 'object' && providerOrId?.service_name) return providerOrId.service_name
+    const serviceId = typeof providerOrId === 'string' ? providerOrId : providerOrId?.service_id
+    if (!serviceId) return '-'
     const service = services.find(s => s.id === serviceId)
     if (!service) return serviceId
     const name = (locale === 'ar' && service.name_ar) ? service.name_ar
@@ -222,7 +225,7 @@ export default function ProvidersManagementPage() {
                       {provider.provider_name}
                     </TableCell>
                     <TableCell className="text-gray-300">
-                      {getServiceName(provider.service_id)}
+                      {getServiceName(provider)}
                     </TableCell>
                     <TableCell className="text-gray-300">
                       {provider.provider_phone || '-'}

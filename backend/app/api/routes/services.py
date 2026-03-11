@@ -24,7 +24,7 @@ from app.services.services_service import (
 from app.services.admin_service import (
     authenticate_admin,
     decode_admin_token,
-    check_permission,
+    get_admin_by_id,
     ROLE_SUPER_ADMIN,
     ROLE_MODERATOR
 )
@@ -126,7 +126,7 @@ async def get_admin_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     admin_token: Optional[str] = Cookie(None)
 ):
-    """Get authenticated admin user"""
+    """Get authenticated admin user - returns admin dict with id, role, etc."""
     token = None
     if credentials:
         token = credentials.credentials
@@ -137,8 +137,18 @@ async def get_admin_user(
         raise HTTPException(status_code=401, detail="Authentication required")
 
     try:
-        admin_id = decode_admin_token(token)
-        return admin_id
+        payload = decode_admin_token(token)
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
+        admin_id = payload.get("sub")
+        if not admin_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        admin = get_admin_by_id(int(admin_id))
+        if not admin:
+            raise HTTPException(status_code=401, detail="Admin not found")
+        return admin
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Admin authentication error: {e}")
         raise HTTPException(
@@ -248,11 +258,12 @@ async def admin_get_services(
     location_id: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Get all services for admin (with pagination)"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN, ROLE_MODERATOR])
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         services = get_all_services(
             status=status,
@@ -283,10 +294,11 @@ async def admin_get_services(
 
 
 @router.get("/admin/services/{service_id}")
-async def admin_get_service(service_id: str, admin_id: str = Depends(get_admin_user)):
+async def admin_get_service(service_id: str, admin: dict = Depends(get_admin_user)):
     """Get a single service for admin"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN, ROLE_MODERATOR])
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         service = get_service_by_id(service_id)
         if not service:
@@ -302,15 +314,16 @@ async def admin_get_service(service_id: str, admin_id: str = Depends(get_admin_u
 @router.post("/admin/services")
 async def admin_create_service(
     service: ServiceCreate,
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Create a new service"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN, ROLE_MODERATOR])
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         service_data = service.dict()
-        service_data['created_by'] = admin_id
-        service_data['updated_by'] = admin_id
+        service_data['created_by'] = str(admin.get("id", ""))
+        service_data['updated_by'] = str(admin.get("id", ""))
 
         new_service = create_service(service_data)
         return new_service
@@ -325,11 +338,12 @@ async def admin_create_service(
 async def admin_update_service(
     service_id: str,
     service: ServiceUpdate,
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Update a service"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN, ROLE_MODERATOR])
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         existing_service = get_service_by_id(service_id)
         if not existing_service:
@@ -337,7 +351,7 @@ async def admin_update_service(
 
         service_data = {k: v for k, v in service.dict().items()
                         if v is not None}
-        service_data['updated_by'] = admin_id
+        service_data['updated_by'] = str(admin.get("id", ""))
 
         updated_service = update_service(service_id, service_data)
         return updated_service
@@ -349,10 +363,11 @@ async def admin_update_service(
 
 
 @router.delete("/admin/services/{service_id}")
-async def admin_delete_service(service_id: str, admin_id: str = Depends(get_admin_user)):
+async def admin_delete_service(service_id: str, admin: dict = Depends(get_admin_user)):
     """Delete a service"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN])
+        if admin.get("role") != ROLE_SUPER_ADMIN:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         existing_service = get_service_by_id(service_id)
         if not existing_service:
@@ -371,11 +386,12 @@ async def admin_delete_service(service_id: str, admin_id: str = Depends(get_admi
 async def admin_toggle_service_status(
     service_id: str,
     status: str = Query(..., description="Status: 'active' or 'inactive'"),
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Toggle service status"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN, ROLE_MODERATOR])
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         if status not in ['active', 'inactive']:
             raise HTTPException(
@@ -385,7 +401,7 @@ async def admin_toggle_service_status(
         if not existing_service:
             raise HTTPException(status_code=404, detail="Service not found")
 
-        update_service(service_id, {'status': status, 'updated_by': admin_id})
+        update_service(service_id, {'status': status, 'updated_by': str(admin.get("id", ""))})
         return {"success": True, "status": status}
     except HTTPException:
         raise
@@ -397,11 +413,12 @@ async def admin_toggle_service_status(
 @router.post("/admin/services/bulk-delete")
 async def admin_bulk_delete_services(
     service_ids: List[str],
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Delete multiple services"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN])
+        if admin.get("role") != ROLE_SUPER_ADMIN:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         deleted_count = 0
         for service_id in service_ids:
@@ -420,15 +437,16 @@ async def admin_bulk_delete_services(
 @router.post("/admin/services/reorder")
 async def admin_reorder_services(
     reorder_data: Dict[str, int],  # {service_id: display_order}
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Update display order of services"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN, ROLE_MODERATOR])
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         for service_id, display_order in reorder_data.items():
             update_service(
-                service_id, {'display_order': display_order, 'updated_by': admin_id})
+                service_id, {'display_order': display_order, 'updated_by': str(admin.get("id", ""))})
 
         return {"success": True}
     except HTTPException:
@@ -440,10 +458,11 @@ async def admin_reorder_services(
 
 # Location management endpoints
 @router.get("/admin/locations")
-async def admin_get_locations(admin_id: str = Depends(get_admin_user)):
+async def admin_get_locations(admin: dict = Depends(get_admin_user)):
     """Get all locations for admin"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN, ROLE_MODERATOR])
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         locations = get_all_locations(active_only=False)
         return {"locations": locations, "count": len(locations)}
@@ -457,11 +476,12 @@ async def admin_get_locations(admin_id: str = Depends(get_admin_user)):
 @router.post("/admin/locations")
 async def admin_create_location(
     location: LocationCreate,
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Create a new location"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN, ROLE_MODERATOR])
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         location_data = location.dict()
         new_location = create_location(location_data)
@@ -477,11 +497,12 @@ async def admin_create_location(
 async def admin_update_location(
     location_id: str,
     location: LocationUpdate,
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Update a location"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN, ROLE_MODERATOR])
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         existing_location = get_location_by_id(location_id)
         if not existing_location:
@@ -499,10 +520,11 @@ async def admin_update_location(
 
 
 @router.delete("/admin/locations/{location_id}")
-async def admin_delete_location(location_id: str, admin_id: str = Depends(get_admin_user)):
+async def admin_delete_location(location_id: str, admin: dict = Depends(get_admin_user)):
     """Delete a location"""
     try:
-        check_permission(admin_id, [ROLE_SUPER_ADMIN])
+        if admin.get("role") != ROLE_SUPER_ADMIN:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
 
         if not delete_location(location_id):
             raise HTTPException(

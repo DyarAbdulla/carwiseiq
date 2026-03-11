@@ -204,98 +204,111 @@ async def change_password(
 @router.get("/dashboard/stats")
 async def get_dashboard_stats(admin: AdminResponse = Depends(require_admin)):
     """Get dashboard statistics"""
+    pred_stats = {"today": 0, "this_week": 0, "this_month": 0, "all_time": 0}
+    total_users = 0
+    accuracy = {"total_feedback": 0, "accuracy_percent": 0.0}
+    recent_feedback = []
+
     try:
         conn = get_feedback_db()
         cursor = conn.cursor()
 
-        # Total predictions (today, this week, this month, all-time)
-        cursor.execute("""
-            SELECT 
-                SUM(CASE WHEN DATE(timestamp) = DATE('now') THEN 1 ELSE 0 END) as today,
-                SUM(CASE WHEN timestamp >= datetime('now', '-7 days') THEN 1 ELSE 0 END) as this_week,
-                SUM(CASE WHEN timestamp >= datetime('now', '-30 days') THEN 1 ELSE 0 END) as this_month,
-                COUNT(*) as all_time
-            FROM predictions
-        """)
-        pred_stats = cursor.fetchone()
+        # Total predictions - handle missing table
+        try:
+            cursor.execute("""
+                SELECT 
+                    SUM(CASE WHEN DATE(timestamp) = DATE('now') THEN 1 ELSE 0 END) as today,
+                    SUM(CASE WHEN timestamp >= datetime('now', '-7 days') THEN 1 ELSE 0 END) as this_week,
+                    SUM(CASE WHEN timestamp >= datetime('now', '-30 days') THEN 1 ELSE 0 END) as this_month,
+                    COUNT(*) as all_time
+                FROM predictions
+            """)
+            pred_stats = cursor.fetchone() or pred_stats
+        except Exception as pe:
+            logger.warning(f"Predictions table error: {pe}")
 
-        # Total users
+        # Model accuracy from feedback
+        try:
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) as total_feedback,
+                    CASE 
+                        WHEN COUNT(*) > 0 THEN SUM(CASE WHEN is_accurate = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)
+                        ELSE 0
+                    END as accuracy_percent
+                FROM feedback
+                WHERE is_accurate IS NOT NULL
+            """)
+            accuracy = cursor.fetchone() or accuracy
+        except Exception as ae:
+            logger.warning(f"Feedback accuracy error: {ae}")
+
+        # Recent feedback (last 10)
+        try:
+            cursor.execute("""
+                SELECT 
+                    f.id, f.rating, f.is_accurate, f.timestamp,
+                    p.car_features, p.predicted_price
+                FROM feedback f
+                JOIN predictions p ON f.prediction_id = p.id
+                ORDER BY f.timestamp DESC
+                LIMIT 10
+            """)
+            recent_feedback = cursor.fetchall()
+        except Exception as re:
+            logger.warning(f"Recent feedback error: {re}")
+
+        conn.close()
+    except Exception as e:
+        logger.warning(f"Feedback DB error: {e}")
+
+    # Total users - handle missing table
+    try:
         user_conn = get_user_db()
         user_cursor = user_conn.cursor()
         user_cursor.execute("SELECT COUNT(*) as total FROM users")
-        total_users = user_cursor.fetchone()["total"]
+        row = user_cursor.fetchone()
+        total_users = row["total"] if row else 0
         user_conn.close()
+    except Exception as ue:
+        logger.warning(f"Users table error: {ue}")
 
-        # Model accuracy from feedback
-        cursor.execute("""
-            SELECT 
-                COUNT(*) as total_feedback,
-                CASE 
-                    WHEN COUNT(*) > 0 THEN SUM(CASE WHEN is_accurate = 1 THEN 1 ELSE 0 END) * 100.0 / COUNT(*)
-                    ELSE 0
-                END as accuracy_percent
-            FROM feedback
-            WHERE is_accurate IS NOT NULL
-        """)
-        accuracy = cursor.fetchone()
+    # Listings from SQLite + Supabase
+    active_listings = get_marketplace_listings_count("active") + get_supabase_listings_count("active")
+    total_listings = get_marketplace_listings_count() + get_supabase_listings_count()
+    sold_listings = get_marketplace_listings_count("sold") + get_supabase_listings_count()
 
-        # Recent feedback (last 10)
-        cursor.execute("""
-            SELECT 
-                f.id, f.rating, f.is_accurate, f.timestamp,
-                p.car_features, p.predicted_price
-            FROM feedback f
-            JOIN predictions p ON f.prediction_id = p.id
-            ORDER BY f.timestamp DESC
-            LIMIT 10
-        """)
-        recent_feedback = cursor.fetchall()
-
-        # System health
-        health_status = {
-            "api": "healthy",
-            "database": "healthy",
-            "model": "healthy"
-        }
-
-        conn.close()
-
-        return {
-            "predictions": {
-                "today": int(pred_stats["today"] or 0),
-                "this_week": int(pred_stats["this_week"] or 0),
-                "this_month": int(pred_stats["this_month"] or 0),
-                "all_time": int(pred_stats["all_time"] or 0)
-            },
-            "users": {
-                "total": int(total_users or 0)
-            },
-            "accuracy": {
-                "percent": round(float(accuracy["accuracy_percent"] or 0), 2) if accuracy and accuracy["total_feedback"] else 0.0,
-                "total_feedback": int(accuracy["total_feedback"] or 0) if accuracy else 0
-            },
-            "listings": {
-                "active": get_marketplace_listings_count("active") + get_supabase_listings_count("active"),
-                "total": get_marketplace_listings_count() + get_supabase_listings_count(),
-                "sold": get_marketplace_listings_count("sold") + get_supabase_listings_count("sold"),
-                "draft": get_marketplace_listings_count("draft"),
-            },
-            "recent_feedback": [
-                {
-                    "id": row["id"],
-                    "rating": row["rating"],
-                    "is_accurate": bool(row["is_accurate"]) if row["is_accurate"] is not None else None,
-                    "timestamp": row["timestamp"],
-                    "car": json.loads(row["car_features"]) if row["car_features"] else {},
-                    "predicted_price": float(row["predicted_price"]) if row["predicted_price"] else 0.0
-                }
-                for row in recent_feedback
-            ],
-            "system_health": health_status
-        }
-    except Exception as e:
-        logger.error(f"Error getting dashboard stats: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "predictions": {
+            "today": int(pred_stats.get("today") or 0),
+            "this_week": int(pred_stats.get("this_week") or 0),
+            "this_month": int(pred_stats.get("this_month") or 0),
+            "all_time": int(pred_stats.get("all_time") or 0)
+        },
+        "users": {"total": int(total_users or 0)},
+        "accuracy": {
+            "percent": round(float(accuracy.get("accuracy_percent") or 0), 2),
+            "total_feedback": int(accuracy.get("total_feedback") or 0)
+        },
+        "listings": {
+            "active": active_listings,
+            "total": total_listings,
+            "sold": sold_listings,
+            "draft": get_marketplace_listings_count("draft"),
+        },
+        "recent_feedback": [
+            {
+                "id": row["id"],
+                "rating": row["rating"],
+                "is_accurate": bool(row["is_accurate"]) if row.get("is_accurate") is not None else None,
+                "timestamp": row["timestamp"],
+                "car": json.loads(row["car_features"]) if row.get("car_features") else {},
+                "predicted_price": float(row["predicted_price"]) if row.get("predicted_price") else 0.0
+            }
+            for row in recent_feedback
+        ],
+        "system_health": {"api": "healthy", "database": "healthy", "model": "healthy"}
+    }
 
 
 @router.get("/dashboard/charts/predictions-over-time")
@@ -731,7 +744,7 @@ async def get_users_list(
         cursor = conn.cursor()
 
         where_clause = ""
-        params = []
+        params: List[Any] = []
         if search:
             where_clause = "WHERE email LIKE ?"
             params.append(f"%{search}%")
@@ -912,19 +925,18 @@ async def get_admin_listings(
             if supabase_url and supabase_key:
                 api_url = f"{supabase_url}/rest/v1/car_listings"
                 headers = {"apikey": supabase_key, "Authorization": f"Bearer {supabase_key}", "Prefer": "count=exact"}
-                select = "id,user_id,title,make,model,year,price,mileage,transmission,fuel_type,condition,location,status,is_sold,images,created_at"
-                url = f"{api_url}?select={select}&order=created_at.desc"
+                params: Dict[str, Any] = {"select": "id,user_id,title,make,model,year,price,mileage,transmission,fuel_type,condition,location,status,is_sold,images,created_at", "order": "created_at.desc", "limit": page_size, "offset": (page - 1) * page_size}
                 if status == "active":
-                    url += "&status=eq.active"
+                    params["status"] = "eq.active"
                 elif status == "sold":
-                    url += "&is_sold=eq.true"
+                    params["is_sold"] = "eq.true"
                 elif status == "pending":
-                    url += "&status=eq.pending"
-                if search:
-                    url += f"&or=(make.ilike.*{search}*,model.ilike.*{search}*,title.ilike.*{search}*)"
-                url += f"&limit={page_size}&offset={(page - 1) * page_size}"
+                    params["status"] = "eq.pending"
+                if search and search.strip():
+                    s = search.strip()
+                    params["or"] = f"(make.ilike.*{s}*,model.ilike.*{s}*,title.ilike.*{s}*)"
                 with httpx.Client(timeout=15) as client:
-                    r = client.get(url, headers=headers)
+                    r = client.get(api_url, headers=headers, params=params)
                     if r.status_code == 200:
                         data = r.json()
                         if not isinstance(data, list):

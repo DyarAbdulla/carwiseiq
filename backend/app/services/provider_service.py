@@ -222,28 +222,34 @@ def get_all_providers(
     location_id: Optional[str] = None,
     active_only: bool = True
 ) -> List[Dict]:
-    """Get all providers with optional filters"""
+    """Get all providers with optional filters. Includes service name from services table."""
     conn = get_db()
     cursor = conn.cursor()
 
-    query = "SELECT * FROM service_providers WHERE 1=1"
+    # JOIN with services to get service name
+    query = """
+        SELECT p.*, s.name_en as service_name_en, s.name_ar as service_name_ar, s.name_ku as service_name_ku
+        FROM service_providers p
+        LEFT JOIN services s ON p.service_id = s.id
+        WHERE 1=1
+    """
     params = []
 
     if service_id:
-        query += " AND service_id = ?"
+        query += " AND p.service_id = ?"
         params.append(service_id)
 
     if active_only or status == 'active':
-        query += " AND status = 'active'"
+        query += " AND p.status = 'active'"
     elif status == 'inactive':
-        query += " AND status = 'inactive'"
+        query += " AND p.status = 'inactive'"
 
     # Filter by location if provided
     if location_id and location_id != 'all' and location_id.strip():
-        query += " AND (is_all_iraq = 1 OR locations LIKE ?)"
+        query += " AND (p.is_all_iraq = 1 OR p.locations LIKE ?)"
         params.append(f'%{location_id}%')
 
-    query += " ORDER BY display_order ASC, provider_name ASC"
+    query += " ORDER BY p.display_order ASC, p.provider_name ASC"
 
     cursor.execute(query, params)
     rows = cursor.fetchall()
@@ -252,6 +258,8 @@ def get_all_providers(
     providers = []
     for row in rows:
         provider = dict(row)
+        # Add service_name (prefer name_en for display)
+        provider['service_name'] = provider.get('service_name_en') or provider.get('service_name_ar') or provider.get('service_name_ku') or provider.get('service_id', '')
         # Parse JSON fields
         if provider.get('locations'):
             try:

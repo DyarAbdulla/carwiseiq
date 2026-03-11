@@ -16,9 +16,8 @@ from app.services.provider_service import (
     get_all_providers
 )
 from app.services.admin_service import (
-    authenticate_admin,
     decode_admin_token,
-    check_permission,
+    get_admin_by_id,
     ROLE_SUPER_ADMIN,
     ROLE_MODERATOR
 )
@@ -78,7 +77,7 @@ async def get_admin_user(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     admin_token: Optional[str] = Cookie(None)
 ):
-    """Get authenticated admin user"""
+    """Get authenticated admin user - returns admin dict with id, role, etc."""
     token = None
     if credentials:
         token = credentials.credentials
@@ -89,8 +88,18 @@ async def get_admin_user(
         raise HTTPException(status_code=401, detail="Authentication required")
 
     try:
-        admin_id = decode_admin_token(token)
-        return admin_id
+        payload = decode_admin_token(token)
+        if not payload:
+            raise HTTPException(status_code=401, detail="Invalid authentication token")
+        admin_id = payload.get("sub")
+        if not admin_id:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+        admin = get_admin_by_id(int(admin_id))
+        if not admin:
+            raise HTTPException(status_code=401, detail="Admin not found")
+        return admin
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Admin authentication error: {e}")
         raise HTTPException(
@@ -142,10 +151,12 @@ async def admin_get_providers(
     location_id: Optional[str] = Query(
         None, description="Filter by location ID"),
     status: Optional[str] = Query(None, description="Filter by status"),
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Get all providers (admin)"""
     try:
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
         providers = get_all_providers(
             service_id=service_id,
             location_id=location_id,
@@ -161,11 +172,12 @@ async def admin_get_providers(
 @router.post("/admin/providers")
 async def admin_create_provider(
     provider_data: ProviderCreate,
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Create a new provider"""
     try:
-        check_permission(admin_id, ROLE_MODERATOR)
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
         provider = create_provider(provider_data.dict())
         return provider
     except Exception as e:
@@ -176,7 +188,7 @@ async def admin_create_provider(
 @router.get("/admin/providers/{provider_id}")
 async def admin_get_provider(
     provider_id: str,
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Get a single provider (admin)"""
     try:
@@ -195,11 +207,12 @@ async def admin_get_provider(
 async def admin_update_provider(
     provider_id: str,
     provider_data: ProviderUpdate,
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Update a provider"""
     try:
-        check_permission(admin_id, ROLE_MODERATOR)
+        if admin.get("role") not in (ROLE_SUPER_ADMIN, ROLE_MODERATOR):
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
         provider = update_provider(
             provider_id, provider_data.dict(exclude_unset=True))
         if not provider:
@@ -215,11 +228,12 @@ async def admin_update_provider(
 @router.delete("/admin/providers/{provider_id}")
 async def admin_delete_provider(
     provider_id: str,
-    admin_id: str = Depends(get_admin_user)
+    admin: dict = Depends(get_admin_user)
 ):
     """Delete a provider"""
     try:
-        check_permission(admin_id, ROLE_SUPER_ADMIN)
+        if admin.get("role") != ROLE_SUPER_ADMIN:
+            raise HTTPException(status_code=403, detail="Insufficient permissions")
         deleted = delete_provider(provider_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Provider not found")
