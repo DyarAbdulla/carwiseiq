@@ -124,7 +124,7 @@ export default function AboutPage() {
             {techItems.map(({ icon: Icon, labelKey, valueKey }, i) => (
               <li
                 key={labelKey}
-                className="flex items-start gap-3 p-4 rounded-lg bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10"
+                className="flex items-start gap-3 rtl:flex-row-reverse p-4 rounded-lg bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10"
               >
                 <div className="w-10 h-10 rounded-lg bg-[#8B5CF6]/20 border border-[#8B5CF6]/30 flex items-center justify-center shrink-0">
                   <Icon className="w-5 h-5 text-[#8B5CF6]" />
@@ -191,7 +191,7 @@ export default function AboutPage() {
                 href={href}
                 target={external ? '_blank' : undefined}
                 rel={external ? 'noopener noreferrer' : undefined}
-                className="inline-flex items-center gap-2 px-4 py-3 rounded-lg border border-[#8B5CF6]/30 bg-white/50 dark:bg-white/5 hover:bg-[#8B5CF6]/20 hover:border-[#8B5CF6]/50 transition-all duration-300 text-slate-700 dark:text-slate-200"
+                className="inline-flex items-center gap-2 rtl:flex-row-reverse px-4 py-3 rounded-lg border border-[#8B5CF6]/30 bg-white/50 dark:bg-white/5 hover:bg-[#8B5CF6]/20 hover:border-[#8B5CF6]/50 transition-all duration-300 text-slate-700 dark:text-slate-200"
               >
                 <Icon className="w-5 h-5 text-[#8B5CF6]" />
                 <span>{label}</span>

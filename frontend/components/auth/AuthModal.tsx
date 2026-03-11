@@ -332,15 +332,15 @@ export function AuthModal({ open, onOpenChange, returnUrl, defaultTab = 'signin'
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 rtl:flex-row-reverse rtl:gap-2">
                     <Checkbox
                       id="auth-remember"
                       checked={!!loginForm.watch('rememberMe')}
                       onCheckedChange={(c) => loginForm.setValue('rememberMe', !!c)}
                       disabled={loginForm.formState.isSubmitting}
-                      className="border-white/20 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
+                      className="border-white/20 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 shrink-0"
                     />
-                    <Label htmlFor="auth-remember" className="text-sm text-slate-400 cursor-pointer">
+                    <Label htmlFor="auth-remember" className="text-sm text-slate-400 cursor-pointer min-w-0">
                       {t('rememberMe')}
                     </Label>
                   </div>
@@ -524,15 +524,15 @@ export function AuthModal({ open, onOpenChange, returnUrl, defaultTab = 'signin'
                     )}
                   </div>
 
-                  <div className="flex items-start gap-2">
+                  <div className="flex items-start gap-2 rtl:flex-row-reverse rtl:gap-2">
                     <Checkbox
                       id="auth-terms"
                       checked={!!registerForm.watch('terms_accepted')}
                       onCheckedChange={(c) => registerForm.setValue('terms_accepted', !!c)}
                       disabled={registerForm.formState.isSubmitting}
-                      className="border-white/20 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 mt-1"
+                      className="border-white/20 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 mt-1 shrink-0 rtl:mt-1"
                     />
-                    <Label htmlFor="auth-terms" className="text-sm text-slate-400 cursor-pointer leading-relaxed">
+                    <Label htmlFor="auth-terms" className="text-sm text-slate-400 cursor-pointer leading-relaxed min-w-0">
                       {t('termsAcceptPrefix')}
                       <Link href={`/${locale}/terms`} className="text-indigo-400 hover:underline" target="_blank">
                         {t('termsOfService')}

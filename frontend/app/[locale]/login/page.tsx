@@ -318,15 +318,15 @@ function LoginPageContent() {
                 {errors.password && <p className="text-sm text-red-400">{errors.password.message}</p>}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rtl:flex-row-reverse rtl:gap-2">
                 <Checkbox
                   id="rememberMe"
                   checked={!!watch('rememberMe')}
                   onCheckedChange={(c) => setValue('rememberMe', !!c)}
                   disabled={isSubmitting}
-                  className="border-[#2a2d3a]"
+                  className="border-[#2a2d3a] shrink-0"
                 />
-                <Label htmlFor="rememberMe" className="text-sm text-[#94a3b8] cursor-pointer">
+                <Label htmlFor="rememberMe" className="text-sm text-[#94a3b8] cursor-pointer min-w-0">
                   {t('rememberMe')}
                 </Label>
               </div>

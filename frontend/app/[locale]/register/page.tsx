@@ -265,15 +265,15 @@ function RegisterPageContent() {
               {errors.confirmPassword && <p className="text-sm text-red-400">{errors.confirmPassword.message}</p>}
             </div>
 
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2 rtl:flex-row-reverse rtl:gap-2">
               <Checkbox
                 id="terms"
                 checked={!!watch('terms_accepted')}
                 onCheckedChange={(c) => setValue('terms_accepted', !!c)}
                 disabled={isSubmitting}
-                className="border-[#2a2d3a] mt-1"
+                className="border-[#2a2d3a] mt-1 shrink-0 rtl:mt-1 rtl:ml-0 rtl:mr-0"
               />
-              <Label htmlFor="terms" className="text-sm text-[#94a3b8] cursor-pointer leading-relaxed">
+              <Label htmlFor="terms" className="text-sm text-[#94a3b8] cursor-pointer leading-relaxed min-w-0">
                 {t('termsAcceptPrefix')}
                 <Link href={`/${locale}/terms`} className="text-[#5B7FFF] hover:underline" target="_blank">
                   {t('termsOfService')}

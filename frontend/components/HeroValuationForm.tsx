@@ -147,22 +147,22 @@ export function HeroValuationForm() {
           />
         </div>
       </div>
-      <div className="flex flex-row gap-3 mt-4 sm:mt-5">
+      <div className="flex flex-col sm:flex-row gap-3 mt-4 sm:mt-5 flex-wrap sm:flex-nowrap">
         <Button
           type="submit"
           size="lg"
-          className="flex-1 min-h-[48px] sm:min-h-[52px] bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-base sm:text-lg font-semibold shadow-lg touch-manipulation"
+          className="flex-1 min-w-0 min-h-[48px] sm:min-h-[52px] bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-sm sm:text-base sm:text-lg font-semibold shadow-lg touch-manipulation whitespace-normal break-words"
         >
-          <Car className="h-5 w-5 mr-2 rtl:mr-0 rtl:ml-2" aria-hidden />
-          {t("cta")}
+          <Car className="h-5 w-5 shrink-0 mr-2 rtl:mr-0 rtl:ml-2" aria-hidden />
+          <span>{t("cta")}</span>
         </Button>
         <SellCarCTA
           variant="outline"
           size="lg"
           showIcon={false}
-          className="flex-1 min-h-[48px] sm:min-h-[52px] border-2 border-slate-300 dark:border-white/30 bg-white/80 dark:bg-white/5 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-400 dark:hover:border-white/40 text-slate-900 dark:text-white text-base sm:text-lg font-semibold rounded-xl touch-manipulation"
+          className="flex-1 min-w-0 min-h-[48px] sm:min-h-[52px] border-2 border-slate-300 dark:border-white/30 bg-white/80 dark:bg-white/5 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-400 dark:hover:border-white/40 text-slate-900 dark:text-white text-sm sm:text-base sm:text-lg font-semibold rounded-xl touch-manipulation whitespace-normal break-words"
         >
-          {tHome("nav.sellCar") || "Sell Car"}
+          <span>{tHome("nav.sellCar") || "Sell Car"}</span>
         </SellCarCTA>
       </div>
     </form>

@@ -49,7 +49,7 @@ export function StatsCounter() {
       <div className="container mx-auto px-3 sm:px-6 max-w-[1200px]">
         <div className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-4 sm:p-6">
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12">
-            <div className="flex items-center gap-3" role="listitem">
+            <div className="flex items-center gap-3 rtl:flex-row-reverse rtl:gap-3" role="listitem">
               <div className="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
                 <Database className="h-6 w-6 text-indigo-400" aria-hidden />
               </div>
@@ -60,7 +60,7 @@ export function StatsCounter() {
                 <div className="text-sm text-slate-600 dark:text-slate-300">{t("carsValued")}</div>
               </div>
             </div>
-            <div className="flex items-center gap-3" role="listitem">
+            <div className="flex items-center gap-3 rtl:flex-row-reverse rtl:gap-3" role="listitem">
               <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
                 <Users className="h-6 w-6 text-purple-400" aria-hidden />
               </div>
@@ -71,7 +71,7 @@ export function StatsCounter() {
                 <div className="text-sm text-slate-600 dark:text-slate-300">{t("happyUsers")}</div>
               </div>
             </div>
-            <div className="flex items-center gap-3" role="listitem">
+            <div className="flex items-center gap-3 rtl:flex-row-reverse rtl:gap-3" role="listitem">
               <div className="w-12 h-12 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
                 <Award className="h-6 w-6 text-blue-400" aria-hidden />
               </div>
