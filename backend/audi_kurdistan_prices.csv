@@ -1,0 +1,209 @@
+make,model,trim,year,mileage_km,condition,fuel_type,transmission,engine_size,price_usd
+Audi,A3,Premium,2014,120000,Used,Gasoline,Automatic,1.8,18000
+Audi,A3,Premium,2015,100000,Used,Gasoline,Automatic,1.8,20000
+Audi,A3,Premium,2016,85000,Used,Gasoline,Automatic,2.0,22000
+Audi,A3,Premium Plus,2017,70000,Used,Gasoline,Automatic,2.0,25000
+Audi,A3,Premium Plus,2018,55000,Used,Gasoline,Automatic,2.0,28000
+Audi,A3,S Line,2019,40000,Used,Gasoline,Automatic,2.0,32000
+Audi,A3,S Line,2020,30000,Used,Gasoline,Automatic,2.0,35000
+Audi,A3,Premium,2021,20000,Used,Gasoline,Automatic,2.0,38000
+Audi,A3,Premium Plus,2022,10000,Used,Gasoline,Automatic,2.0,42000
+Audi,A3,S Line,2023,5000,Used,Gasoline,Automatic,2.0,45000
+Audi,A3,Premium,2024,0,New,Gasoline,Automatic,2.0,48000
+Audi,A3,S Line,2025,0,New,Gasoline,Automatic,2.0,52000
+Audi,A4,Premium,2014,130000,Used,Gasoline,Automatic,2.0,20000
+Audi,A4,Premium,2015,110000,Used,Gasoline,Automatic,2.0,23000
+Audi,A4,Premium Plus,2016,95000,Used,Gasoline,Automatic,2.0,26000
+Audi,A4,Premium Plus,2017,80000,Used,Gasoline,Automatic,2.0,29000
+Audi,A4,S Line,2018,65000,Used,Gasoline,Automatic,2.0,33000
+Audi,A4,S Line,2019,50000,Used,Gasoline,Automatic,2.0,37000
+Audi,A4,Premium Plus,2020,35000,Used,Gasoline,Automatic,2.0,41000
+Audi,A4,S Line,2021,25000,Used,Gasoline,Automatic,2.0,45000
+Audi,A4,Premium Plus,2022,15000,Used,Gasoline,Automatic,2.0,48000
+Audi,A4,S Line,2023,8000,Used,Gasoline,Automatic,2.0,52000
+Audi,A4,Premium,2024,0,New,Gasoline,Automatic,2.0,55000
+Audi,A4,S Line,2025,0,New,Gasoline,Automatic,2.0,58000
+Audi,A5,Premium,2014,125000,Used,Gasoline,Automatic,2.0,22000
+Audi,A5,Premium Plus,2015,105000,Used,Gasoline,Automatic,2.0,26000
+Audi,A5,S Line,2016,90000,Used,Gasoline,Automatic,2.0,30000
+Audi,A5,Premium Plus,2017,75000,Used,Gasoline,Automatic,2.0,34000
+Audi,A5,S Line,2018,60000,Used,Gasoline,Automatic,2.0,38000
+Audi,A5,Sportback,2019,45000,Used,Gasoline,Automatic,2.0,42000
+Audi,A5,Sportback,2020,30000,Used,Gasoline,Automatic,2.0,46000
+Audi,A5,S Line,2021,20000,Used,Gasoline,Automatic,2.0,50000
+Audi,A5,Sportback,2022,12000,Used,Gasoline,Automatic,2.0,54000
+Audi,A5,S Line,2023,5000,Used,Gasoline,Automatic,2.0,58000
+Audi,A5,Sportback,2024,0,New,Gasoline,Automatic,2.0,62000
+Audi,A5,S Line,2025,0,New,Gasoline,Automatic,2.0,65000
+Audi,A6,Premium,2014,140000,Used,Gasoline,Automatic,2.0,23000
+Audi,A6,Premium,2015,120000,Used,Gasoline,Automatic,2.0,27000
+Audi,A6,Premium Plus,2016,100000,Used,Gasoline,Automatic,3.0,32000
+Audi,A6,Premium Plus,2017,85000,Used,Gasoline,Automatic,3.0,37000
+Audi,A6,S Line,2018,70000,Used,Gasoline,Automatic,3.0,42000
+Audi,A6,S Line,2019,55000,Used,Gasoline,Automatic,3.0,48000
+Audi,A6,Premium Plus,2020,40000,Used,Gasoline,Automatic,3.0,54000
+Audi,A6,S Line,2021,28000,Used,Gasoline,Automatic,3.0,60000
+Audi,A6,Premium Plus,2022,18000,Used,Gasoline,Automatic,3.0,65000
+Audi,A6,S Line,2023,8000,Used,Gasoline,Automatic,3.0,70000
+Audi,A6,Premium,2024,0,New,Gasoline,Automatic,3.0,75000
+Audi,A6,S Line,2025,0,New,Gasoline,Automatic,3.0,82000
+Audi,A7,Premium,2014,135000,Used,Gasoline,Automatic,3.0,28000
+Audi,A7,Premium Plus,2015,115000,Used,Gasoline,Automatic,3.0,33000
+Audi,A7,S Line,2016,95000,Used,Gasoline,Automatic,3.0,38000
+Audi,A7,Premium Plus,2017,80000,Used,Gasoline,Automatic,3.0,44000
+Audi,A7,S Line,2018,65000,Used,Gasoline,Automatic,3.0,50000
+Audi,A7,Sportback,2019,50000,Used,Gasoline,Automatic,3.0,56000
+Audi,A7,Sportback,2020,35000,Used,Gasoline,Automatic,3.0,62000
+Audi,A7,S Line,2021,25000,Used,Gasoline,Automatic,3.0,68000
+Audi,A7,Sportback,2022,15000,Used,Gasoline,Automatic,3.0,75000
+Audi,A7,S Line,2023,6000,Used,Gasoline,Automatic,3.0,82000
+Audi,A7,Sportback,2024,0,New,Gasoline,Automatic,3.0,88000
+Audi,A7,S Line,2025,0,New,Gasoline,Automatic,3.0,95000
+Audi,A8,Premium,2014,145000,Used,Gasoline,Automatic,3.0,32000
+Audi,A8,Premium Plus,2015,125000,Used,Gasoline,Automatic,3.0,38000
+Audi,A8,L,2016,105000,Used,Gasoline,Automatic,4.0,45000
+Audi,A8,L,2017,90000,Used,Gasoline,Automatic,4.0,52000
+Audi,A8,Premium Plus,2018,75000,Used,Gasoline,Automatic,4.0,60000
+Audi,A8,L,2019,55000,Used,Gasoline,Automatic,4.0,70000
+Audi,A8,L,2020,40000,Used,Gasoline,Automatic,4.0,80000
+Audi,A8,Premium Plus,2021,28000,Used,Gasoline,Automatic,4.0,90000
+Audi,A8,L,2022,18000,Used,Gasoline,Automatic,4.0,100000
+Audi,A8,L,2023,8000,Used,Gasoline,Automatic,4.0,110000
+Audi,A8,L,2024,0,New,Gasoline,Automatic,4.0,120000
+Audi,A8,L,2025,0,New,Gasoline,Automatic,4.0,130000
+Audi,Q3,Premium,2014,115000,Used,Gasoline,Automatic,2.0,20000
+Audi,Q3,Premium,2015,95000,Used,Gasoline,Automatic,2.0,23000
+Audi,Q3,Premium Plus,2016,80000,Used,Gasoline,Automatic,2.0,26000
+Audi,Q3,S Line,2017,65000,Used,Gasoline,Automatic,2.0,30000
+Audi,Q3,Premium Plus,2018,50000,Used,Gasoline,Automatic,2.0,34000
+Audi,Q3,S Line,2019,38000,Used,Gasoline,Automatic,2.0,38000
+Audi,Q3,Sportback,2020,28000,Used,Gasoline,Automatic,2.0,42000
+Audi,Q3,S Line,2021,18000,Used,Gasoline,Automatic,2.0,46000
+Audi,Q3,Sportback,2022,10000,Used,Gasoline,Automatic,2.0,50000
+Audi,Q3,S Line,2023,5000,Used,Gasoline,Automatic,2.0,54000
+Audi,Q3,Sportback,2024,0,New,Gasoline,Automatic,2.0,58000
+Audi,Q3,S Line,2025,0,New,Gasoline,Automatic,2.0,62000
+Audi,Q5,Premium,2014,125000,Used,Gasoline,Automatic,2.0,22000
+Audi,Q5,Premium,2015,105000,Used,Gasoline,Automatic,2.0,26000
+Audi,Q5,Premium Plus,2016,90000,Used,Gasoline,Automatic,2.0,30000
+Audi,Q5,S Line,2017,75000,Used,Gasoline,Automatic,2.0,35000
+Audi,Q5,Premium Plus,2018,60000,Used,Gasoline,Automatic,2.0,40000
+Audi,Q5,S Line,2019,45000,Used,Gasoline,Automatic,2.0,45000
+Audi,Q5,Sportback,2020,32000,Used,Gasoline,Automatic,2.0,50000
+Audi,Q5,S Line,2021,22000,Used,Gasoline,Automatic,2.0,55000
+Audi,Q5,Sportback,2022,12000,Used,Gasoline,Automatic,2.0,60000
+Audi,Q5,S Line,2023,5000,Used,Gasoline,Automatic,2.0,65000
+Audi,Q5,Sportback,2024,0,New,Gasoline,Automatic,2.0,70000
+Audi,Q5,S Line,2025,0,New,Gasoline,Automatic,2.0,75000
+Audi,Q7,Premium,2014,135000,Used,Gasoline,Automatic,3.0,28000
+Audi,Q7,Premium,2015,115000,Used,Gasoline,Automatic,3.0,33000
+Audi,Q7,Premium Plus,2016,95000,Used,Gasoline,Automatic,3.0,38000
+Audi,Q7,S Line,2017,80000,Used,Gasoline,Automatic,3.0,44000
+Audi,Q7,Premium Plus,2018,65000,Used,Gasoline,Automatic,3.0,50000
+Audi,Q7,S Line,2019,50000,Used,Gasoline,Automatic,3.0,58000
+Audi,Q7,Premium Plus,2020,38000,Used,Gasoline,Automatic,3.0,65000
+Audi,Q7,S Line,2021,26000,Used,Gasoline,Automatic,3.0,72000
+Audi,Q7,Premium Plus,2022,15000,Used,Gasoline,Automatic,3.0,80000
+Audi,Q7,S Line,2023,7000,Used,Gasoline,Automatic,3.0,88000
+Audi,Q7,Premium,2024,0,New,Gasoline,Automatic,3.0,95000
+Audi,Q7,S Line,2025,0,New,Gasoline,Automatic,3.0,105000
+Audi,Q8,Premium,2018,55000,Used,Gasoline,Automatic,3.0,58000
+Audi,Q8,Premium Plus,2019,42000,Used,Gasoline,Automatic,3.0,68000
+Audi,Q8,S Line,2020,30000,Used,Gasoline,Automatic,3.0,78000
+Audi,Q8,Premium Plus,2021,20000,Used,Gasoline,Automatic,3.0,88000
+Audi,Q8,S Line,2022,12000,Used,Gasoline,Automatic,3.0,98000
+Audi,Q8,Premium Plus,2023,5000,Used,Gasoline,Automatic,3.0,108000
+Audi,Q8,S Line,2024,0,New,Gasoline,Automatic,3.0,118000
+Audi,Q8,S Line,2025,0,New,Gasoline,Automatic,3.0,125000
+Audi,TT,Premium,2014,90000,Used,Gasoline,Automatic,2.0,25000
+Audi,TT,S Line,2015,75000,Used,Gasoline,Automatic,2.0,28000
+Audi,TT,RS,2016,60000,Used,Gasoline,Automatic,2.5,35000
+Audi,TT,S Line,2017,50000,Used,Gasoline,Automatic,2.0,38000
+Audi,TT,RS,2018,40000,Used,Gasoline,Automatic,2.5,45000
+Audi,TT,S Line,2019,30000,Used,Gasoline,Automatic,2.0,48000
+Audi,TT,RS,2020,22000,Used,Gasoline,Automatic,2.5,55000
+Audi,TT,S Line,2021,15000,Used,Gasoline,Automatic,2.0,58000
+Audi,TT,RS,2022,8000,Used,Gasoline,Automatic,2.5,65000
+Audi,TT,S Line,2023,3000,Used,Gasoline,Automatic,2.0,68000
+Audi,TT,RS,2024,0,New,Gasoline,Automatic,2.5,75000
+Audi,TT,RS,2025,0,New,Gasoline,Automatic,2.5,80000
+Audi,S3,Premium,2015,85000,Used,Gasoline,Automatic,2.0,28000
+Audi,S3,Premium Plus,2016,70000,Used,Gasoline,Automatic,2.0,32000
+Audi,S3,Premium Plus,2017,55000,Used,Gasoline,Automatic,2.0,36000
+Audi,S3,Premium,2018,45000,Used,Gasoline,Automatic,2.0,40000
+Audi,S3,Premium Plus,2019,35000,Used,Gasoline,Automatic,2.0,45000
+Audi,S3,Premium,2020,25000,Used,Gasoline,Automatic,2.0,50000
+Audi,S3,Premium Plus,2021,18000,Used,Gasoline,Automatic,2.0,55000
+Audi,S3,Premium,2022,10000,Used,Gasoline,Automatic,2.0,60000
+Audi,S3,Premium Plus,2023,5000,Used,Gasoline,Automatic,2.0,65000
+Audi,S3,Premium,2024,0,New,Gasoline,Automatic,2.0,68000
+Audi,S3,Premium Plus,2025,0,New,Gasoline,Automatic,2.0,72000
+Audi,S4,Premium,2015,90000,Used,Gasoline,Automatic,3.0,32000
+Audi,S4,Premium Plus,2016,75000,Used,Gasoline,Automatic,3.0,38000
+Audi,S4,Premium Plus,2017,60000,Used,Gasoline,Automatic,3.0,44000
+Audi,S4,Premium,2018,50000,Used,Gasoline,Automatic,3.0,50000
+Audi,S4,Premium Plus,2019,40000,Used,Gasoline,Automatic,3.0,56000
+Audi,S4,Premium,2020,30000,Used,Gasoline,Automatic,3.0,62000
+Audi,S4,Premium Plus,2021,20000,Used,Gasoline,Automatic,3.0,68000
+Audi,S4,Premium,2022,12000,Used,Gasoline,Automatic,3.0,74000
+Audi,S4,Premium Plus,2023,5000,Used,Gasoline,Automatic,3.0,80000
+Audi,S4,Premium,2024,0,New,Gasoline,Automatic,3.0,85000
+Audi,S4,Premium Plus,2025,0,New,Gasoline,Automatic,3.0,90000
+Audi,S5,Sportback,2016,80000,Used,Gasoline,Automatic,3.0,40000
+Audi,S5,Sportback,2017,65000,Used,Gasoline,Automatic,3.0,46000
+Audi,S5,Coupe,2018,52000,Used,Gasoline,Automatic,3.0,52000
+Audi,S5,Sportback,2019,40000,Used,Gasoline,Automatic,3.0,58000
+Audi,S5,Coupe,2020,30000,Used,Gasoline,Automatic,3.0,65000
+Audi,S5,Sportback,2021,22000,Used,Gasoline,Automatic,3.0,72000
+Audi,S5,Coupe,2022,14000,Used,Gasoline,Automatic,3.0,78000
+Audi,S5,Sportback,2023,6000,Used,Gasoline,Automatic,3.0,85000
+Audi,S5,Coupe,2024,0,New,Gasoline,Automatic,3.0,92000
+Audi,S5,Sportback,2025,0,New,Gasoline,Automatic,3.0,98000
+Audi,RS3,Sedan,2017,50000,Used,Gasoline,Automatic,2.5,48000
+Audi,RS3,Sedan,2018,40000,Used,Gasoline,Automatic,2.5,55000
+Audi,RS3,Sportback,2019,32000,Used,Gasoline,Automatic,2.5,62000
+Audi,RS3,Sedan,2020,24000,Used,Gasoline,Automatic,2.5,70000
+Audi,RS3,Sportback,2021,16000,Used,Gasoline,Automatic,2.5,78000
+Audi,RS3,Sedan,2022,10000,Used,Gasoline,Automatic,2.5,85000
+Audi,RS3,Sportback,2023,4000,Used,Gasoline,Automatic,2.5,92000
+Audi,RS3,Sedan,2024,0,New,Gasoline,Automatic,2.5,98000
+Audi,RS3,Sportback,2025,0,New,Gasoline,Automatic,2.5,105000
+Audi,RS5,Coupe,2017,55000,Used,Gasoline,Automatic,2.9,55000
+Audi,RS5,Coupe,2018,45000,Used,Gasoline,Automatic,2.9,65000
+Audi,RS5,Sportback,2019,35000,Used,Gasoline,Automatic,2.9,75000
+Audi,RS5,Coupe,2020,26000,Used,Gasoline,Automatic,2.9,85000
+Audi,RS5,Sportback,2021,18000,Used,Gasoline,Automatic,2.9,95000
+Audi,RS5,Coupe,2022,10000,Used,Gasoline,Automatic,2.9,105000
+Audi,RS5,Sportback,2023,5000,Used,Gasoline,Automatic,2.9,115000
+Audi,RS5,Coupe,2024,0,New,Gasoline,Automatic,2.9,125000
+Audi,RS5,Sportback,2025,0,New,Gasoline,Automatic,2.9,135000
+Audi,RS6,Avant,2020,22000,Used,Gasoline,Automatic,4.0,105000
+Audi,RS6,Avant,2021,15000,Used,Gasoline,Automatic,4.0,118000
+Audi,RS6,Avant,2022,10000,Used,Gasoline,Automatic,4.0,130000
+Audi,RS6,Avant,2023,5000,Used,Gasoline,Automatic,4.0,142000
+Audi,RS6,Avant,2024,0,New,Gasoline,Automatic,4.0,155000
+Audi,RS6,Avant,2025,0,New,Gasoline,Automatic,4.0,165000
+Audi,RS7,Sportback,2020,24000,Used,Gasoline,Automatic,4.0,110000
+Audi,RS7,Sportback,2021,16000,Used,Gasoline,Automatic,4.0,125000
+Audi,RS7,Sportback,2022,10000,Used,Gasoline,Automatic,4.0,140000
+Audi,RS7,Sportback,2023,5000,Used,Gasoline,Automatic,4.0,155000
+Audi,RS7,Sportback,2024,0,New,Gasoline,Automatic,4.0,170000
+Audi,RS7,Sportback,2025,0,New,Gasoline,Automatic,4.0,180000
+Audi,RSQ8,Premium,2020,28000,Used,Gasoline,Automatic,4.0,115000
+Audi,RSQ8,Premium Plus,2021,20000,Used,Gasoline,Automatic,4.0,130000
+Audi,RSQ8,Premium,2022,12000,Used,Gasoline,Automatic,4.0,145000
+Audi,RSQ8,Premium Plus,2023,6000,Used,Gasoline,Automatic,4.0,160000
+Audi,RSQ8,Premium,2024,0,New,Gasoline,Automatic,4.0,175000
+Audi,RSQ8,Premium Plus,2025,0,New,Gasoline,Automatic,4.0,190000
+Audi,e-tron,Premium,2019,40000,Used,Electric,Automatic,0,45000
+Audi,e-tron,Premium Plus,2020,30000,Used,Electric,Automatic,0,52000
+Audi,e-tron,S Line,2021,22000,Used,Electric,Automatic,0,60000
+Audi,e-tron,Premium Plus,2022,15000,Used,Electric,Automatic,0,68000
+Audi,e-tron,S Line,2023,8000,Used,Electric,Automatic,0,75000
+Audi,e-tron,Premium,2024,0,New,Electric,Automatic,0,82000
+Audi,e-tron,S Line,2025,0,New,Electric,Automatic,0,90000
+Audi,e-tron GT,Premium,2021,18000,Used,Electric,Automatic,0,85000
+Audi,e-tron GT,RS,2022,12000,Used,Electric,Automatic,0,105000
+Audi,e-tron GT,Premium Plus,2023,6000,Used,Electric,Automatic,0,115000
+Audi,e-tron GT,RS,2024,0,New,Electric,Automatic,0,135000
+Audi,e-tron GT,RS,2025,0,New,Electric,Automatic,0,145000

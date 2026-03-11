@@ -1,5 +1,6 @@
 """
-Dataset loader service - loads and caches the car dataset
+Dataset loader service - loads and caches the car dataset.
+Includes Audi Kurdistan supplementary data when available.
 """
 
 import pandas as pd
@@ -12,6 +13,9 @@ from functools import lru_cache
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+# Audi supplementary data path
+AUDI_DATA_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "audi_kurdistan_prices.csv"
 
 
 class DatasetLoader:
@@ -56,6 +60,12 @@ class DatasetLoader:
             
             logger.info(f"Loading dataset from: {settings.DATA_FILE}")
             self._dataset = pd.read_csv(settings.DATA_FILE)
+
+            # Merge Audi Kurdistan supplementary data if available
+            audi_df = self._load_audi_supplementary()
+            if audi_df is not None and len(audi_df) > 0:
+                self._dataset = self._merge_audi_data(self._dataset, audi_df)
+                logger.info(f"Dataset includes {len(audi_df)} Audi Kurdistan rows (total: {len(self._dataset)})")
             
             # Verify dataset is not empty
             if len(self._dataset) == 0:
@@ -113,6 +123,42 @@ class DatasetLoader:
         """Check if dataset is loaded"""
         return self._loaded
     
+    def _load_audi_supplementary(self) -> Optional[pd.DataFrame]:
+        """Load and transform Audi Kurdistan prices to match main dataset format."""
+        if not AUDI_DATA_PATH.exists():
+            return None
+        try:
+            df = pd.read_csv(AUDI_DATA_PATH)
+            # Column mapping
+            df = df.rename(columns={
+                "mileage_km": "mileage",
+                "price_usd": "price",
+            })
+            df["location"] = "Kurdistan"
+            df["mileage_unit"] = "km"
+            # Map condition: Used->Good, New->New
+            df["condition"] = df["condition"].map({"New": "New", "Used": "Good"}).fillna("Good")
+            # Estimate cylinders from engine_size
+            def _cylinders(es):
+                if pd.isna(es) or es <= 0:
+                    return 4
+                return 4 if es <= 2.5 else (6 if es <= 3.5 else 8)
+            df["cylinders"] = df["engine_size"].apply(_cylinders)
+            return df
+        except Exception as e:
+            logger.warning(f"Could not load Audi supplementary data: {e}")
+            return None
+
+    def _merge_audi_data(self, main_df: pd.DataFrame, audi_df: pd.DataFrame) -> pd.DataFrame:
+        """Merge Audi data into main dataset, aligning columns."""
+        common_cols = [c for c in main_df.columns if c in audi_df.columns]
+        audi_subset = audi_df[common_cols].copy()
+        for col in main_df.columns:
+            if col not in audi_subset.columns:
+                audi_subset[col] = pd.NA
+        audi_subset = audi_subset[main_df.columns]
+        return pd.concat([main_df, audi_subset], ignore_index=True)
+
     def get_price_column(self) -> Optional[str]:
         """Get the name of the price column"""
         if self._dataset is None:

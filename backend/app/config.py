@@ -85,6 +85,11 @@ class Settings(BaseSettings):
         return paths[8]  # Default to cleaned_car_data.csv
 
     @property
+    def AUDI_SUPPLEMENTARY_PATH(self) -> Path:
+        """Path to Audi Kurdistan supplementary prices CSV."""
+        return self.BASE_DIR / "data" / "audi_kurdistan_prices.csv"
+
+    @property
     def MODEL_DIR(self) -> Path:
         """Path to models directory"""
         paths = [
