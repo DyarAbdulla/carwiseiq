@@ -21,6 +21,9 @@ function getItems(
   if (Array.isArray(rawItems) && rawItems.length > 0 && rawItems.every((x) => typeof x === 'string')) {
     return rawItems as string[]
   }
+  if (typeof rawItems === 'string' && rawItems.trim()) {
+    return rawItems.split('|').map((s) => s.trim()).filter(Boolean)
+  }
   const oldVal = safeT(t, oldKey)
   if (oldVal) return oldVal.split('|').map((s) => s.trim()).filter(Boolean)
   return []

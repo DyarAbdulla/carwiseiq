@@ -34,6 +34,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { removeCarBackgroundLazy } from '@/lib/backgroundRemovalLazy'
 import { usePredictLoading } from '@/components/PredictLoadingProvider'
 import { activityHelpers } from '@/lib/activityLogger'
+import { safeText, sanitizeCarFeaturesFromUnknown } from '@/lib/safeDisplay'
 
 // Image upload constants (kept for image analysis functionality)
 const MAX_IMAGES = 10
@@ -161,7 +162,9 @@ function CarPreviewImage({
       // Reset loading states
       setHasError(false)
       setImageLoaded(false)
-      console.log('[CarPreviewImage] previewImageSrc updated:', newSrc)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[CarPreviewImage] previewImageSrc updated:', newSrc)
+      }
     }
   }, [previewImageSrc, currentSrc])
 
@@ -182,7 +185,9 @@ function CarPreviewImage({
 
     const processImage = async () => {
       try {
-        console.log('[CarPreview] Starting background removal for:', currentSrc.substring(0, 50))
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[CarPreview] Starting background removal for:', currentSrc.substring(0, 50))
+        }
 
         // Set 20-second timeout
         const timeoutPromise = new Promise<string>((_, reject) => {
@@ -200,16 +205,22 @@ function CarPreviewImage({
         const result = await Promise.race([removalPromise, timeoutPromise])
 
         if (bgRemovalAbortRef.current) {
-          console.log('[CarPreview] Background removal aborted')
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[CarPreview] Background removal aborted')
+          }
           return
         }
 
         if (result) {
-          console.log('[CarPreview] Background removal complete')
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[CarPreview] Background removal complete')
+          }
           setProcessedSrc(result)
         }
       } catch (error) {
-        console.warn('[CarPreview] Background removal failed, using original:', error)
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('[CarPreview] Background removal failed, using original:', error)
+        }
         // Keep using original image
       } finally {
         if (!bgRemovalAbortRef.current) {
@@ -355,7 +366,7 @@ function CarPreviewImage({
                 <Image
                   key={displaySrc}
                   src={displaySrc}
-                  alt={`${carFeatures.year} ${carFeatures.make} ${carFeatures.model}`}
+                  alt={`${safeText(carFeatures.year)} ${safeText(carFeatures.make)} ${safeText(carFeatures.model)}`}
                   fill
                   className="object-contain"
                   loading="eager"
@@ -364,7 +375,9 @@ function CarPreviewImage({
                     setHasError(false)
                   }}
                   onError={() => {
-                    console.error('[CarPreviewImage] Image load error, falling back to default')
+                    if (process.env.NODE_ENV === 'development') {
+                      console.error('[CarPreviewImage] Image load error, falling back to default')
+                    }
                     setHasError(true)
                     setImageLoaded(false)
                   }}
@@ -524,15 +537,15 @@ function PredictPageContent() {
         if (prefill) {
           try {
             const data = JSON.parse(prefill)
-            // Validate data structure
-            if (data && typeof data === 'object' && data.make && data.model && data.year) {
-              setPrefillData(data)
+            const cleaned = sanitizeCarFeaturesFromUnknown(data)
+            if (cleaned) {
+              setPrefillData(cleaned)
               sessionStorage.removeItem('prefillCar')
               // Show toast notification
               if (toast?.toast) {
                 toast.toast({
                   title: tCommon?.('success') || 'Success',
-                  description: `Car details loaded: ${data.make} ${data.model} (${data.year})`,
+                  description: `Car details loaded: ${cleaned.make} ${cleaned.model} (${cleaned.year})`,
                 })
               }
             }
@@ -682,18 +695,14 @@ function PredictPageContent() {
     setFormFeatures(features)
     setPredictionId(undefined) // Reset prediction ID when starting new prediction
 
-    // Log car details for testing
-    console.log('═══════════════════════════════════════════════════')
-    console.log('🎯 TESTING WITH CAR:')
-    console.log('   Make:', features.make)
-    console.log('   Model:', features.model)
-    console.log('   Year:', features.year)
-    console.log('   Trim:', features.trim || 'N/A')
-    console.log('   Condition:', features.condition)
-    console.log('   Location:', features.location)
-    console.log('═══════════════════════════════════════════════════')
-    console.log('✅ Background removal will work for this car (universal algorithm)')
-    console.log('═══════════════════════════════════════════════════')
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎯 Predict request:', {
+        make: features.make,
+        model: features.model,
+        year: features.year,
+        trim: features.trim || 'N/A',
+      })
+    }
 
     // Yield to browser to allow UI to update before starting heavy work
     await new Promise(resolve => setTimeout(resolve, 0))
@@ -1041,8 +1050,10 @@ function PredictPageContent() {
                       {/* Car title and badge */}
                       <div className="text-center space-y-2">
                         <h3 className="text-lg font-semibold text-white">
-                          {carFeatures.year} {carFeatures.make} {carFeatures.model}
-                          {carFeatures.trim && carFeatures.trim !== '__none__' && ` ${carFeatures.trim}`}
+                          {safeText(carFeatures.year)} {safeText(carFeatures.make)} {safeText(carFeatures.model)}
+                          {carFeatures.trim && carFeatures.trim !== '__none__'
+                            ? ` ${safeText(carFeatures.trim)}`
+                            : ''}
                         </h3>
                         <Badge variant="secondary" className="text-xs">
                           {t('result.basedOnDetails')}

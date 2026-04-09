@@ -10,6 +10,7 @@ import type {
   SellCarRequest,
   SellCarResponse,
 } from './types'
+import { normalizePredictionResponse } from './normalizePredictionResponse'
 
 // Use NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 in .env.local (or .env)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
@@ -616,6 +617,33 @@ export function getApiErrorTranslationKey(error: unknown): string | null {
   return 'errors.generic'
 }
 
+/** POST /api/predict with retries: immediate, then +1s, then +2s (skips retry on 4xx except 408/429). */
+async function postPredictWithBackoff(
+  requestBody: Record<string, unknown>
+): Promise<import('axios').AxiosResponse<PredictionResponse>> {
+  const waitMs = [1000, 2000]
+  let lastErr: unknown
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, waitMs[attempt - 1]))
+    }
+    try {
+      return await api.post<PredictionResponse>('/api/predict', requestBody)
+    } catch (e) {
+      lastErr = e
+      if (axios.isAxiosError(e)) {
+        const st = e.response?.status
+        if (st != null && st >= 400 && st < 500 && st !== 408 && st !== 429) {
+          throw e
+        }
+      }
+      if (attempt === 2) break
+    }
+  }
+  if (lastErr instanceof Error) throw lastErr
+  throw new Error('Prediction request failed')
+}
+
 // API Functions
 export const apiClient = {
   // Health check
@@ -676,7 +704,7 @@ export const apiClient = {
         hasAuth: !!api.defaults.headers.common['Authorization']
       })
 
-      const response = await api.post<PredictionResponse>('/api/predict', requestBody)
+      const response = await postPredictWithBackoff(requestBody)
 
       console.log('📥 [API] Response received', {
         status: response.status,
@@ -697,7 +725,7 @@ export const apiClient = {
       }
 
       console.log('✅ [API] predictPrice successful', { predicted_price: response.data.predicted_price })
-      return response.data
+      return normalizePredictionResponse(response.data)
     } catch (error: any) {
       console.error('❌ [API] predictPrice error:', {
         error,
@@ -1504,8 +1532,8 @@ export const apiClient = {
       if (imageFeatures && imageFeatures.length > 0) {
         requestBody.image_features = imageFeatures
       }
-      const response = await api.post<PredictionResponse>('/api/predict', requestBody)
-      return response.data
+      const response = await postPredictWithBackoff(requestBody)
+      return normalizePredictionResponse(response.data)
     } catch (error) {
       throw new Error(handleError(error))
     }

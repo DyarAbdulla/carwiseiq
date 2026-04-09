@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { safeText, safeNumber } from '@/lib/safeDisplay'
 import { formatCurrency } from '@/lib/utils'
 import type { PredictionResponse, CarFeatures } from '@/lib/types'
 import { Button } from '@/components/ui/button'
@@ -62,7 +63,8 @@ function useCountUp(endValue: number, duration: number = 1500) {
 }
 
 export function PriceRevealCard({ result, carFeatures, predictionId }: PriceRevealCardProps) {
-  const { displayValue, isAnimating } = useCountUp(result.predicted_price, 1500)
+  const predicted = safeNumber(result.predicted_price, 0)
+  const { displayValue, isAnimating } = useCountUp(predicted, 1500)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [confettiTriggered, setConfettiTriggered] = useState(false)
@@ -72,8 +74,8 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
   const router = useRouter()
   const locale = useLocale()
 
-  const low = result.confidence_interval?.lower ?? result.predicted_price * 0.85
-  const high = result.confidence_interval?.upper ?? result.predicted_price * 1.15
+  const low = result.confidence_interval?.lower ?? predicted * 0.85
+  const high = result.confidence_interval?.upper ?? predicted * 1.15
 
   // Calculate confidence percentage
   const confidencePercent = result.confidence_level === 'high' ? 98 :
@@ -81,7 +83,7 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
 
   // Trigger confetti when animation completes
   useEffect(() => {
-    if (!isAnimating && !confettiTriggered && displayValue === result.predicted_price) {
+    if (!isAnimating && !confettiTriggered && displayValue === predicted) {
       setConfettiTriggered(true)
 
       // Trigger confetti burst from center
@@ -108,7 +110,7 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
 
       return () => clearInterval(interval)
     }
-  }, [isAnimating, confettiTriggered, displayValue, result.predicted_price])
+  }, [isAnimating, confettiTriggered, displayValue, predicted])
 
   // Shine effect animation
   const shineX = useMotionValue(-100)
@@ -126,8 +128,10 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
     return () => clearInterval(interval)
   }, [shineX])
 
+  const shineXPercent = useTransform(shineSpring, (value) => `${value}%`)
+
   const handleShare = async () => {
-    const shareText = `🚗 ${carFeatures.year} ${carFeatures.make} ${carFeatures.model}\n💰 Predicted Price: ${formatCurrency(result.predicted_price)}\n\nCheck out CarWiseIQ for accurate car price predictions!`
+    const shareText = `🚗 ${safeText(carFeatures.year)} ${safeText(carFeatures.make)} ${safeText(carFeatures.model)}\n💰 Predicted Price: ${formatCurrency(predicted)}\n\nCheck out CarWiseIQ for accurate car price predictions!`
     const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
 
     if (navigator.share) {
@@ -197,7 +201,7 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
         timestamp: new Date().toISOString(),
         carFeatures,
         result,
-        displayName: `${carFeatures.year} ${carFeatures.make} ${carFeatures.model}`,
+        displayName: `${safeText(carFeatures.year)} ${safeText(carFeatures.make)} ${safeText(carFeatures.model)}`,
       }
       savedPredictions.unshift(predictionData)
       localStorage.setItem('saved_predictions', JSON.stringify(savedPredictions.slice(0, 50)))
@@ -236,7 +240,7 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
         {/* Shine Effect */}
         <motion.div
           style={{
-            x: useTransform(shineSpring, (value) => `${value}%`),
+            x: shineXPercent,
           }}
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 pointer-events-none z-10"
         />
@@ -249,8 +253,10 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-2xl md:text-3xl font-bold text-white mb-2"
           >
-            {carFeatures.year} {carFeatures.make} {carFeatures.model}
-            {carFeatures.trim && ` ${carFeatures.trim}`}
+            {safeText(carFeatures.year)} {safeText(carFeatures.make)} {safeText(carFeatures.model)}
+            {carFeatures.trim && carFeatures.trim !== '__none__'
+              ? ` ${safeText(carFeatures.trim)}`
+              : ''}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}

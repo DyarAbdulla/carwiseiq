@@ -19,10 +19,21 @@ import logging
 import pandas as pd
 import numpy as np
 import re
+import asyncio
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+_predictor_singleton: Optional[Predictor] = None
+
+
+def get_predictor() -> Predictor:
+    """Single Predictor instance; model weights live in shared module cache."""
+    global _predictor_singleton
+    if _predictor_singleton is None:
+        _predictor_singleton = Predictor()
+    return _predictor_singleton
 
 
 class BatchPredictionRequest(BaseModel):
@@ -325,8 +336,19 @@ async def predict_price(
             if image_features_array is not None and model_service and model_service.is_multimodal_available:
                 logger.info(
                     "📸 Using multimodal prediction (with image features)")
-                predicted_price = model_service.predict(
-                    car_data, image_features_array)
+                try:
+                    predicted_price = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            model_service.predict, car_data, image_features_array
+                        ),
+                        timeout=10.0,
+                    )
+                except asyncio.TimeoutError:
+                    logger.error("Multimodal prediction timed out after 10s")
+                    raise HTTPException(
+                        status_code=504,
+                        detail="Prediction took too long. Please try again.",
+                    )
                 # Convert to native type immediately
                 predicted_price = to_native_type(predicted_price)
             else:
@@ -334,7 +356,7 @@ async def predict_price(
                 logger.info("📊 Using tabular-only prediction")
                 logger.info(f"📋 Car data being sent to predictor: {car_data}")
                 try:
-                    predictor = Predictor()
+                    predictor = get_predictor()
                     logger.info("✅ Predictor initialized")
                 except RuntimeError as e:
                     # Model file missing or not loaded - return 503 Service Unavailable
@@ -361,11 +383,20 @@ async def predict_price(
                     )
 
                 try:
-                    predicted_price = predictor.predict(car_data)
+                    predicted_price = await asyncio.wait_for(
+                        asyncio.to_thread(predictor.predict, car_data),
+                        timeout=10.0,
+                    )
                     # Convert to native type immediately
                     predicted_price = to_native_type(predicted_price)
                     logger.info(
                         f"✅ Prediction successful: ${predicted_price:,.2f}")
+                except asyncio.TimeoutError:
+                    logger.error("Tabular prediction timed out after 10s")
+                    raise HTTPException(
+                        status_code=504,
+                        detail="Prediction took too long. Please try again.",
+                    )
                 except RuntimeError as e:
                     # Model file missing or not loaded - return 503 Service Unavailable
                     logger.error(
@@ -1172,8 +1203,8 @@ async def predict_batch(request: BatchPredictionRequest):
                 detail="At least 1 car required"
             )
 
-        # Initialize predictor and market analyzer
-        predictor = Predictor()
+        # Initialize predictor and market analyzer (singleton predictor)
+        predictor = get_predictor()
         market_analyzer = MarketAnalyzer()
 
         # Process predictions
@@ -1186,8 +1217,14 @@ async def predict_batch(request: BatchPredictionRequest):
                 # Convert to dict
                 car_data = car.dict()
 
-                # Make prediction
-                predicted_price = predictor.predict(car_data)
+                # Make prediction (thread pool + timeout — do not block event loop)
+                try:
+                    predicted_price = await asyncio.wait_for(
+                        asyncio.to_thread(predictor.predict, car_data),
+                        timeout=10.0,
+                    )
+                except asyncio.TimeoutError:
+                    raise RuntimeError("Prediction timed out after 10 seconds")
 
                 # Validate prediction
                 if predicted_price < 0:
@@ -1425,9 +1462,18 @@ async def predict_from_url(request: UrlPredictionRequest):
                 )
 
         # Make prediction
-        predictor = Predictor()
+        predictor = get_predictor()
         car_data = car_features.dict()
-        predicted_price = predictor.predict(car_data)
+        try:
+            predicted_price = await asyncio.wait_for(
+                asyncio.to_thread(predictor.predict, car_data),
+                timeout=10.0,
+            )
+        except asyncio.TimeoutError:
+            raise HTTPException(
+                status_code=504,
+                detail="Prediction took too long. Please try again.",
+            )
 
         # Validate prediction
         if predicted_price < 0:

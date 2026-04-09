@@ -17,8 +17,8 @@ DB_PATH = os.path.join(os.path.dirname(
 
 
 def get_db():
-    """Get database connection"""
-    conn = sqlite3.connect(DB_PATH)
+    """Get database connection (WAL, concurrent-friendly timeout)."""
+    conn = sqlite3.connect(DB_PATH, timeout=30.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
 

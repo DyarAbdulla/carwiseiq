@@ -5,14 +5,16 @@ import { formatCurrency } from '@/lib/utils'
 import type { PredictionResponse } from '@/lib/types'
 import { TrendingUp, TrendingDown, MapPin, Gauge, Lightbulb, ArrowUp, ArrowDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { safeText } from '@/lib/safeDisplay'
 
 interface SmartDealAnalystProps {
   result: PredictionResponse
 }
 
 /** Get deal status: 'great' | 'fair' | 'above' */
-function getDealStatus(dealAnalysis?: string, dealScore?: { score: string }): 'great' | 'fair' | 'above' {
-  const s = (dealAnalysis || dealScore?.score || 'fair').toLowerCase()
+function getDealStatus(dealAnalysis?: string, dealScore?: { score?: string }): 'great' | 'fair' | 'above' {
+  const raw = dealAnalysis ?? dealScore?.score ?? 'fair'
+  const s = (typeof raw === 'string' ? raw : safeText(raw, 'fair')).toLowerCase()
   if (s === 'excellent' || s === 'good') return 'great'
   if (s === 'poor') return 'above'
   return 'fair'
@@ -75,26 +77,28 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
     const insights = []
 
     // Mileage impact
-    const mileageFactor = priceFactors.find(f => f.factor.toLowerCase().includes('mileage'))
+    const mileageFactor = priceFactors.find(f =>
+      safeText(f.factor, '').toLowerCase().includes('mileage'))
     if (mileageFactor) {
       const impact = Math.abs(mileageFactor.impact)
       const direction = mileageFactor.direction
       insights.push({
         title: 'Mileage Impact',
         value: `${direction === 'up' ? '+' : '-'}${impact.toFixed(1)}%`,
-        description: mileageFactor.description || `Low mileage ${direction === 'up' ? 'increased' : 'decreased'} value by ~${impact.toFixed(0)}%.`,
+        description: safeText(mileageFactor.description, '') || `Low mileage ${direction === 'up' ? 'increased' : 'decreased'} value by ~${impact.toFixed(0)}%.`,
         icon: direction === 'up' ? ArrowUp : ArrowDown,
         color: direction === 'up' ? 'text-green-400' : 'text-amber-400',
       })
     }
 
     // Location impact
-    const locationFactor = priceFactors.find(f => f.factor.toLowerCase().includes('location'))
+    const locationFactor = priceFactors.find(f =>
+      safeText(f.factor, '').toLowerCase().includes('location'))
     if (locationFactor) {
       insights.push({
         title: 'Location Impact',
         value: 'Stable',
-        description: locationFactor.description || 'Location prices are trending stable.',
+        description: safeText(locationFactor.description, '') || 'Location prices are trending stable.',
         icon: MapPin,
         color: 'text-blue-400',
       })
@@ -110,16 +114,15 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
     }
 
     // Depreciation/Value retention
-    const depreciationFactor = priceFactors.find(f =>
-      f.factor.toLowerCase().includes('year') ||
-      f.factor.toLowerCase().includes('age') ||
-      f.factor.toLowerCase().includes('depreciation')
-    )
+    const depreciationFactor = priceFactors.find(f => {
+      const name = safeText(f.factor, '').toLowerCase()
+      return name.includes('year') || name.includes('age') || name.includes('depreciation')
+    })
     if (depreciationFactor) {
       insights.push({
         title: 'Value Retention',
         value: 'Good',
-        description: depreciationFactor.description || 'This model holds value well.',
+        description: safeText(depreciationFactor.description, '') || 'This model holds value well.',
         icon: TrendingUp,
         color: 'text-green-400',
       })
@@ -134,20 +137,25 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
     }
 
     // Add any other significant factors
-    const otherFactors = priceFactors.filter(f =>
-      !f.factor.toLowerCase().includes('mileage') &&
-      !f.factor.toLowerCase().includes('location') &&
-      !f.factor.toLowerCase().includes('year') &&
-      !f.factor.toLowerCase().includes('age') &&
-      !f.factor.toLowerCase().includes('depreciation')
-    ).slice(0, 1)
+    const otherFactors = priceFactors.filter(f => {
+      const name = safeText(f.factor, '').toLowerCase()
+      return (
+        !name.includes('mileage') &&
+        !name.includes('location') &&
+        !name.includes('year') &&
+        !name.includes('age') &&
+        !name.includes('depreciation')
+      )
+    }).slice(0, 1)
 
     if (otherFactors.length > 0 && insights.length < 4) {
       const factor = otherFactors[0]
       insights.push({
-        title: factor.factor,
+        title: safeText(factor.factor, 'Factor'),
         value: `${factor.direction === 'up' ? '+' : '-'}${Math.abs(factor.impact).toFixed(1)}%`,
-        description: factor.description || `${factor.factor} ${factor.direction === 'up' ? 'increased' : 'decreased'} value.`,
+        description:
+          safeText(factor.description, '') ||
+          `${safeText(factor.factor, 'Factor')} ${factor.direction === 'up' ? 'increased' : 'decreased'} value.`,
         icon: factor.direction === 'up' ? ArrowUp : ArrowDown,
         color: factor.direction === 'up' ? 'text-green-400' : 'text-amber-400',
       })
@@ -271,7 +279,7 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
                     )}
                   </div>
                   <p className="text-xs text-[#94a3b8] leading-relaxed">
-                    {insight.description}
+                    {safeText(insight.description, '')}
                   </p>
                 </div>
               </div>

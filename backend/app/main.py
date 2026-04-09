@@ -8,6 +8,7 @@ Main application entry point
 import asyncio
 import logging
 import sys
+import time
 import uvicorn
 from app.middleware.security import SecurityMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -30,6 +31,8 @@ if env_path.exists():
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 # 0=all, 1=no INFO, 2=no WARNING, 3=ERROR only
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
+
+_APP_START_MONOTONIC = time.monotonic()
 
 
 # Add backend directory to path
@@ -67,6 +70,38 @@ app.add_middleware(
 )
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
+@app.get("/health")
+async def health_root():
+    """
+    Load balancer / uptime monitoring: model status, uptime, memory (RSS).
+    """
+    model_loaded = False
+    try:
+        from app.core.predict_price import load_model
+
+        pipe, _meta = load_model()
+        model_loaded = pipe is not None
+    except Exception:
+        model_loaded = False
+
+    uptime_s = round(time.monotonic() - _APP_START_MONOTONIC, 2)
+    mem_mb = None
+    try:
+        import psutil
+
+        mem_mb = round(psutil.Process().memory_info().rss / (1024 * 1024), 2)
+    except Exception:
+        pass
+
+    return {
+        "status": "ok",
+        "model_loaded": model_loaded,
+        "uptime_seconds": uptime_s,
+        "memory_mb": mem_mb,
+    }
+
 
 # Root endpoint
 

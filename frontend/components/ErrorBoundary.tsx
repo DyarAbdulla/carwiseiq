@@ -37,7 +37,9 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('ErrorBoundary caught an error:', error, errorInfo)
+    }
     this.setState({
       error,
       errorInfo,
@@ -64,10 +66,10 @@ export class ErrorBoundary extends Component<Props, State> {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-6 w-6 text-red-500" />
-                <CardTitle className="text-red-400">Something went wrong</CardTitle>
+                <CardTitle className="text-red-400">Something went wrong. Please refresh.</CardTitle>
               </div>
               <CardDescription className="text-[#94a3b8]">
-                An error occurred while rendering this component
+                An error occurred while rendering this page.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
