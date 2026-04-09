@@ -75,12 +75,13 @@ function BuySellPageContent() {
   ]
 
   const handleBudgetChipClick = (chip: typeof budgetChips[0]) => {
-    if ('value' in chip) {
+    if ('value' in chip && chip.value != null) {
       // Single value chip (Under $5k)
-      setBudget(chip.value)
+      const v = chip.value
+      setBudget(v)
       setPriceSearchMode('smart')
-      const calculatedMin = chip.value * 0.85
-      const calculatedMax = chip.value * 1.15
+      const calculatedMin = v * 0.85
+      const calculatedMax = v * 1.15
       setFilters({ ...filters, min_price: calculatedMin.toString(), max_price: calculatedMax.toString() })
     } else {
       // Range chip

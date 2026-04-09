@@ -325,7 +325,9 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
         setPriceHistory([])
 
         // Log listing view activity
-        const listingTitle = normalized.title || `${normalized.year} ${normalized.make} ${normalized.model}`
+        const listingTitle =
+          (typeof normalized.title === 'string' && normalized.title.trim()) ||
+          `${String(normalized.year ?? '')} ${String(normalized.make ?? '')} ${String(normalized.model ?? '')}`.trim()
         activityHelpers.logViewListing(String(listingId), listingTitle)
       }
 

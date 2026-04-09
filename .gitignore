@@ -4,8 +4,13 @@
 node_modules/
 __pycache__/
 *.pyc
+# ML binaries (do not commit random checkpoints — except production Kurdistan model)
 *.pkl
+!backend/models/*.pkl
+!backend/models/**/*.pkl
 *.joblib
+!backend/models/*.joblib
+!backend/models/**/*.joblib
 *.h5
 *.pt
 *.bin

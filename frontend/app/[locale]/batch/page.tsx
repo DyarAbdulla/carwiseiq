@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
-import { Upload, FileSpreadsheet, Download, X, FileDown, ArrowUpDown, ArrowUp, ArrowDown, Link as LinkIcon, Loader2 } from 'lucide-react'
+import { Upload, FileSpreadsheet, Download, X, FileDown, ArrowUpDown, ArrowUp, ArrowDown, Link as LinkIcon, Loader2, CheckCircle2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'

@@ -134,6 +134,8 @@ function normalizeForMapping(str: string): string {
     .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
 }
 
+import { resolveApiAssetUrl } from '@/lib/resolveApiAssetUrl'
+
 // Cache for image paths to avoid repeated API calls
 const imagePathCache = new Map<string, string>()
 
@@ -174,13 +176,7 @@ export async function getCarPreviewImageAsync(options: CarPreviewOptions): Promi
     })
 
     let imagePath = result.image_path || '/images/cars/default-car.jpg'
-
-    // Convert /car_images/ paths to full API URLs for high-quality images
-    if (imagePath.startsWith('/car_images/')) {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000'
-      const filename = imagePath.replace('/car_images/', '')
-      imagePath = `${apiBaseUrl}/api/car-images/${filename}`
-    }
+    imagePath = resolveApiAssetUrl(imagePath)
 
     // Cache the result
     imagePathCache.set(cacheKey, imagePath)

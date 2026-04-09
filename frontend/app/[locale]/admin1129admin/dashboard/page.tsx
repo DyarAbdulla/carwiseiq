@@ -1,6 +1,17 @@
 "use client"
 import { useState, useEffect } from 'react'
-import dynamic from 'next/dynamic'
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from '@/lib/recharts-dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { apiClient } from '@/lib/api'
 import {
@@ -12,17 +23,6 @@ import {
   Database,
   Cpu
 } from 'lucide-react'
-
-const LineChart = dynamic(() => import('recharts').then(m => ({ default: m.LineChart })), { ssr: false })
-const Line = dynamic(() => import('recharts').then(m => ({ default: m.Line })), { ssr: false })
-const BarChart = dynamic(() => import('recharts').then(m => ({ default: m.BarChart })), { ssr: false })
-const Bar = dynamic(() => import('recharts').then(m => ({ default: m.Bar })), { ssr: false })
-const XAxis = dynamic(() => import('recharts').then(m => ({ default: m.XAxis })), { ssr: false })
-const YAxis = dynamic(() => import('recharts').then(m => ({ default: m.YAxis })), { ssr: false })
-const CartesianGrid = dynamic(() => import('recharts').then(m => ({ default: m.CartesianGrid })), { ssr: false })
-const Tooltip = dynamic(() => import('recharts').then(m => ({ default: m.Tooltip })), { ssr: false })
-const Legend = dynamic(() => import('recharts').then(m => ({ default: m.Legend })), { ssr: false })
-const ResponsiveContainer = dynamic(() => import('recharts').then(m => ({ default: m.ResponsiveContainer })), { ssr: false })
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<any>(null)

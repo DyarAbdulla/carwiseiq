@@ -1,6 +1,7 @@
 "use client"
 
 import { supabase } from './supabase'
+import type { Json } from './database.types'
 
 const ACTIVITY_STORAGE_KEY = 'carwiseiq_activity_log'
 
@@ -15,7 +16,7 @@ export type ActivityType =
 
 export interface ActivityMetadata {
   [key: string]: unknown
-  entity_id?: string | number
+  entity_id?: string | number | null
   entity_type?: string
   car_make?: string
   car_model?: string
@@ -100,7 +101,7 @@ export async function logActivity(
       user_id: userId,
       type,
       entity_id: payload.entity_id,
-      metadata: payload.metadata,
+      metadata: payload.metadata as Json,
     })
 
     if (!error) return

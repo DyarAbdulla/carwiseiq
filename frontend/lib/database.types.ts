@@ -52,6 +52,7 @@ export interface Database {
           updated_at?: string
           is_verified?: boolean
         }
+        Relationships: []
       }
       car_listings: {
         Row: {
@@ -123,6 +124,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       favorites: {
         Row: {
@@ -143,6 +145,68 @@ export interface Database {
           listing_id?: string
           created_at?: string
         }
+        Relationships: []
+      }
+      cars: {
+        Row: {
+          id: string
+          user_id: string
+          car_name: string
+          car_model: string | null
+          car_year: number | null
+          car_price: number | null
+          car_image_url: string | null
+          description: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          car_name: string
+          car_model?: string | null
+          car_year?: number | null
+          car_price?: number | null
+          car_image_url?: string | null
+          description?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          car_name?: string
+          car_model?: string | null
+          car_year?: number | null
+          car_price?: number | null
+          car_image_url?: string | null
+          description?: string | null
+        }
+        Relationships: []
+      }
+      user_activity: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          entity_id: string | null
+          metadata: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          entity_id?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          entity_id?: string | null
+          metadata?: Json
+          created_at?: string
+        }
+        Relationships: []
       }
     }
     Views: Record<string, never>

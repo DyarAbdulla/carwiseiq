@@ -1,6 +1,14 @@
 "use client"
 import { useState, useEffect } from 'react'
-import dynamic from 'next/dynamic'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from '@/lib/recharts-dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,13 +18,6 @@ import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, TrendingUp, Eye, Heart, MessageSquare, AlertCircle, CheckCircle2, XCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
-const LineChart = dynamic(() => import('recharts').then(m => ({ default: m.LineChart })), { ssr: false })
-const Line = dynamic(() => import('recharts').then(m => ({ default: m.Line })), { ssr: false })
-const XAxis = dynamic(() => import('recharts').then(m => ({ default: m.XAxis })), { ssr: false })
-const YAxis = dynamic(() => import('recharts').then(m => ({ default: m.YAxis })), { ssr: false })
-const CartesianGrid = dynamic(() => import('recharts').then(m => ({ default: m.CartesianGrid })), { ssr: false })
-const Tooltip = dynamic(() => import('recharts').then(m => ({ default: m.Tooltip })), { ssr: false })
-const ResponsiveContainer = dynamic(() => import('recharts').then(m => ({ default: m.ResponsiveContainer })), { ssr: false })
 import { motion } from 'framer-motion'
 import { ChartSkeleton } from '@/components/common/LoadingSkeleton'
 
@@ -220,7 +221,7 @@ export default function ListingAnalyticsPage() {
                   dataKey="date"
                   stroke="#94a3b8"
                   tick={{ fill: '#94a3b8' }}
-                  tickFormatter={(value) => {
+                  tickFormatter={(value: string | number) => {
                     const date = new Date(value)
                     return `${date.getMonth() + 1}/${date.getDate()}`
                   }}

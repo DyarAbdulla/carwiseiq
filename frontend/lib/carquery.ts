@@ -200,6 +200,8 @@ export interface CarQuerySpecsResult {
   drivetrain?: string | null
   fuelType?: string | null
   fuelEconomy?: { city: number; highway: number } | null
+  /** 0–60 mph seconds when available */
+  acceleration?: number | null
 }
 
 /** Convert CarQuerySpecs to CarSpecsResult format for display */

@@ -27,6 +27,7 @@ import axios from 'axios'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { getCarPreviewImage } from '@/lib/carImageMap'
+import { resolveApiAssetUrl } from '@/lib/resolveApiAssetUrl'
 import { Badge } from '@/components/ui/badge'
 import { useImageCache } from '@/hooks/use-image-cache'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -75,7 +76,7 @@ function CarPreviewImage({
       if (process.env.NODE_ENV === 'development') {
         console.log('[CarPreview] Using preview_image URL from dataset:', previewImage)
       }
-      return previewImage.trim()
+      return resolveApiAssetUrl(previewImage.trim())
     }
 
     // Priority 3: Use car image from prediction result (car_images folder)
@@ -89,9 +90,10 @@ function CarPreviewImage({
         return cachedUrl
       }
 
-      // carImagePath is like "car_000000.jpg" - serve from backend API
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
-      const backendImageUrl = `${apiBaseUrl}/api/car-images/${carImagePath}`
+      // carImagePath is like "car_000000.jpg" — always absolute API URL on static hosting
+      const backendImageUrl = resolveApiAssetUrl(
+        carImagePath.includes('/') ? carImagePath : `/api/car-images/${carImagePath}`
+      )
 
       // Cache the URL before returning (prevents duplicate requests)
       imageCache.setCachedUrl(carImagePath, backendImageUrl)

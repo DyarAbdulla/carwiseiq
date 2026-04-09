@@ -411,7 +411,7 @@ function MyListingsContent() {
         if (error || !data) return null
 
         const normalized = normalizeSupabaseListing(data as Record<string, unknown>)
-        const result = { ...normalized, fromSupabase: true } as CarListing
+        const result = { ...(normalized as unknown as CarListing), fromSupabase: true }
 
         if (process.env.NODE_ENV === 'development') {
           console.log('[MyListings] [FETCH_BY_ID] END - Success, listing id:', result.id)

@@ -26,7 +26,7 @@ interface ActivityLog {
 }
 
 interface PredictionHistoryItem {
-  id: string
+  id: string | number
   timestamp: string
   predicted_price: number
   confidence_level?: string
@@ -212,7 +212,7 @@ export default function ActivityHistoryPage() {
       case 'favorite':
         return 'Favorited'
       default:
-        return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+        return String(type).replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
     }
   }
 
@@ -406,7 +406,7 @@ export default function ActivityHistoryPage() {
                   const activity = item.data as ActivityLog
                   const Icon = getActivityIcon(activity.type)
                   const colorClass = getActivityColor(activity.type)
-                  const metadata = activity.metadata || {}
+                  const metadata: Record<string, unknown> = activity.metadata || {}
 
                   return (
                     <motion.div
@@ -434,25 +434,26 @@ export default function ActivityHistoryPage() {
                             <span>{formatDate(activity.created_at)}</span>
                           </div>
                           {/* Display metadata */}
-                          {metadata.listing_title && (
+                          {typeof metadata.listing_title === 'string' && metadata.listing_title.trim() !== '' && (
                             <p className="text-slate-900 dark:text-white mb-2">{metadata.listing_title}</p>
                           )}
-                          {metadata.car_make && metadata.car_model && (
+                          {typeof metadata.car_make === 'string' && typeof metadata.car_model === 'string' && (
                             <p className="text-slate-900 dark:text-white mb-2">
-                              {metadata.car_year} {metadata.car_make} {metadata.car_model}
+                              {metadata.car_year != null ? String(metadata.car_year) : ''} {metadata.car_make}{' '}
+                              {metadata.car_model}
                             </p>
                           )}
-                          {metadata.predicted_price && (
+                          {typeof metadata.predicted_price === 'number' && (
                             <p className="text-indigo-400 text-lg font-semibold">
-                              {formatPrice(metadata.predicted_price as number)}
+                              {formatPrice(metadata.predicted_price)}
                             </p>
                           )}
-                          {metadata.listing_price && (
+                          {typeof metadata.listing_price === 'number' && (
                             <p className="text-emerald-400 text-lg font-semibold">
-                              {formatPrice(metadata.listing_price as number)}
+                              {formatPrice(metadata.listing_price)}
                             </p>
                           )}
-                          {metadata.comparison_count && (
+                          {typeof metadata.comparison_count === 'number' && (
                             <p className="text-purple-400 text-lg font-semibold">
                               Compared {metadata.comparison_count} cars
                             </p>

@@ -320,7 +320,8 @@ export default function ChatBot() {
                 dir={isRTL ? 'rtl' : 'ltr'}
               />
               <button
-                onClick={sendMessage}
+                type="button"
+                onClick={() => void sendMessage()}
                 disabled={isLoading || !input.trim()}
                 className="flex-shrink-0 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors"
               >
