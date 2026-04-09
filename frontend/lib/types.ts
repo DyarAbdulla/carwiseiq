@@ -99,6 +99,10 @@ export interface PredictionResponse {
   confidence_range?: number
   precision?: number
   confidence_level?: 'high' | 'medium' | 'low'
+  /** Server-computed 40–95; preferred over inferring from confidence_level */
+  confidence_percent?: number
+  luxury_adjusted?: boolean
+  luxury_reference_note?: string
   market_comparison?: MarketComparison
   deal_analysis?: 'excellent' | 'good' | 'fair' | 'poor'
   deal_score?: DealScore

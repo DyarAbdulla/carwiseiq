@@ -94,6 +94,9 @@ class PredictionResponse(BaseModel):
     confidence_range: Optional[float] = None
     precision: Optional[float] = None
     confidence_level: Optional[str] = None
+    confidence_percent: Optional[float] = None
+    luxury_adjusted: Optional[bool] = None
+    luxury_reference_note: Optional[str] = None
     market_comparison: Optional[MarketComparison] = None
     deal_analysis: Optional[str] = None
     deal_score: Optional[DealScore] = None

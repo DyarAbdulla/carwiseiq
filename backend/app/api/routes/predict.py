@@ -469,6 +469,21 @@ async def predict_price(
 
         logger.info(f"✅ Prediction validated: ${predicted_price:,.2f}")
 
+        from app.core.luxury_correction import (
+            apply_luxury_correction,
+            compute_confidence_percent,
+            count_make_model_in_dataset,
+        )
+
+        make_for_count = str(car_data.get("make", "")).strip()
+        model_for_count = str(car_data.get("model", "")).strip()
+        make_model_count = count_make_model_in_dataset(
+            df, make_for_count, model_for_count)
+
+        lux_result = apply_luxury_correction(predicted_price, car_data)
+        predicted_price = float(lux_result.price)
+        luxury_adjusted = lux_result.luxury_adjusted
+
         # Market analyzer will be initialized later in the market analysis section
 
         # Get similar cars from dataset for validation
@@ -636,6 +651,11 @@ async def predict_price(
             # Safe fallback bounds
             predicted_price = max(100, min(predicted_price, 1000000))
 
+        confidence_percent, luxury_reference_note = compute_confidence_percent(
+            make_model_count, luxury_adjusted
+        )
+        precision = max(8.0, min(45.0, 100.0 - float(confidence_percent)))
+
         # Market comparison
         logger.info("📈 Starting market analysis...")
         market_analyzer = None
@@ -663,7 +683,6 @@ async def predict_price(
         preview_image = None
         car_image_path = None
         market_trends = []
-        precision = 20.0
         confidence_interval = None
         confidence_range = 0.0
         confidence_level = 'medium'
@@ -1043,6 +1062,12 @@ async def predict_price(
                 confidence_range=float(round(confidence_range_final, 2)),
                 precision=precision_final,
                 confidence_level=confidence_level_final,
+                confidence_percent=float(
+                    round(to_native_type(confidence_percent), 2)),
+                luxury_adjusted=bool(luxury_adjusted),
+                luxury_reference_note=str(luxury_reference_note)
+                if luxury_reference_note
+                else None,
                 market_comparison=market_comparison,
                 deal_analysis=str(deal_analysis) if deal_analysis else None,
                 deal_score=deal_score,
@@ -1077,7 +1102,13 @@ async def predict_price(
                         round(to_native_type(confidence_range), 2)),
                     precision=float(to_native_type(precision)),
                     confidence_level=str(
-                        confidence_level) if confidence_level else 'medium'
+                        confidence_level) if confidence_level else 'medium',
+                    confidence_percent=float(
+                        round(to_native_type(confidence_percent), 2)),
+                    luxury_adjusted=bool(luxury_adjusted),
+                    luxury_reference_note=str(luxury_reference_note)
+                    if luxury_reference_note
+                    else None,
                 )
             except Exception as e2:
                 logger.error(
@@ -1093,7 +1124,13 @@ async def predict_price(
                     ),
                     confidence_range=float(predicted_price_final * 0.15),
                     precision=20.0,
-                    confidence_level='medium'
+                    confidence_level='medium',
+                    confidence_percent=float(
+                        round(to_native_type(confidence_percent), 2)),
+                    luxury_adjusted=bool(luxury_adjusted),
+                    luxury_reference_note=str(luxury_reference_note)
+                    if luxury_reference_note
+                    else None,
                 )
 
         logger.info("=" * 80)

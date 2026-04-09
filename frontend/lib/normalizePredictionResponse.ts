@@ -159,6 +159,16 @@ export function normalizePredictionResponse(data: unknown): PredictionResponse {
   const deal_analysis =
     d.deal_analysis == null ? undefined : asString(d.deal_analysis, '')
 
+  let confidence_percent: number | undefined
+  if (typeof d.confidence_percent === 'number' && Number.isFinite(d.confidence_percent) && d.confidence_percent > 0) {
+    confidence_percent = d.confidence_percent
+  }
+
+  const luxury_adjusted =
+    typeof d.luxury_adjusted === 'boolean' ? d.luxury_adjusted : undefined
+  const luxury_reference_note =
+    d.luxury_reference_note != null ? asString(d.luxury_reference_note, '') : undefined
+
   return {
     predicted_price,
     message,
@@ -169,6 +179,10 @@ export function normalizePredictionResponse(data: unknown): PredictionResponse {
       d.confidence_range != null ? asFiniteNumber(d.confidence_range, 0) : undefined,
     precision: d.precision != null ? asFiniteNumber(d.precision, 20) : undefined,
     confidence_level,
+    confidence_percent,
+    luxury_adjusted,
+    luxury_reference_note:
+      luxury_reference_note === '' ? undefined : luxury_reference_note,
     market_comparison: normalizeMarketComparison(d.market_comparison),
     deal_analysis:
       deal_analysis === ''

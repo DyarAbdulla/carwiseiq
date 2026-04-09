@@ -55,7 +55,7 @@ const nextConfig = {
         { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
         {
           key: 'Content-Security-Policy',
-          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://carwiseiq.com https://api.carwiseiq.com https://www.carwiseiq.com; connect-src 'self' https://*.supabase.co https://*.koyeb.app https://*.railway.app https://api.carwiseiq.com; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://carwiseiq.com https://api.carwiseiq.com https://www.carwiseiq.com https://carwiseiq-production.up.railway.app https://*.railway.app; connect-src 'self' https://*.supabase.co https://*.koyeb.app https://*.railway.app https://api.carwiseiq.com; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
         }
       );
     }

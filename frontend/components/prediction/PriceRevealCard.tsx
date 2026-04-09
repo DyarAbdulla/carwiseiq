@@ -77,9 +77,20 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
   const low = result.confidence_interval?.lower ?? predicted * 0.85
   const high = result.confidence_interval?.upper ?? predicted * 1.15
 
-  // Calculate confidence percentage
-  const confidencePercent = result.confidence_level === 'high' ? 98 :
-    result.confidence_level === 'medium' ? 85 : 72
+  const confidencePercent =
+    result.confidence_percent != null &&
+    Number.isFinite(result.confidence_percent) &&
+    result.confidence_percent > 0
+      ? Math.round(Math.min(99, Math.max(1, result.confidence_percent)))
+      : result.confidence_level === 'high'
+        ? 92
+        : result.confidence_level === 'medium'
+          ? 82
+          : 65
+
+  const luxuryNote =
+    result.luxury_reference_note?.trim() ||
+    'Price estimated using market reference data'
 
   // Trigger confetti when animation completes
   useEffect(() => {
@@ -327,6 +338,11 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
         >
           {/* Confidence Bar */}
           <div className="space-y-2">
+            {result.luxury_adjusted ? (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/95 leading-snug">
+                {safeText(luxuryNote)}
+              </div>
+            ) : null}
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400">Confidence Score</span>
               <span className="text-emerald-400 font-semibold">{confidencePercent}% Accurate</span>
