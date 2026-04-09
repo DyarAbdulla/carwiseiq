@@ -11,7 +11,6 @@ import { X, Plus, Download, Share2, Save, Trophy, TrendingDown, TrendingUp, Spar
 import type { CarFeatures, PredictionResponse } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatCurrency, formatFuelEconomy, formatFuelEconomyL100km } from '@/lib/utils'
-import Image from 'next/image'
 import { CompareSkeleton } from '@/components/skeletons'
 import { useCarQuerySpecs } from '@/hooks/useCarQuerySpecs'
 import { ComparisonChart } from '@/components/compare/ComparisonChart'
@@ -107,9 +106,12 @@ function ComparePageContent() {
         loading: false,
         currentStep: 1,
       })))
-      router.replace(`/${locale}/compare`)
+      // Strip share params without a full navigation (avoids dev NotFound boundary churn)
+      if (typeof window !== 'undefined' && (window.location.search.includes('type=pred') || window.location.search.includes('d='))) {
+        window.history.replaceState(null, '', `/${locale}/compare`)
+      }
     }
-  }, [mounted, searchParams, listingIds.length, router, locale])
+  }, [mounted, searchParams, listingIds.length, locale])
 
   /*
    * VERIFICATION CHECKLIST - Compare Page Fixes:

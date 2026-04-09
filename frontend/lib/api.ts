@@ -567,6 +567,14 @@ const handleError = (error: unknown): string => {
       return errorDetail
     }
 
+    const code = (axiosError as { code?: string }).code
+    if (code === 'ECONNREFUSED' || code === 'ERR_NETWORK' || (axiosError.message || '').toLowerCase().includes('network error')) {
+      return 'Unable to connect to the prediction service. Please try again later.'
+    }
+    const st = axiosError.response?.status
+    if (st === 503 || st === 502 || st === 504) {
+      return 'Unable to connect to the prediction service. Please try again later.'
+    }
     return axiosError.response?.data?.message || axiosError.message || 'An error occurred'
   }
   return error instanceof Error ? error.message : 'An unknown error occurred'

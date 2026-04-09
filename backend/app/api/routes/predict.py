@@ -162,7 +162,7 @@ async def predict_price(
         try:
             year = int(to_native_type(car_data['year']))
             # Validate year range (1900 to current year + 1 for new cars)
-            current_year = 2025  # Match config.CURRENT_YEAR
+            current_year = 2026  # Match config.CURRENT_YEAR
             if year < 1900 or year > current_year + 1:
                 logger.warning(
                     f"⚠️ Year {year} is outside valid range (1900-{current_year + 1})")
@@ -491,9 +491,8 @@ async def predict_price(
                         f"⚠️ Error getting similar cars (non-critical): {e}", exc_info=True)
                     # Continue without similar cars data
 
-        # Validate prediction against similar cars (40% threshold)
+        # Compare to similar listings for logging only (do not override ML model or show noisy warnings)
         message = None
-        validation_warning = None
 
         if similar_cars_avg_price and similar_cars_avg_price > 0:
             try:
@@ -503,19 +502,12 @@ async def predict_price(
                     (predicted_price - similar_cars_avg_price) / similar_cars_avg_price * 100)
 
                 if price_diff_percent > 40:
-                    validation_warning = f"WARNING: Prediction differs by {price_diff_percent:.1f}% from similar cars in dataset. "
-                    validation_warning += f"Predicted: ${predicted_price:,.0f}, Market average: ${similar_cars_avg_price:,.0f}. "
-                    validation_warning += "This may indicate a model accuracy issue."
-                    logger.warning(validation_warning)
-
-                    # Optionally adjust prediction to be closer to market average
-                    # Cap at 30% above/below market average
-                    if predicted_price > similar_cars_avg_price * 1.3:
-                        predicted_price = float(similar_cars_avg_price * 1.3)
-                        message = f"Prediction adjusted to ${predicted_price:,.0f} (capped at 30% above market average)"
-                    elif predicted_price < similar_cars_avg_price * 0.7:
-                        predicted_price = float(similar_cars_avg_price * 0.7)
-                        message = f"Prediction adjusted to ${predicted_price:,.0f} (capped at 30% below market average)"
+                    logger.info(
+                        "Prediction vs similar-cars mean: %.1f%% diff (predicted=%s, mean=%s) — model output kept",
+                        price_diff_percent,
+                        predicted_price,
+                        similar_cars_avg_price,
+                    )
             except Exception as e:
                 logger.warning(
                     f"⚠️ Error in price validation (non-critical): {e}", exc_info=True)
@@ -612,12 +604,6 @@ async def predict_price(
             predicted_price = float(to_native_type(predicted_price))
             # Safe fallback bounds
             predicted_price = max(100, min(predicted_price, 1000000))
-
-        # Combine messages
-        if validation_warning and message:
-            message = f"{validation_warning} {message}"
-        elif validation_warning:
-            message = validation_warning
 
         # Market comparison
         logger.info("📈 Starting market analysis...")

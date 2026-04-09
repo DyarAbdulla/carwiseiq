@@ -1,140 +1,197 @@
 """
-Backend-specific prediction module for production model (91.1% accuracy)
-Loads production_model.pkl and uses DataFrame for CatBoost prediction.
-Falls back to dataset-based estimate when model file is not found.
+Production price prediction using the trained sklearn Pipeline
+(price_prediction_pipeline.joblib) and inference_meta.json for row construction.
 """
 
-import pickle
+from __future__ import annotations
+
 import json
 import logging
 from pathlib import Path
-from typing import Tuple, Optional, Any
-import pandas as pd
+from typing import Any, Optional
+
+import joblib
 import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# Global cache for model and info
-_cached_model = None
-_cached_model_info = None
-_cached_encoders = None
+CURRENT_YEAR = 2026
+
+_cached_pipeline = None
+_cached_meta: dict = {}
 _using_fallback = False
+_model_load_failed = False
 
 
-def _model_paths() -> list:
-    """Return list of paths to check for production_model.pkl (first existing wins)."""
-    current_file = Path(__file__)
-    backend_dir = current_file.parent.parent.parent
-    root_dir = backend_dir.parent
+def _backend_dir() -> Path:
+    return Path(__file__).resolve().parent.parent.parent
+
+
+def _root_dir() -> Path:
+    return _backend_dir().parent
+
+
+def _models_paths() -> list[Path]:
+    b = _backend_dir()
+    r = _root_dir()
     return [
-        backend_dir / "models" / "production_model.pkl",
-        Path("/app/models/production_model.pkl"),
-        root_dir / "models" / "production_model.pkl",
+        b / "models" / "price_prediction_pipeline.joblib",
+        Path("/app/models/price_prediction_pipeline.joblib"),
+        r / "models" / "price_prediction_pipeline.joblib",
     ]
 
 
-def _find_model_path() -> Optional[Path]:
-    for p in _model_paths():
+def _meta_paths() -> list[Path]:
+    b = _backend_dir()
+    r = _root_dir()
+    return [
+        b / "models" / "inference_meta.json",
+        Path("/app/models/inference_meta.json"),
+        r / "models" / "inference_meta.json",
+    ]
+
+
+def _find_first_existing(paths: list[Path]) -> Optional[Path]:
+    for p in paths:
         if p.exists():
             return p
     return None
 
 
-def load_model() -> Tuple[Any, dict, dict]:
-    """Load the production model (91.1% accurate) or return None for fallback."""
-    global _cached_model, _cached_model_info, _cached_encoders, _using_fallback
+def load_model():
+    """Load sklearn pipeline and inference metadata (cached)."""
+    global _cached_pipeline, _cached_meta, _using_fallback, _model_load_failed
 
-    if _cached_model is not None:
-        return _cached_model, _cached_model_info, _cached_encoders
+    if _cached_pipeline is not None:
+        return _cached_pipeline, _cached_meta
+    if _model_load_failed:
+        return None, {}
 
-    model_path = _find_model_path()
-    if not model_path:
-        logger.warning("Model not found in any of: %s; using dataset fallback", [str(p) for p in _model_paths()])
+    pipe_path = _find_first_existing(_models_paths())
+    meta_path = _find_first_existing(_meta_paths())
+
+    if not pipe_path:
+        logger.warning("price_prediction_pipeline.joblib not found; predictions will use dataset fallback")
         _using_fallback = True
-        _cached_model = None
-        _cached_model_info = {}
-        _cached_encoders = {}
-        return None, {}, {}
-
-    models_dir = model_path.parent
-    logger.info(f"Loading model from: {model_path}")
+        _model_load_failed = True
+        _cached_pipeline = None
+        _cached_meta = {}
+        return None, {}
 
     try:
-        with open(model_path, 'rb') as f:
-            model_data = pickle.load(f)
-
-        # Extract model from model_data dict
-        if isinstance(model_data, dict):
-            model = model_data.get('model')
-            if model is None:
-                raise ValueError("Model not found in model_data dict")
-        else:
-            model = model_data
-
-        logger.info(f"✅ Model loaded successfully!")
-        logger.info(f"   Model type: {type(model).__name__}")
-
+        _cached_pipeline = joblib.load(pipe_path)
+        logger.info("Loaded price prediction pipeline from %s", pipe_path)
     except Exception as e:
-        logger.error(f"Failed to load model: {e}", exc_info=True)
+        logger.error("Failed to load pipeline: %s", e, exc_info=True)
         _using_fallback = True
-        _cached_model = None
-        _cached_model_info = {}
-        _cached_encoders = {}
-        return None, {}, {}
+        _model_load_failed = True
+        _cached_pipeline = None
+        _cached_meta = {}
+        return None, {}
 
-    # Load model info JSON
-    model_info_path = models_dir / "model_info.json"
-    model_info = {}
-    if model_info_path.exists():
+    if meta_path and meta_path.exists():
         try:
-            with open(model_info_path, 'r') as f:
-                model_info = json.load(f)
-            logger.info(f"✅ Model info loaded")
-            logger.info(
-                f"   Accuracy (R²): {model_info.get('metrics', {}).get('test', {}).get('r2', 'N/A')}")
+            with open(meta_path, "r", encoding="utf-8") as f:
+                _cached_meta = json.load(f)
         except Exception as e:
-            logger.warning(f"Could not load model_info.json: {e}")
+            logger.warning("Could not load inference_meta.json: %s", e)
+            _cached_meta = {}
     else:
-        logger.warning(f"model_info.json not found at {model_info_path}")
+        logger.warning("inference_meta.json not found; using defaults for encoded lookups")
+        _cached_meta = {}
 
-    # Load encoders if available
-    encoders_path = models_dir / "encoders.pkl"
-    encoders = {}
-    if encoders_path.exists():
-        try:
-            with open(encoders_path, 'rb') as f:
-                encoders = pickle.load(f)
-            logger.info(f"✅ Encoders loaded")
-        except Exception as e:
-            logger.warning(f"Could not load encoders.pkl: {e}")
+    return _cached_pipeline, _cached_meta
 
-    # Also check if encoders are in model_data
-    if isinstance(model_data, dict) and 'encoders' in model_data:
-        if not encoders:
-            encoders = model_data['encoders']
-        else:
-            # Merge, preferring separate file
-            encoders.update(model_data.get('encoders', {}))
 
-    _cached_model = model
-    _cached_model_info = model_info
-    _cached_encoders = encoders
+def _lookup_encoded(meta: dict, raw_key: str, enc_key: str, raw_val: str) -> float:
+    """Map raw string to dataset-style encoded float using training lookups."""
+    medians = meta.get("medians") or {}
+    fallback = float(medians.get(enc_key, 0.0))
+    lk = (meta.get("lookups") or {}).get(f"{raw_key}_to_{enc_key}")
+    if not lk:
+        return fallback
+    if raw_val in lk:
+        return float(lk[raw_val])
+    # case-insensitive
+    rl = raw_val.strip().lower()
+    for k, v in lk.items():
+        if str(k).strip().lower() == rl:
+            return float(v)
+    return fallback
 
-    return model, model_info, encoders
+
+def _build_feature_row(car_data: dict, meta: dict) -> pd.DataFrame:
+    """Build a single-row DataFrame matching training columns."""
+    year = int(car_data.get("year") or 2020)
+    make = str(car_data.get("make") or "").strip()
+    model = str(car_data.get("model") or "").strip()
+    trim = str(car_data.get("trim") or "").strip()
+    mileage = float(car_data.get("mileage") or 0)
+    engine_size = float(car_data.get("engine_size") or 2.0)
+    cylinders = int(car_data.get("cylinders") or 4)
+    condition = str(car_data.get("condition") or "Used").strip()
+    fuel_type = str(car_data.get("fuel_type") or "Gasoline").strip()
+    location = str(car_data.get("location") or "Baghdad").strip()
+    mileage_unit = str(car_data.get("mileage_unit") or "km").strip()
+    color = str(car_data.get("color") or "Unknown").strip()
+    transmission = str(car_data.get("transmission") or "Unknown").strip()
+
+    title = f"{year} {make} {model} {trim}".strip() if trim else f"{year} {make} {model}".strip()
+
+    scraped_ordinal = float(meta.get("median_scraped_ordinal", 0.0))
+
+    cond_enc = _lookup_encoded(meta, "condition", "condition_encoded", condition)
+    fuel_enc = _lookup_encoded(meta, "fuel_type", "fuel_type_encoded", fuel_type)
+    loc_enc = _lookup_encoded(meta, "location", "location_encoded", location)
+
+    car_age_years = float(max(0, CURRENT_YEAR - year))
+    mile = max(0.0, mileage)
+    mpy = mile / max(car_age_years, 0.5) if car_age_years > 0 else mile
+    log_mileage = float(np.log1p(mile))
+    inv_sqrt_mileage = float(1.0 / np.sqrt(max(mile, 1.0)))
+    age_of_car = car_age_years
+
+    row = {
+        "title": title,
+        "make": make,
+        "model": model,
+        "trim": trim if trim else "Base",
+        "mileage_unit": mileage_unit,
+        "location": location,
+        "condition": condition,
+        "fuel_type": fuel_type,
+        "color": color,
+        "transmission": transmission,
+        "year": year,
+        "mileage": mile,
+        "engine_size": engine_size,
+        "cylinders": cylinders,
+        "condition_encoded": cond_enc,
+        "fuel_type_encoded": fuel_enc,
+        "location_encoded": loc_enc,
+        "age_of_car": age_of_car,
+        "scraped_ordinal": scraped_ordinal,
+        "car_age_years": car_age_years,
+        "mileage_per_year": float(mpy),
+        "log_mileage": log_mileage,
+        "inv_sqrt_mileage": inv_sqrt_mileage,
+    }
+    return pd.DataFrame([row])
 
 
 def _predict_from_dataset(car_data: dict) -> float:
-    """Estimate price from dataset (mean price for make/model/year when model file missing)."""
+    """Estimate price from dataset when the ML pipeline is unavailable."""
     try:
         from app.services.dataset_loader import DatasetLoader
+
         loader = DatasetLoader.get_instance()
         df = loader.dataset
         if df is None or len(df) == 0:
-            logger.warning("Dataset not loaded; using default estimate")
-            return 25000.0
+            return 20000.0
         price_col = loader.get_price_column() or "price"
         if price_col not in df.columns:
-            return 25000.0
+            return 20000.0
         make = str(car_data.get("make", "")).strip()
         model_name = str(car_data.get("model", "")).strip()
         year = int(car_data.get("year", 2020))
@@ -150,19 +207,20 @@ def _predict_from_dataset(car_data: dict) -> float:
         mask &= df["year"].astype(int) == year
         subset = df.loc[mask]
         if len(subset) == 0:
-            subset = df[(df["make"].astype(str).str.strip().str.lower() == make.lower()) & (df["model"].astype(str).str.strip().str.lower() == model_name.lower())]
+            subset = df[
+                (df["make"].astype(str).str.strip().str.lower() == make.lower())
+                & (df["model"].astype(str).str.strip().str.lower() == model_name.lower())
+            ]
         if len(subset) == 0:
             subset = df[df["make"].astype(str).str.strip().str.lower() == make.lower()]
         if len(subset) == 0:
             subset = df
         prices = subset[price_col].dropna()
         if len(prices) == 0:
-            return 25000.0
-        # Simple adjustment by mileage vs subset mean
+            return 20000.0
         mean_price = float(prices.mean())
         mean_mileage = subset["mileage"].mean() if "mileage" in subset.columns else 50000
         if pd.notna(mean_mileage) and mean_mileage > 0:
-            # Lower mileage -> higher price (rough factor)
             ratio = mean_mileage / max(mileage, 1000)
             ratio = min(2.0, max(0.5, ratio))
             estimate = mean_price * ratio
@@ -171,198 +229,48 @@ def _predict_from_dataset(car_data: dict) -> float:
         return float(max(500, min(1000000, estimate)))
     except Exception as e:
         logger.warning("Dataset fallback failed: %s", e)
-        return 25000.0
+        return 20000.0
 
 
-def predict_price(car_data: dict, return_confidence: bool = False):
+def predict_price(car_data: dict, return_confidence: bool = False) -> float:
     """
-    Predict price using CatBoost model or dataset fallback when model file is missing.
+    Predict price using the trained sklearn Pipeline.
 
     Args:
-        car_data: Dictionary containing car features
-        return_confidence: Whether to return confidence intervals (not implemented yet)
+        car_data: Vehicle features from the API (make, model, year, mileage, etc.)
+        return_confidence: Reserved for future use.
 
     Returns:
-        Predicted price as float
+        Predicted price in USD.
     """
+    _ = return_confidence
     try:
-        # Load model (may return None when file not found)
-        model, model_info, encoders = load_model()
-
-        if model is None:
+        pipeline, meta = load_model()
+        if pipeline is None:
             return _predict_from_dataset(car_data)
 
-        # Get feature columns from model_info (try both keys)
-        feature_columns = model_info.get(
-            'feature_columns') or model_info.get('features', [])
+        X = _build_feature_row(car_data, meta)
+        pred = pipeline.predict(X)
+        price = float(pred[0]) if hasattr(pred, "__len__") else float(pred)
 
-        if not feature_columns:
-            logger.warning("feature_columns not found in model_info; using dataset fallback")
+        if not np.isfinite(price) or price < 100:
+            logger.warning("Invalid pipeline output %s; using dataset fallback", price)
             return _predict_from_dataset(car_data)
+        if price > 2_000_000:
+            price = min(price, 2_000_000.0)
 
-        logger.info(
-            f"Using {len(feature_columns)} features: {feature_columns[:5]}...")
-
-        logger.info(
-            f"Using {len(feature_columns)} features from model_info.json")
-
-        # Prepare input data dictionary
-        input_data = {}
-        current_year = 2026  # Match training
-
-        for col in feature_columns:
-            if col == 'age_of_car':
-                # Calculate age from year
-                year = int(car_data.get('year', 2020))
-                input_data[col] = max(0, current_year - year)
-            elif col == 'make_encoded':
-                # Encode make
-                make = str(car_data.get('make', '')).strip()
-                if encoders and 'make' in encoders:
-                    try:
-                        encoder = encoders['make']
-                        # Check if it's a LabelEncoder
-                        if hasattr(encoder, 'classes_'):
-                            # Handle unseen values - use 0 as default
-                            try:
-                                input_data[col] = encoder.transform([make])[0]
-                            except ValueError:
-                                # Unseen value - use 0
-                                input_data[col] = 0
-                                logger.warning(
-                                    f"Unseen make '{make}', using default encoding 0")
-                        else:
-                            input_data[col] = 0
-                    except Exception as e:
-                        logger.warning(
-                            f"Error encoding make '{make}': {e}, using 0")
-                        input_data[col] = 0
-                else:
-                    # Fallback: hash-based encoding
-                    input_data[col] = abs(hash(make)) % 1000
-            elif col == 'model_encoded':
-                # Encode model
-                model_name = str(car_data.get('model', '')).strip()
-                if encoders and 'model' in encoders:
-                    try:
-                        encoder = encoders['model']
-                        if hasattr(encoder, 'classes_'):
-                            try:
-                                input_data[col] = encoder.transform([model_name])[
-                                    0]
-                            except ValueError:
-                                # Unseen value - use 0
-                                input_data[col] = 0
-                                logger.warning(
-                                    f"Unseen model '{model_name}', using default encoding 0")
-                        else:
-                            input_data[col] = 0
-                    except Exception as e:
-                        logger.warning(
-                            f"Error encoding model '{model_name}': {e}, using 0")
-                        input_data[col] = 0
-                else:
-                    input_data[col] = abs(hash(model_name)) % 1000
-            elif col == 'condition_encoded':
-                # Map condition to encoded value
-                condition = str(car_data.get('condition', 'Good')).strip()
-                condition_map = {
-                    'Excellent': 0,
-                    'Very Good': 1,
-                    'Good': 2,
-                    'Fair': 3,
-                    'Poor': 4
-                }
-                input_data[col] = condition_map.get(
-                    condition, 2)  # Default to 'Good'
-            elif col == 'fuel_type_encoded':
-                # Map fuel type to encoded value
-                fuel_type = str(car_data.get('fuel_type', 'Gasoline')).strip()
-                fuel_map = {
-                    'Gasoline': 0,
-                    'Diesel': 1,
-                    'Hybrid': 2,
-                    'Electric': 3,
-                    'Other': 4
-                }
-                input_data[col] = fuel_map.get(
-                    fuel_type, 0)  # Default to 'Gasoline'
-            elif col == 'location_encoded':
-                # Hash-based encoding for location
-                location = str(car_data.get('location', 'Unknown')).strip()
-                input_data[col] = abs(hash(location)) % 1000
-            elif col in car_data:
-                # Direct mapping for numeric columns
-                val = car_data[col]
-                if pd.isna(val) or val is None:
-                    # Use default values
-                    defaults = {
-                        'year': 2020,
-                        'mileage': 50000,
-                        'engine_size': 2.0,
-                        'cylinders': 4
-                    }
-                    input_data[col] = defaults.get(col, 0)
-                else:
-                    input_data[col] = float(val)
-            else:
-                # Missing feature - use default
-                defaults = {
-                    'year': 2020,
-                    'mileage': 50000,
-                    'engine_size': 2.0,
-                    'cylinders': 4
-                }
-                input_data[col] = defaults.get(col, 0)
-                logger.warning(
-                    f"Missing feature '{col}', using default value: {input_data[col]}")
-
-        # Create DataFrame with EXACT feature order (CatBoost requires DataFrame!)
-        df = pd.DataFrame([input_data])
-
-        # Ensure column order matches training exactly
-        df = df[feature_columns]
-
-        logger.info(f"Predicting with features: {list(df.columns)}")
-        logger.info(f"Feature values: {df.iloc[0].to_dict()}")
-
-        # Predict (CatBoost handles categorical features automatically in DataFrame)
-        try:
-            prediction = model.predict(df)
-
-            # Handle different return types
-            if isinstance(prediction, np.ndarray):
-                prediction = float(prediction[0])
-            elif isinstance(prediction, (list, tuple)):
-                prediction = float(prediction[0])
-            else:
-                prediction = float(prediction)
-
-        except Exception as e:
-            logger.error(f"Prediction failed: {e}", exc_info=True)
-            raise RuntimeError(f"Model prediction failed: {e}")
-
-        # Validate prediction (increased max for luxury vehicles)
-        if not np.isfinite(prediction) or prediction < 500:
-            logger.warning(
-                f"⚠️ Invalid prediction: {prediction}, using fallback")
-            prediction = 15000  # Fallback
-        elif prediction > 1000000:  # Cap at 1M for safety, but allow luxury cars
-            logger.warning(
-                f"⚠️ Very high prediction: ${prediction:,.2f}, capping at 1M")
-            prediction = 1000000
-
-        logger.info(f"✅ Predicted price: ${prediction:,.2f}")
-
-        return float(prediction)
-
-    except FileNotFoundError as e:
-        logger.warning(f"Model file not found: {e}; using dataset fallback")
-        return _predict_from_dataset(car_data)
+        return price
     except Exception as e:
-        logger.error(f"❌ Prediction error: {e}", exc_info=True)
-        import traceback
-        logger.error(f"Full traceback:\n{traceback.format_exc()}")
-        # Return fallback price instead of crashing
-        logger.warning("Returning fallback price due to error")
-        return 15000.0
+        logger.error("predict_price error: %s", e, exc_info=True)
+        try:
+            return _predict_from_dataset(car_data)
+        except Exception:
+            return 15000.0
+
+
+def preload_model() -> None:
+    """Load pipeline once at app startup."""
+    try:
+        load_model()
+    except Exception as e:
+        logger.warning("preload_model failed: %s", e)

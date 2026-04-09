@@ -14,7 +14,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 import re
 from fastapi.responses import JSONResponse, Response
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
+from starlette.middleware.gzip import GZipMiddleware
 from app.api.routes import health, predict, cars, budget, stats, auth, options, images, model_info, feedback, admin, marketplace, messaging, favorites, ai, chat, dataset, export, services, providers
 from app.config import settings
 import os
@@ -64,6 +65,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Root endpoint
 
@@ -124,7 +127,9 @@ app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    """Never expose stack traces or internal errors to clients. Log server-side only."""
+    """Never expose stack traces for generic errors; preserve FastAPI HTTPException responses."""
+    if isinstance(exc, HTTPException):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
     logging.error("Unhandled exception: %s", exc, exc_info=True)
     return JSONResponse(
         status_code=500,
@@ -223,13 +228,13 @@ async def startup_event():
         logging.error(f"Failed to initialize services database: {e}")
         # Non-critical, continue startup
 
-    # Try to load predictor to verify model is available
+    # Warm up price model pipeline (cached for all /api/predict requests)
     try:
-        from app.services.predictor import Predictor
-        predictor = Predictor()
-        logging.info("Model loaded successfully at startup")
+        from app.core.predict_price import preload_model
+        preload_model()
+        logging.info("Price prediction pipeline loaded at startup")
     except Exception as e:
-        logging.error(f"Failed to load model at startup: {e}")
+        logging.error("Failed to load price model at startup: %s", e)
 
     # Pre-load CLIP model for auto-detection (warmup)
     try:

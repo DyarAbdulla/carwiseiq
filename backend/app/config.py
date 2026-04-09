@@ -66,6 +66,8 @@ class Settings(BaseSettings):
             # Backend folder / Docker /app (production)
             self.BASE_DIR / "cleaned_car_data.csv",
             Path("/app/cleaned_car_data.csv"),
+            # Project root (repo root)
+            self.ROOT_DIR / "cleaned_car_data.csv",
             # Try iqcars_cleaned.csv (production dataset with locations and fuel_types)
             self.ROOT_DIR / "data" / "iqcars_cleaned.csv",
             self.BASE_DIR / "data" / "iqcars_cleaned.csv",
@@ -82,7 +84,7 @@ class Settings(BaseSettings):
         for p in paths:
             if p.exists():
                 return p
-        return paths[8]  # Default to cleaned_car_data.csv
+        return self.ROOT_DIR / "cleaned_car_data.csv"
 
     @property
     def AUDI_SUPPLEMENTARY_PATH(self) -> Path:
@@ -104,7 +106,7 @@ class Settings(BaseSettings):
 
     # Data validation
     MIN_YEAR: int = 1900
-    MAX_YEAR: int = 2025
+    MAX_YEAR: int = 2026
     MIN_MILEAGE: int = 0
     MAX_MILEAGE: int = 1000000
     MIN_ENGINE_SIZE: float = 0.5
@@ -158,7 +160,7 @@ def check_required_env_production() -> None:
 # ============================================================================
 # Feature Configuration (kept for compatibility)
 # ============================================================================
-CURRENT_YEAR = 2025
+CURRENT_YEAR = 2026
 
 # Categorical encoding maps
 CONDITION_MAP = {

@@ -5,6 +5,7 @@ import { Save, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useState, useEffect } from 'react'
 import type { CarFeatures, PredictionResponse } from '@/lib/types'
+import { activityHelpers } from '@/lib/activityLogger'
 
 interface SaveToCompareProps {
   carFeatures: CarFeatures

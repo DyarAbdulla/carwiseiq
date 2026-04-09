@@ -406,10 +406,9 @@ export function SearchableSelect({
         name={name}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
-        className={cn("h-12 md:h-10", className)}
         disabled={disabled}
         className={cn(
-          "flex items-center justify-between rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50/90 dark:bg-white/[0.05] backdrop-blur-sm px-4 text-base text-slate-900 dark:text-slate-100 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100/80 dark:hover:bg-white/[0.08] w-full h-12 md:h-10 py-3 md:py-2 [touch-action:manipulation]",
+          "flex h-12 md:h-10 items-center justify-between rounded-lg border border-slate-200/80 dark:border-white/10 bg-slate-50/90 dark:bg-white/[0.05] backdrop-blur-sm px-4 text-base text-slate-900 dark:text-slate-100 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 dark:focus:border-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-100/80 dark:hover:bg-white/[0.08] w-full py-3 md:py-2 [touch-action:manipulation]",
           className
         )}
         aria-expanded={isOpen}

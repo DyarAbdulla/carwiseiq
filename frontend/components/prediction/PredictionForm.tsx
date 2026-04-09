@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { apiClient } from '@/lib/api'
 import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { SAMPLE_CAR, YEAR_RANGE, MILEAGE_RANGE, CONDITIONS, FUEL_TYPES } from '@/lib/constants'
+import { dedupeOptionList, normalizeConditionLabel } from '@/lib/formOptions'
 import type { CarFeatures } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 import { useDebounce } from '@/hooks/use-debounce'
@@ -180,6 +181,13 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
   const conditionValue = form.watch('condition')
   const locationValue = form.watch('location')
 
+  useEffect(() => {
+    const cur = form.getValues('condition')
+    const n = normalizeConditionLabel(cur)
+    if (cur && n && cur !== n) {
+      form.setValue('condition', n as any, { shouldValidate: false })
+    }
+  }, [conditions, form])
 
   // Sync selectedMake with form value to ensure Model dropdown works correctly
   useEffect(() => {
@@ -380,7 +388,9 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
       engine_size: prefillData.engine_size ?? (prefillData as any).engineSize ?? 2.0,
       cylinders: prefillData.cylinders ?? (prefillData as any).cylindersValue ?? 4,
       trim: prefillData.trim || (prefillData as any).trimValue || '',
-      condition: prefillData.condition || (prefillData as any).conditionValue || 'Good',
+      condition: normalizeConditionLabel(
+        prefillData.condition || (prefillData as any).conditionValue || 'Good'
+      ),
       fuel_type: prefillData.fuel_type || (prefillData as any).fuelType || 'Gasoline',
       location: prefillData.location || (prefillData as any).locationValue || '',
       color: prefillData.color || (prefillData as any).colorValue || '',
@@ -630,7 +640,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
     try {
       const metadata = await apiClient.getMetadata()
       if (metadata.conditions.length > 0) {
-        setConditions(metadata.conditions)
+        setConditions(dedupeOptionList(metadata.conditions, normalizeConditionLabel))
       }
       if (metadata.fuel_types.length > 0) {
         setFuelTypes(metadata.fuel_types)
@@ -1218,7 +1228,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
       cylinders: Number(data.cylinders),
       make: String(data.make).trim(),
       model: String(data.model).trim(),
-      condition: String(data.condition).trim(),
+      condition: normalizeConditionLabel(String(data.condition)),
       fuel_type: fuelType, // Use validated fuel type
       location: String(data.location).trim(),
       color: data.color && data.color.trim() !== '' ? String(data.color).trim() : undefined,
@@ -1895,8 +1905,8 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
                   <SelectValue placeholder="Select condition" />
                 </SelectTrigger>
                 <SelectContent>
-                  {conditions.map((condition) => (
-                    <SelectItem key={condition} value={condition} className="text-white">
+                  {conditions.map((condition, idx) => (
+                    <SelectItem key={`${idx}-${condition}`} value={condition} className="text-white">
                       {condition}
                     </SelectItem>
                   ))}

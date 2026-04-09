@@ -3,7 +3,7 @@ Image analysis endpoint - analyzes car images using AI
 """
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from typing import List, Optional
 import logging
 import os
@@ -17,6 +17,51 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Tiny transparent SVG when no file on disk (valid in <img> even when .jpg was requested)
+_PLACEHOLDER_SVG = b'<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#1e293b" width="400" height="300"/><text x="50%" y="50%" fill="#94a3b8" font-family="system-ui,sans-serif" font-size="14" text-anchor="middle" dy=".3em">No image</text></svg>'
+
+
+def _placeholder_car_image_response() -> Response:
+    """Avoid 404 for missing car_*.jpg — browsers still get a valid image."""
+    return Response(
+        content=_PLACEHOLDER_SVG,
+        media_type="image/svg+xml",
+        headers={
+            "Cache-Control": "public, max-age=3600",
+            "X-Car-Image-Fallback": "1",
+        },
+    )
+
+
+def _try_placeholder_file(settings_mod) -> Optional[Path]:
+    """Optional placeholder from frontend public folder."""
+    candidates = [
+        settings_mod.ROOT_DIR / "frontend" / "public" / "images" / "cars" / "default-car.svg",
+        settings_mod.ROOT_DIR / "frontend" / "public" / "images" / "cars" / "default-car.jpg",
+        settings_mod.ROOT_DIR / "frontend" / "public" / "images" / "cars" / "default-car.png",
+    ]
+    for p in candidates:
+        if p.exists() and p.is_file():
+            return p
+    return None
+
+
+def _file_response_for_path(path: Path) -> FileResponse:
+    ext = path.suffix.lower()
+    media = "image/jpeg"
+    if ext == ".svg":
+        media = "image/svg+xml"
+    elif ext == ".png":
+        media = "image/png"
+    return FileResponse(
+        path=str(path),
+        media_type=media,
+        headers={
+            "Cache-Control": "public, max-age=3600",
+            "X-Car-Image-Fallback": "1",
+        },
+    )
 
 # Upload directory
 UPLOAD_DIR = Path("uploads")
@@ -191,13 +236,13 @@ async def get_car_image(image_filename: str):
                 detail="Access denied: invalid file path"
             )
 
-        # Check if file exists
+        # Missing file: serve placeholder (avoid 404 in browser / Next.js Image)
         if not image_path.exists():
-            logger.warning(f"Car image not found: {image_path}")
-            raise HTTPException(
-                status_code=404,
-                detail=f"Car image not found: {image_filename}"
-            )
+            logger.debug("Car image not found, using placeholder: %s", image_filename)
+            alt = _try_placeholder_file(settings)
+            if alt is not None:
+                return _file_response_for_path(alt)
+            return _placeholder_car_image_response()
 
         # Return file with proper content type and headers for high quality
         response = FileResponse(

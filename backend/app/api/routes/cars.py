@@ -395,26 +395,28 @@ async def get_metadata():
         # This ensures the form shows all possible conditions even if dataset only has some
         valid_conditions = ['New', 'Like New',
                             'Excellent', 'Good', 'Fair', 'Poor', 'Salvage']
-        conditions = []
+        valid_set = set(valid_conditions)
+        conditions: list = []
         if 'condition' in df.columns:
             dataset_conditions = df['condition'].dropna().unique().tolist()
             dataset_conditions = [str(c).strip()
                                   for c in dataset_conditions if str(c).strip()]
-            # Merge dataset conditions with valid conditions, preserving order
-            all_conditions = set(valid_conditions)
+            seen: set = set()
+            # Single pass: normalize "Used" -> "Good" and never duplicate labels
             for cond in dataset_conditions:
-                # Normalize condition names (handle "Used" as "Good", etc.)
-                normalized = cond
-                if cond.lower() == 'used':
-                    normalized = 'Good'
-                if normalized in all_conditions:
-                    conditions.append(normalized)
-            # Add any valid conditions not in dataset
+                normalized = 'Good' if cond.lower() == 'used' else cond
+                if normalized not in valid_set:
+                    continue
+                if normalized in seen:
+                    continue
+                seen.add(normalized)
+                conditions.append(normalized)
             for cond in valid_conditions:
-                if cond not in conditions:
+                if cond not in seen:
+                    seen.add(cond)
                     conditions.append(cond)
         else:
-            conditions = valid_conditions
+            conditions = list(valid_conditions)
 
         # Get unique fuel types - filter to only valid values
         valid_fuel_types = ['Gasoline', 'Diesel',

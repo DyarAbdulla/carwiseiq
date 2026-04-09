@@ -661,7 +661,7 @@ function PredictPageContent() {
     }
 
     // Validate fuel_type before API call (extra safeguard)
-    const validFuelTypes = ['Gasoline', 'Diesel', 'Electric', 'Hybrid', 'Plug-in Hybrid', 'Other']
+    const validFuelTypes = ['Gasoline', 'Diesel', 'Electric', 'Hybrid', 'Plug-in Hybrid', 'Plug-In Hybrid', 'Other']
     if (!features.fuel_type || !validFuelTypes.includes(features.fuel_type)) {
       if (toast?.toast) {
         toast.toast({

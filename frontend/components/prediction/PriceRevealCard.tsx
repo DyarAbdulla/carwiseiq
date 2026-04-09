@@ -7,13 +7,14 @@ import type { PredictionResponse, CarFeatures } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Share2, Bookmark, Check } from 'lucide-react'
 import confetti from 'canvas-confetti'
-import type { CreateTypes } from 'canvas-confetti'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
 import { apiClient } from '@/lib/api'
 import { activityHelpers } from '@/lib/activityLogger'
+
+const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min
 
 interface PriceRevealCardProps {
   result: PredictionResponse
@@ -88,10 +89,6 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
       const animationEnd = Date.now() + duration
       const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }
 
-      function randomInRange(min: number, max: number) {
-        return Math.random() * (max - min) + min
-      }
-
       const interval = setInterval(() => {
         const timeLeft = animationEnd - Date.now()
 
@@ -101,12 +98,12 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
 
         const particleCount = 50 * (timeLeft / duration)
 
-        confetti({
+        void confetti({
           ...defaults,
           particleCount,
           origin: { x: randomInRange(0.1, 0.9), y: Math.random() - 0.2 },
-          colors: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444']
-        } as CreateTypes.Options)
+          colors: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'],
+        })
       }, 250)
 
       return () => clearInterval(interval)

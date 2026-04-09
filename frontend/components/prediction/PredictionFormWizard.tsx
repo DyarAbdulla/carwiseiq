@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { apiClient } from '@/lib/api'
 import { SAMPLE_CAR, YEAR_RANGE, MILEAGE_RANGE, CONDITIONS, FUEL_TYPES } from '@/lib/constants'
+import { dedupeOptionList, normalizeConditionLabel } from '@/lib/formOptions'
 import type { CarFeatures } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 import { useDebounce } from '@/hooks/use-debounce'
@@ -27,7 +28,7 @@ const step1Schema = z.object({
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
   trim: z.string().optional(),
-  year: z.number().min(1900).max(2025),
+  year: z.number().min(1900).max(2026),
 })
 
 const step2Schema = z.object({
@@ -44,7 +45,7 @@ const step3Schema = z.object({
 
 // Full schema for final validation
 const carFormSchema = z.object({
-  year: z.number().min(1900).max(2025),
+  year: z.number().min(1900).max(2026),
   mileage: z.number().min(0).max(1000000),
   engine_size: z.number({ required_error: "Engine size is required" }).min(0.5, { message: "Engine size must be at least 0.5L" }).max(10.0, { message: "Engine size must be at most 10.0L" }),
   cylinders: z.number().min(2).max(12),
@@ -140,6 +141,14 @@ export function PredictionFormWizard({ onSubmit, loading = false, prefillData = 
   const debouncedMake = useDebounce(makeValue, 1000)
   const debouncedModel = useDebounce(modelValue, 1000)
   const debouncedEngineSize = useDebounce(engineSizeValue, 1000)
+
+  useEffect(() => {
+    const cur = form.getValues('condition')
+    const n = normalizeConditionLabel(cur)
+    if (cur && n && cur !== n) {
+      form.setValue('condition', n as any, { shouldValidate: false })
+    }
+  }, [conditions, form])
 
   // Load initial data
   useEffect(() => {
@@ -442,7 +451,7 @@ export function PredictionFormWizard({ onSubmit, loading = false, prefillData = 
     try {
       const metadata = await apiClient.getMetadata()
       if (metadata.conditions.length > 0) {
-        setConditions(metadata.conditions)
+        setConditions(dedupeOptionList(metadata.conditions, normalizeConditionLabel))
       }
       if (metadata.fuel_types.length > 0) {
         setFuelTypes(metadata.fuel_types)
@@ -532,7 +541,7 @@ export function PredictionFormWizard({ onSubmit, loading = false, prefillData = 
       cylinders: Number(data.cylinders),
       make: String(data.make).trim(),
       model: String(data.model).trim(),
-      condition: String(data.condition).trim(),
+      condition: normalizeConditionLabel(String(data.condition)),
       fuel_type: fuelType,
       location: String(data.location).trim(),
       color: data.color && data.color.trim() !== '' ? String(data.color).trim() : undefined,
@@ -891,8 +900,8 @@ export function PredictionFormWizard({ onSubmit, loading = false, prefillData = 
               <SelectValue placeholder="Select condition" />
             </SelectTrigger>
             <SelectContent>
-              {conditions.map((condition) => (
-                <SelectItem key={condition} value={condition} className="text-white">
+              {conditions.map((condition, idx) => (
+                <SelectItem key={`${idx}-${condition}`} value={condition} className="text-white">
                   {condition}
                 </SelectItem>
               ))}

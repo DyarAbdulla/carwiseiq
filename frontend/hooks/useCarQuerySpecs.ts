@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from "react"
 import {
   fetchCarQuerySpecs,
   carQuerySpecsToResult,
   type CarQuerySpecsResult,
-} from '@/lib/carquery'
+} from "@/lib/carquery"
 
 interface CarForSpecs {
   id: string
@@ -21,28 +21,48 @@ interface CarForSpecs {
 function carKey(car: CarForSpecs): string | null {
   const f = car.features
   if (!f?.make?.trim() || !f?.model?.trim() || !f?.year) return null
-  return `${car.id}|${f.make}|${f.model}|${f.year}|${f.engine_size ?? ''}|${f.cylinders ?? ''}`
+  return `${car.id}|${f.make}|${f.model}|${f.year}|${f.engine_size ?? ""}|${f.cylinders ?? ""}`
 }
 
 export function useCarQuerySpecs(cars: CarForSpecs[]) {
   const [specsByCarId, setSpecsByCarId] = useState<Record<string, CarQuerySpecsResult | null>>({})
   const [loadingByCarId, setLoadingByCarId] = useState<Record<string, boolean>>({})
   const fetchedKeysRef = useRef<Set<string>>(new Set())
+  const clearedNullRef = useRef<Set<string>>(new Set())
+
+  const carsSerialized = useMemo(
+    () =>
+      cars
+        .map((c) => {
+          const k = carKey(c)
+          return k ?? `null:${c.id}`
+        })
+        .join("||"),
+    [cars]
+  )
 
   useEffect(() => {
     cars.forEach((car) => {
       const key = carKey(car)
+      if (key) {
+        clearedNullRef.current.delete(car.id)
+      }
       if (!key) {
-        setSpecsByCarId((prev) => {
-          const next = { ...prev }
-          delete next[car.id]
-          return next
-        })
-        setLoadingByCarId((prev) => {
-          const next = { ...prev }
-          delete next[car.id]
-          return next
-        })
+        if (!clearedNullRef.current.has(car.id)) {
+          clearedNullRef.current.add(car.id)
+          setSpecsByCarId((prev) => {
+            if (!(car.id in prev)) return prev
+            const next = { ...prev }
+            delete next[car.id]
+            return next
+          })
+          setLoadingByCarId((prev) => {
+            if (!(car.id in prev)) return prev
+            const next = { ...prev }
+            delete next[car.id]
+            return next
+          })
+        }
         return
       }
 
@@ -67,7 +87,7 @@ export function useCarQuerySpecs(cars: CarForSpecs[]) {
           setLoadingByCarId((prev) => ({ ...prev, [car.id]: false }))
         })
     })
-  }, [cars])
+  }, [carsSerialized, cars])
 
   const specMaps = cars.map((c) => specsByCarId[c.id] ?? null)
   const loadingSpecs = cars.some((c) => loadingByCarId[c.id])
