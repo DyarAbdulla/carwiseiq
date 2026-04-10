@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState, useRef } from 'react'
-import { useForm } from 'react-hook-form'
+import { useEffect, useState, useRef, useMemo, useId } from 'react'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useTranslations } from 'next-intl'
@@ -9,10 +9,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/ui/searchable-select'
-import { Slider } from '@/components/ui/slider'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
-import { SAMPLE_CAR, YEAR_RANGE, MILEAGE_RANGE, CONDITIONS, FUEL_TYPES, IRAQ_LOCATIONS_FALLBACK } from '@/lib/constants'
+import { SAMPLE_CAR, CONDITIONS, FUEL_TYPES, IRAQ_LOCATIONS_FALLBACK, FALLBACK_ENGINE_DISPLACEMENTS, PREDICT_YEAR_MIN, PREDICT_YEAR_MAX } from '@/lib/constants'
+import { getCylinderOptionsForDisplacement, getDefaultCylinderForDisplacement } from '@/lib/engineCylinderMapping'
 import type { CarFeatures } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
 import { useDebounce } from '@/hooks/use-debounce'
@@ -21,17 +21,39 @@ import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FieldTooltip, FIELD_TOOLTIPS } from './FieldTooltip'
 
+function buildEngineOptions(sizes: readonly number[]): Array<{ size: number; display: string }> {
+  return sizes.map((size) => ({
+    size,
+    display: size === Math.floor(size) ? `${Math.floor(size)}L` : `${size}L`,
+  }))
+}
+
+function dedupeEngineOptions(engines: Array<{ size: number; display: string }>): Array<{ size: number; display: string }> {
+  const m = new Map<number, { size: number; display: string }>()
+  for (const e of engines) {
+    const k = Math.round(e.size * 100) / 100
+    if (!m.has(k)) {
+      const size = k
+      m.set(k, {
+        size,
+        display: size === Math.floor(size) ? `${Math.floor(size)}L` : `${size}L`,
+      })
+    }
+  }
+  return Array.from(m.values()).sort((a, b) => a.size - b.size)
+}
+
 // Step validation schemas
 const step1Schema = z.object({
   make: z.string().min(1, "Make is required"),
   model: z.string().min(1, "Model is required"),
   trim: z.string().optional(),
-  year: z.number().min(1900).max(2025),
+  year: z.number().min(PREDICT_YEAR_MIN).max(PREDICT_YEAR_MAX),
 })
 
 const step2Schema = z.object({
   mileage: z.number().min(0).max(1000000),
-  engine_size: z.number({ required_error: "Engine size is required" }).min(0.5).max(10.0),
+  engine_size: z.number({ required_error: "Engine size is required" }).min(0.5).max(16.0),
   cylinders: z.number().min(2).max(12),
   fuel_type: z.string().min(1),
 })
@@ -43,9 +65,9 @@ const step3Schema = z.object({
 
 // Full schema
 const carFormSchema = z.object({
-  year: z.number().min(1900).max(2025),
+  year: z.number().min(PREDICT_YEAR_MIN).max(PREDICT_YEAR_MAX),
   mileage: z.number().min(0).max(1000000),
-  engine_size: z.number({ required_error: "Engine size is required" }).min(0.5).max(10.0),
+  engine_size: z.number({ required_error: "Engine size is required" }).min(0.5).max(16.0),
   cylinders: z.number().min(2).max(12),
   make: z.string().min(1),
   model: z.string().min(1),
@@ -76,19 +98,30 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
   const [locations, setLocations] = useState<string[]>(IRAQ_LOCATIONS_FALLBACK)
   const [conditions, setConditions] = useState<string[]>(CONDITIONS)
   const [fuelTypes, setFuelTypes] = useState<string[]>(FUEL_TYPES)
-  const [yearRange, setYearRange] = useState(YEAR_RANGE)
-  const [mileageRange, setMileageRange] = useState(MILEAGE_RANGE)
   const [selectedMake, setSelectedMake] = useState<string>(SAMPLE_CAR.make || '')
   const [selectedModel, setSelectedModel] = useState<string>(SAMPLE_CAR.model || '')
-  const [allEngineSizes, setAllEngineSizes] = useState<Array<{ size: number; display: string }>>([])
-  const [availableEngines, setAvailableEngines] = useState<Array<{ size: number; display: string }>>([])
-  const [availableCylinders, setAvailableCylinders] = useState<number[]>([])
+  const [allEngineSizes, setAllEngineSizes] = useState<Array<{ size: number; display: string }>>(() =>
+    buildEngineOptions(FALLBACK_ENGINE_DISPLACEMENTS)
+  )
+  const [availableEngines, setAvailableEngines] = useState<Array<{ size: number; display: string }>>(() =>
+    buildEngineOptions(FALLBACK_ENGINE_DISPLACEMENTS)
+  )
+  const [availableCylinders, setAvailableCylinders] = useState<number[]>(() =>
+    getCylinderOptionsForDisplacement(SAMPLE_CAR.engine_size)
+  )
   const [initialLoading, setInitialLoading] = useState(true)
   const [loadingTrims, setLoadingTrims] = useState(false)
   const [loadingMetadata, setLoadingMetadata] = useState(false)
   const [loadingEngines, setLoadingEngines] = useState(false)
-  const [loadingCylinders, setLoadingCylinders] = useState(false)
   const [loadingFuelTypes, setLoadingFuelTypes] = useState(false)
+
+  const yearOptions = useMemo(() => {
+    const years: number[] = []
+    for (let y = PREDICT_YEAR_MAX; y >= PREDICT_YEAR_MIN; y--) years.push(y)
+    return years
+  }, [])
+
+  const engineDatalistId = useId()
 
   const optionsCache = useApiCache(5 * 60 * 1000)
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map())
@@ -96,7 +129,7 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
   const form = useForm<CarFormValues>({
     resolver: zodResolver(carFormSchema),
     defaultValues: prefillData ? {
-      year: prefillData.year,
+      year: Math.min(PREDICT_YEAR_MAX, Math.max(PREDICT_YEAR_MIN, prefillData.year)),
       mileage: prefillData.mileage,
       engine_size: prefillData.engine_size,
       cylinders: prefillData.cylinders,
@@ -108,7 +141,7 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
       location: prefillData.location,
       color: prefillData.color || '',
     } : {
-      year: SAMPLE_CAR.year,
+      year: Math.min(PREDICT_YEAR_MAX, Math.max(PREDICT_YEAR_MIN, SAMPLE_CAR.year)),
       mileage: SAMPLE_CAR.mileage,
       engine_size: SAMPLE_CAR.engine_size,
       cylinders: SAMPLE_CAR.cylinders,
@@ -129,14 +162,6 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
 
   const debouncedMake = useDebounce(makeValue, 1000)
   const debouncedModel = useDebounce(modelValue, 1000)
-  const debouncedEngineSize = useDebounce(engineSizeValue, 1000)
-
-  // Load engine sizes on mount
-  useEffect(() => {
-    const sizes = [1.0, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.5, 2.7, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 8.0]
-    setAllEngineSizes(sizes.map(size => ({ size, display: `${size}L` })))
-    setAvailableEngines(sizes.map(size => ({ size, display: `${size}L` })))
-  }, [])
 
   // Load data on mount
   useEffect(() => {
@@ -172,9 +197,6 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
               await loadTrims(defaultMake, defaultModel)
             }
           }
-          if (allEngineSizes.length > 0) {
-            setAvailableEngines(allEngineSizes)
-          }
         }
       } finally {
         if (mounted) {
@@ -209,12 +231,21 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
     }
   }, [debouncedMake, debouncedModel])
 
-  // Load cylinders when engine size changes
+  // Cylinder options from displacement (realistic bands)
   useEffect(() => {
-    if (debouncedMake && debouncedModel && debouncedEngineSize && debouncedMake.trim() !== '' && debouncedModel.trim() !== '') {
-      loadAvailableCylinders(debouncedMake, debouncedModel, debouncedEngineSize)
+    if (typeof engineSizeValue !== 'number' || isNaN(engineSizeValue) || engineSizeValue < 0.5) {
+      setAvailableCylinders([4])
+      return
     }
-  }, [debouncedMake, debouncedModel, debouncedEngineSize])
+    const opts = getCylinderOptionsForDisplacement(engineSizeValue)
+    setAvailableCylinders(opts)
+    const current = form.getValues('cylinders')
+    const def = getDefaultCylinderForDisplacement(engineSizeValue)
+    if (!opts.includes(current)) {
+      form.setValue('cylinders', def, { shouldValidate: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-filter when displacement changes
+  }, [engineSizeValue])
 
   // Notify parent of form changes
   useEffect(() => {
@@ -234,7 +265,7 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
   useEffect(() => {
     if (prefillData) {
       form.reset({
-        year: prefillData.year,
+        year: Math.min(PREDICT_YEAR_MAX, Math.max(PREDICT_YEAR_MIN, prefillData.year)),
         mileage: prefillData.mileage,
         engine_size: prefillData.engine_size,
         cylinders: prefillData.cylinders,
@@ -257,8 +288,6 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
       const metadata = await apiClient.getMetadata()
       if (metadata.conditions.length > 0) setConditions(metadata.conditions)
       if (metadata.fuel_types.length > 0) setFuelTypes(metadata.fuel_types)
-      if (metadata.year_range) setYearRange(metadata.year_range)
-      if (metadata.mileage_range) setMileageRange(metadata.mileage_range)
     } catch (error) {
       // Use defaults
     } finally {
@@ -369,8 +398,9 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
   }
 
   const loadAvailableEngines = async (make: string, model: string) => {
-    if (loadingEngines || !make || !model || make.trim() === '' || model.trim() === '') {
-      setAvailableEngines(allEngineSizes)
+    const fallback = buildEngineOptions(FALLBACK_ENGINE_DISPLACEMENTS)
+    if (!make || !model || make.trim() === '' || model.trim() === '') {
+      setAvailableEngines(fallback)
       return
     }
 
@@ -400,69 +430,23 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
       if (abortController.signal.aborted) return
 
       if (engines.length > 0) {
-        setAvailableEngines(engines)
-        if (engines.length === 1 && engines[0].size) {
-          form.setValue('engine_size', engines[0].size)
-          await loadAvailableCylinders(make, model, engines[0].size)
+        const deduped = dedupeEngineOptions(engines)
+        setAvailableEngines(deduped)
+        setAllEngineSizes(deduped)
+        if (deduped.length === 1 && deduped[0].size) {
+          form.setValue('engine_size', deduped[0].size, { shouldValidate: true })
         }
       } else {
-        setAvailableEngines(allEngineSizes)
+        setAvailableEngines(fallback)
+        setAllEngineSizes(fallback)
       }
     } catch (error: any) {
       if (error.name === 'AbortError') return
-      setAvailableEngines(allEngineSizes)
+      setAvailableEngines(fallback)
+      setAllEngineSizes(fallback)
     } finally {
       abortControllersRef.current.delete(cacheKey)
       setLoadingEngines(false)
-    }
-  }
-
-  const loadAvailableCylinders = async (make: string, model: string, engineSize: number) => {
-    if (loadingCylinders || !make || !model || make.trim() === '' || model.trim() === '' || !engineSize) {
-      setAvailableCylinders([])
-      return
-    }
-
-    const cacheKey = `cylinders:${make}:${model}:${engineSize}`
-    const existingController = abortControllersRef.current.get(cacheKey)
-    if (existingController) {
-      existingController.abort()
-    }
-
-    const abortController = new AbortController()
-    abortControllersRef.current.set(cacheKey, abortController)
-
-    setLoadingCylinders(true)
-    try {
-      const cylinders = await optionsCache.getOrFetch(
-        cacheKey,
-        async () => {
-          try {
-            return await apiClient.getAvailableCylinders(make, model, engineSize)
-          } catch (error: any) {
-            if (error.name === 'AbortError') throw error
-            throw error
-          }
-        }
-      )
-
-      if (abortController.signal.aborted) return
-
-      setAvailableCylinders(cylinders)
-
-      if (cylinders.length === 1 && cylinders[0]) {
-        form.setValue('cylinders', cylinders[0])
-      } else if (cylinders.length > 0 && !cylinders.includes(form.getValues('cylinders'))) {
-        if (cylinders[0]) {
-          form.setValue('cylinders', cylinders[0])
-        }
-      }
-    } catch (error: any) {
-      if (error.name === 'AbortError') return
-      setAvailableCylinders([4])
-    } finally {
-      abortControllersRef.current.delete(cacheKey)
-      setLoadingCylinders(false)
     }
   }
 
@@ -671,8 +655,6 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
                       onValueChange={(value) => {
                         form.setValue('model', value)
                         setSelectedModel(value)
-                        setAvailableEngines([])
-                        setAvailableCylinders([])
                         form.setValue('trim', '')
                         form.clearErrors('trim')
                         setTrims([])
@@ -727,25 +709,29 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
 
                   <div className="space-y-1.5 sm:col-span-2">
                     <FieldTooltip content={FIELD_TOOLTIPS.year}>
-                      <Label htmlFor="year" className="text-white/90 text-sm font-medium">
-                        {t('year')}: <span className="text-blue-400 font-bold text-base">{form.watch('year')}</span>
-                      </Label>
+                      <Label htmlFor="year" className="text-white font-medium text-sm drop-shadow-sm">{t('year')}</Label>
                     </FieldTooltip>
-                    <div className="relative">
-                      <Slider
-                        value={[form.watch('year')]}
-                        onValueChange={([value]) => form.setValue('year', value)}
-                        min={yearRange.min}
-                        max={yearRange.max}
-                        step={1}
-                        className="w-full"
-                      />
-                      {/* Year Range Labels */}
-                      <div className="flex justify-between mt-2 text-xs text-white/60">
-                        <span>{yearRange.min}</span>
-                        <span>{yearRange.max}</span>
-                      </div>
-                    </div>
+                    <Select
+                      value={form.watch('year') ? String(form.watch('year')) : ''}
+                      onValueChange={(value) => {
+                        form.setValue('year', parseInt(value, 10), { shouldValidate: true })
+                      }}
+                      disabled={initialLoading}
+                    >
+                      <SelectTrigger
+                        id="year"
+                        className="border-white/20 bg-black/30 backdrop-blur-sm h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300"
+                      >
+                        <SelectValue placeholder={t('year')} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[280px] bg-[#1a1d29] border-[#2a2d3a]">
+                        {yearOptions.map((y) => (
+                          <SelectItem key={y} value={String(y)} className="text-white">
+                            {y}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </motion.div>
@@ -763,51 +749,85 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <FieldTooltip content={FIELD_TOOLTIPS.mileage}>
-                      <Label htmlFor="mileage" className="text-white font-medium text-sm drop-shadow-sm">{t('mileage')} (km)</Label>
+                      <Label htmlFor="mileage" className="text-white font-medium text-sm drop-shadow-sm">{t('mileage')}</Label>
                     </FieldTooltip>
-                    <Input
-                      id="mileage"
-                      type="number"
-                      className="border-white/20 bg-black/30 backdrop-blur-sm text-white h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300"
-                      {...form.register('mileage', { valueAsNumber: true })}
+                    <Controller
+                      name="mileage"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Input
+                          id="mileage"
+                          type="number"
+                          min={0}
+                          max={1000000}
+                          className="border-white/20 bg-black/30 backdrop-blur-sm text-white h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300"
+                          value={field.value === undefined || field.value === null ? '' : field.value}
+                          onChange={(e) => {
+                            const raw = e.target.value
+                            if (raw === '') {
+                              field.onChange(0)
+                              return
+                            }
+                            let n = parseFloat(raw)
+                            if (isNaN(n)) return
+                            if (n > 1000000) n = 1000000
+                            if (n < 0) n = 0
+                            field.onChange(Math.round(n))
+                          }}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                          ref={field.ref}
+                        />
+                      )}
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <FieldTooltip content={FIELD_TOOLTIPS.engine_size}>
-                      <Label htmlFor="engine_size" className="text-white font-medium text-sm drop-shadow-sm">{t('engineSize')} <span className="text-red-400 font-bold">*</span></Label>
+                      <Label htmlFor="engine_size" className="text-white font-medium text-sm drop-shadow-sm">
+                        {t('engineSize')} <span className="text-red-400 font-bold">*</span>
+                      </Label>
                     </FieldTooltip>
-                    <Select
-                      value={form.watch('engine_size') ? form.watch('engine_size').toString() : ''}
-                      onValueChange={(value) => {
-                        if (value && value !== '') {
-                          const engineSize = parseFloat(value)
-                          form.setValue('engine_size', engineSize)
-                          form.clearErrors('engine_size')
-                          if (selectedMake && selectedModel) {
-                            loadAvailableCylinders(selectedMake, selectedModel, engineSize)
-                          }
-                        }
-                      }}
-                      disabled={loadingEngines || (allEngineSizes.length === 0 && availableEngines.length === 0)}
-                    >
-                      <SelectTrigger className={`${form.formState.errors.engine_size ? 'border-red-500' : 'border-white/20'} bg-black/30 backdrop-blur-sm h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300`}>
-                        <SelectValue placeholder={loadingEngines ? "Loading..." : (allEngineSizes.length > 0 || availableEngines.length > 0) ? "Select engine size" : "Loading engine sizes..."} />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#1a1d29] border-[#2a2d3a]">
-                        {loadingEngines ? (
-                          <div className="p-2 text-center text-[#94a3b8]">Loading engines...</div>
-                        ) : (availableEngines.length > 0 || allEngineSizes.length > 0) ? (
-                          (availableEngines.length > 0 ? availableEngines : allEngineSizes).map((engine) => (
-                            <SelectItem key={engine.size} value={engine.size.toString()} className="text-white">
-                              {engine.display}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="p-2 text-center text-[#94a3b8]">No engine sizes available</div>
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      name="engine_size"
+                      control={form.control}
+                      render={({ field }) => (
+                        <>
+                          <Input
+                            id="engine_size"
+                            type="number"
+                            step={0.1}
+                            min={0.5}
+                            max={16}
+                            list={engineDatalistId}
+                            disabled={loadingEngines}
+                            placeholder={loadingEngines ? 'Loading…' : 'e.g. 2.0 or choose below'}
+                            className={`${form.formState.errors.engine_size ? 'border-red-500' : 'border-white/20'} bg-black/30 backdrop-blur-sm text-white h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300`}
+                            value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : field.value}
+                            onChange={(e) => {
+                              const raw = e.target.value
+                              if (raw === '') return
+                              const n = parseFloat(raw)
+                              if (isNaN(n)) return
+                              const clamped = Math.min(16, Math.max(0.5, Math.round(n * 10) / 10))
+                              field.onChange(clamped)
+                              form.clearErrors('engine_size')
+                            }}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                          <datalist id={engineDatalistId}>
+                            {(availableEngines.length > 0 ? availableEngines : allEngineSizes).map((eng) => (
+                              <option key={`${eng.size}-${eng.display}`} value={eng.size} label={eng.display} />
+                            ))}
+                          </datalist>
+                        </>
+                      )}
+                    />
+                    <p className="text-[10px] text-white/50 leading-tight">
+                      Choose a dataset size from suggestions or type any displacement in liters.
+                    </p>
                     {form.formState.errors.engine_size && (
                       <p className="text-sm text-red-400 mt-1">{form.formState.errors.engine_size.message}</p>
                     )}
@@ -821,25 +841,29 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
                       value={form.watch('cylinders') ? form.watch('cylinders').toString() : ''}
                       onValueChange={(value) => {
                         if (value && value !== '') {
-                          form.setValue('cylinders', parseInt(value))
+                          form.setValue('cylinders', parseInt(value, 10))
                         }
                       }}
-                      disabled={!selectedMake || !selectedModel || !engineSizeValue || loadingCylinders || availableCylinders.length === 0}
+                      disabled={
+                        typeof engineSizeValue !== 'number' || isNaN(engineSizeValue) || engineSizeValue < 0.5
+                      }
                     >
                       <SelectTrigger className="border-white/20 bg-black/30 backdrop-blur-sm h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300">
-                        <SelectValue placeholder={loadingCylinders ? "Loading..." : availableCylinders.length > 0 ? "Select cylinders" : selectedMake && selectedModel && engineSizeValue ? "No cylinders available" : "Select make, model, and engine first"} />
+                        <SelectValue
+                          placeholder={
+                            availableCylinders.length > 0 ? 'Select cylinders' : 'Enter engine size first'
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent className="bg-[#1a1d29] border-[#2a2d3a]">
-                        {loadingCylinders ? (
-                          <div className="p-2 text-center text-[#94a3b8]">Loading cylinders...</div>
-                        ) : availableCylinders.length > 0 ? (
+                        {availableCylinders.length > 0 ? (
                           availableCylinders.map((cyl) => (
                             <SelectItem key={cyl} value={cyl.toString()} className="text-white">
                               {cyl}
                             </SelectItem>
                           ))
                         ) : (
-                          <div className="p-2 text-center text-[#94a3b8]">Select make, model, and engine first</div>
+                          <div className="p-2 text-center text-[#94a3b8]">Enter engine size first</div>
                         )}
                       </SelectContent>
                     </Select>

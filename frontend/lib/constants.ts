@@ -4,8 +4,17 @@
 
 export const YEAR_RANGE = {
   min: 2000,
-  max: 2025,
+  max: 2026,
 }
+
+/** Predict wizard: fixed year bounds (newest first in UI). */
+export const PREDICT_YEAR_MIN = 1970
+export const PREDICT_YEAR_MAX = 2026
+
+/** Engine sizes when dataset has no rows for make/model (liters). */
+export const FALLBACK_ENGINE_DISPLACEMENTS = [
+  1.0, 1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.5, 2.7, 3.0, 3.3, 3.5, 3.6, 3.8, 4.0, 4.4, 4.6, 4.7, 5.0, 5.3, 5.6, 5.7, 6.0, 6.2, 6.4, 6.7, 6.8, 7.0, 8.0,
+] as const
 
 export const MILEAGE_RANGE = {
   min: 0,

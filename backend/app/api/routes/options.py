@@ -65,20 +65,28 @@ async def get_available_engines(
         engine_sizes_numeric = pd.to_numeric(filtered['engine_size'], errors='coerce')
         engine_sizes = engine_sizes_numeric.dropna().unique().tolist()
 
-        # Create engine options with display names
-        engines = []
-        for size in sorted(set(engine_sizes)):
+        # Round to 2 decimals so near-duplicate floats (e.g. 2.0 vs 2.0001) collapse to one option
+        rounded_keys = []
+        for s in engine_sizes:
             try:
-                # Ensure size is numeric
-                size_float = float(size)
+                sf = float(s)
+                if pd.isna(sf) or np.isnan(sf):
+                    continue
+                rounded_keys.append(round(sf, 2))
+            except (ValueError, TypeError):
+                continue
+
+        # Create engine options with display names (unique by rounded displacement)
+        engines = []
+        for size_float in sorted(set(rounded_keys)):
+            try:
                 if pd.isna(size_float) or np.isnan(size_float):
                     continue
-                # Format display: "2.0L" or "2L" (remove trailing zero)
                 if size_float == int(size_float):
                     display = f"{int(size_float)}L"
                 else:
                     display = f"{size_float}L"
-                engines.append(EngineOption(size=size_float, display=display))
+                engines.append(EngineOption(size=float(size_float), display=display))
             except (ValueError, TypeError):
                 continue
 
