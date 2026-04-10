@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -98,6 +98,13 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
     ? whatIfResult.predicted_price
     : initialPrediction.predicted_price
 
+  const conditionOptions = useMemo(() => {
+    if (condition && !CONDITIONS.includes(condition)) {
+      return [condition, ...CONDITIONS]
+    }
+    return [...CONDITIONS]
+  }, [condition])
+
   return (
     <Card className="border-[#2a2d3a] bg-[#1a1d29]">
       <CardHeader>
@@ -153,7 +160,7 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-[#1a1d29] border-[#2a2d3a]">
-              {CONDITIONS.map((cond) => (
+              {conditionOptions.map((cond) => (
                 <SelectItem key={cond} value={cond} className="text-white">
                   {cond}
                 </SelectItem>
