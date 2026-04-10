@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/dialog'
 import { apiClient } from '@/lib/api'
 import { listingImageUrl } from '@/lib/utils'
+import { buySellListingHref } from '@/lib/marketplaceLinks'
 import { SkeletonCardCompact } from '@/components/skeletons'
 import { HeroValuationForm } from '@/components/HeroValuationForm'
 import { StatsCounter } from '@/components/StatsCounter'
@@ -814,7 +815,11 @@ const BestDealsSection = memo(function BestDealsSection({ t, locale }: { t: (k: 
                 </Link>
               )
               : deals.map((d: any) => (
-                <Link key={d.id} href={`/${locale}/buy-sell/${d.id}`} className="shrink-0 w-[260px] rounded-2xl border border-white/10 bg-white/5 overflow-hidden">
+                <a
+                  key={d.id}
+                  href={buySellListingHref(locale, d.id)}
+                  className="shrink-0 w-[260px] rounded-2xl border border-white/10 bg-white/5 overflow-hidden"
+                >
                   <div className="aspect-[16/10] car-card-image-wrap bg-slate-800/50 relative">
                     {d.cover_image ? (
                       <img src={listingImageUrl(d.cover_image)} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -824,7 +829,7 @@ const BestDealsSection = memo(function BestDealsSection({ t, locale }: { t: (k: 
                     <p className="font-bold text-white truncate">{d.year} {d.make} {d.model}</p>
                     <p className="text-lg font-bold text-indigo-400">${d.price?.toLocaleString()}</p>
                   </div>
-                </Link>
+                </a>
               ))}
         </div>
       </div>

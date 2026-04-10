@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast'
 import Link from 'next/link'
 import { FavoriteButton } from '@/components/marketplace/FavoriteButton'
 import { listingImageUrl } from '@/lib/utils'
+import { buySellListingHref } from '@/lib/marketplaceLinks'
 
 export default function FavoritesPage() {
   const router = useRouter()
@@ -365,7 +366,11 @@ export default function FavoritesPage() {
             </div>
             <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6' : 'space-y-4'}>
               {listings.map((listing) => (
-                <Link key={listing.id} href={`/${locale}/buy-sell/${listing.id}`}>
+                <a
+                  key={listing.id}
+                  href={buySellListingHref(locale, listing.id)}
+                  className="block min-w-0"
+                >
                   <div className="group relative backdrop-blur-md bg-white/5 border border-white/10 rounded-2xl overflow-hidden transition-all duration-300 ease-out cursor-pointer hover:-translate-y-1 hover:ring-2 hover:ring-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/20 active:scale-[0.98]">
                     <div className={viewMode === 'grid' ? '' : 'flex'}>
                       <div className={`${viewMode === 'grid' ? 'aspect-video' : 'w-64'} bg-gray-900/50 overflow-hidden relative`}>
@@ -431,7 +436,7 @@ export default function FavoritesPage() {
                       </div>
                     </div>
                   </div>
-                </Link>
+                </a>
               ))}
             </div>
             {/* Pagination */}

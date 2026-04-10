@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
-import { Car, Menu, X, User, LogOut, Sun, Moon, LayoutDashboard, List, ChevronDown, UserCircle, Sparkles, MessageCircle } from 'lucide-react'
+import { Car, Menu, X, User, LogOut, Sun, Moon, LayoutDashboard, List, ChevronDown, UserCircle, Sparkles, MessageCircle, Info } from 'lucide-react'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
@@ -31,6 +31,7 @@ const navItems = [
   { href: '/', labelKey: 'nav.home', icon: Car },
   { href: '/predict', labelKey: 'nav.predict' },
   { href: '/services', labelKey: 'nav.services', icon: Sparkles },
+  { href: '/about', labelKey: 'nav.about', icon: Info },
   { href: '/buy-sell', labelKey: 'nav.buySell' },
   { href: '/favorites', labelKey: 'nav.favorites' },
   { href: '/batch', labelKey: 'nav.batch' },
@@ -94,9 +95,22 @@ export function Header() {
 
   const basePathname = pathname ? pathname.replace(new RegExp(`^/${locale}`), '') || '/' : '/'
 
-  // isActive: exact match for home; for others match exact or nested (e.g. /buy-sell/123)
-  const isActiveNav = (href: string) =>
-    href === '/' ? (basePathname === '/' || basePathname === '') : (basePathname === href || basePathname.startsWith(href + '/'))
+  // Listing detail uses /buy-sell?id= (same path as browse); no /buy-sell/[id] with static export
+  const isActiveNav = (href: string) => {
+    if (href === '/' || href === '') return basePathname === '/' || basePathname === ''
+    if (href === '/buy-sell') return basePathname === '/buy-sell'
+    if (href === '/about') return basePathname === '/about'
+    if (href === '/sell') return basePathname.startsWith('/sell')
+    return basePathname === href || basePathname.startsWith(`${href}/`)
+  }
+
+  const mobileNavItemClass = (active: boolean) =>
+    cn(
+      'flex min-h-[44px] w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+      active
+        ? 'bg-indigo-100 text-indigo-900 dark:bg-white/15 dark:text-white'
+        : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10'
+    )
 
   const handleNavClick = (_href: string) => { }
 
@@ -394,112 +408,93 @@ export function Header() {
 
                     <div className="border-t border-slate-200/80 dark:border-white/10 my-1" role="separator" />
 
-                    {/* Nav items: Home, Predict, Compare, Buy & Sell, Sell Car */}
-                    <nav className="space-y-0.5">
+                    {/* Mobile nav: Home → … → Batch → About (single list, shared styles) */}
+                    <nav className="space-y-1" aria-label={tKey(t, 'nav.menu')}>
                       <Link
                         href={`/${locale}/`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActiveNav('/') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                        )}
+                        className={mobileNavItemClass(isActiveNav('/'))}
                       >
                         {tKey(t, 'nav.home')}
                       </Link>
                       <Link
                         href={`/${locale}/predict`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActiveNav('/predict') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                        )}
+                        className={mobileNavItemClass(isActiveNav('/predict'))}
                       >
                         {tKey(t, 'nav.predict')}
                       </Link>
                       <Link
                         href={`/${locale}/compare`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActiveNav('/compare') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                        )}
+                        className={mobileNavItemClass(isActiveNav('/compare'))}
                       >
                         {tKey(t, 'nav.compare')}
                       </Link>
                       <Link
                         href={`/${locale}/buy-sell`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActiveNav('/buy-sell') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                        )}
+                        className={mobileNavItemClass(isActiveNav('/buy-sell'))}
                       >
                         {tKey(t, 'nav.buySell')}
                       </Link>
                       <SellCarCTA
                         as="button"
-                        variant="outline"
+                        variant="ghost"
                         onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center w-full rounded-lg px-3 py-2 text-sm font-medium border border-purple-500/50 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 transition-colors cursor-pointer justify-start"
                         showIcon={false}
+                        className={cn(
+                          mobileNavItemClass(isActiveNav('/sell')),
+                          'h-auto min-h-[44px] w-full justify-start border-0 shadow-none font-medium'
+                        )}
                       >
                         {t('nav.sellCar')}
                       </SellCarCTA>
-                    </nav>
-
-                    <div className="border-t border-slate-200/80 dark:border-white/10 my-1" role="separator" />
-
-                    {/* AI Assistant, Favorites, History, Services, Batch */}
-                    <nav className="space-y-0.5">
                       <button
+                        type="button"
                         onClick={() => {
                           window.dispatchEvent(new CustomEvent('open-chatbot'))
                           setMobileMenuOpen(false)
                         }}
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 w-full text-start text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
+                        className={cn(mobileNavItemClass(false), 'text-start')}
                       >
-                        <MessageCircle className="h-4 w-4 shrink-0 text-purple-500 dark:text-purple-400" />
+                        <MessageCircle className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" aria-hidden />
                         {tKey(t, 'nav.aiAssistant')}
                       </button>
                       <Link
                         href={`/${locale}/favorites`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActiveNav('/favorites') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                        )}
+                        className={mobileNavItemClass(isActiveNav('/favorites'))}
                       >
                         {tKey(t, 'nav.favorites')}
                       </Link>
                       <Link
                         href={`/${locale}/history`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActiveNav('/history') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                        )}
+                        className={mobileNavItemClass(isActiveNav('/history'))}
                       >
                         {tKey(t, 'nav.history')}
                       </Link>
                       <Link
                         href={`/${locale}/services`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActiveNav('/services') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                        )}
+                        className={mobileNavItemClass(isActiveNav('/services'))}
                       >
                         {tKey(t, 'nav.services')}
                       </Link>
                       <Link
                         href={`/${locale}/batch`}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActiveNav('/batch') ? "bg-indigo-100 dark:bg-white/15 text-indigo-900 dark:text-white" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"
-                        )}
+                        className={mobileNavItemClass(isActiveNav('/batch'))}
                       >
                         {tKey(t, 'nav.batch')}
+                      </Link>
+                      <Link
+                        href={`/${locale}/about`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={mobileNavItemClass(isActiveNav('/about'))}
+                      >
+                        {tKey(t, 'nav.about')}
                       </Link>
                     </nav>
 

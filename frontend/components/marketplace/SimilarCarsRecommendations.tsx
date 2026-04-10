@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
 import { formatCurrency, listingImageUrl } from '@/lib/utils'
+import { buySellListingHref } from '@/lib/marketplaceLinks'
 import { Car, ChevronLeft, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
@@ -65,10 +66,22 @@ export function SimilarCarsRecommendations({
       })
 
       // Filter out current listing and get first 6
-      const similar = (data.items || [])
-        .filter((car: any) => car.id !== listingId)
+      type SearchItem = {
+        id: number
+        make: string
+        model: string
+        year: number
+        price: number
+        mileage: number
+        condition: string
+        images?: { url?: string }[]
+        location_city?: string
+      }
+      const items = (data.items ?? []) as SearchItem[]
+      const similar = items
+        .filter((car) => car.id !== listingId)
         .slice(0, 6)
-        .map((car: any) => ({
+        .map((car) => ({
           id: car.id,
           listing_id: car.id,
           make: car.make,
@@ -144,7 +157,9 @@ export function SimilarCarsRecommendations({
             >
               <Card
                 className="border-[#2a2d3a] bg-[#1a1d29] hover:border-[#5B7FFF]/50 transition-all cursor-pointer"
-                onClick={() => router.push(`/${locale}/buy-sell/${car.listing_id}`)}
+                onClick={() =>
+                  router.push(buySellListingHref(locale, car.listing_id))
+                }
               >
                 <div className="relative h-32 bg-gradient-to-br from-[#5B7FFF]/20 to-[#8B5CF6]/20">
                   {car.image_url ? (

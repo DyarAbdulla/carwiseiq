@@ -10,14 +10,14 @@ export function SkeletonCard({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-white/10 dark:border-white/10 overflow-hidden bg-white/5 dark:bg-white/5",
+        "rounded-xl border border-white/10 dark:border-white/10 overflow-hidden bg-white/5 dark:bg-white/5 shadow-lg",
         className
       )}
       role="status"
       aria-label="Loading car card"
     >
-      {/* Image placeholder - aspect 4:3 to match listing cards */}
-      <div className="skeleton-shimmer aspect-[4/3] w-full rounded-none" />
+      {/* 16:9 marketplace cards */}
+      <div className="skeleton-shimmer aspect-video w-full rounded-none" />
       <div className="p-4 md:p-5 space-y-3">
         {/* Title line */}
         <div className="skeleton-shimmer h-5 w-3/4 rounded-md" />

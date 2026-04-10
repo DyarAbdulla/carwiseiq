@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 
 interface SocialShareButtonsProps {
   listing: {
-    id: number
+    id: number | string
     make: string
     model: string
     year: number

@@ -4,7 +4,7 @@ import { listingImageUrl } from '@/lib/utils'
 
 interface ListingStructuredDataProps {
   listing: {
-    id?: number | null
+    id?: number | string | null
     make?: string | null
     model?: string | null
     year?: number | null
@@ -15,7 +15,7 @@ interface ListingStructuredDataProps {
     transmission?: string | null
     location_city?: string | null
     description?: string | null
-    images?: Array<{ url?: string | null }> | null
+    images?: Array<{ url?: string | null }> | null | unknown
   } | null
 }
 
@@ -73,9 +73,12 @@ export function ListingStructuredData({ listing }: ListingStructuredDataProps) {
   if (listing?.description) {
     structuredData.description = String(listing.description ?? '')
   }
-  if (listing?.images && listing.images.length > 0) {
-    structuredData.image = listing.images
-      .map((img) => listingImageUrl(img?.url))
+  const imgs = Array.isArray(listing?.images) ? listing.images : []
+  if (imgs.length > 0) {
+    structuredData.image = imgs
+      .map((img: { url?: string | null } | string) =>
+        listingImageUrl(typeof img === 'string' ? img : img?.url)
+      )
       .filter(Boolean)
   }
 

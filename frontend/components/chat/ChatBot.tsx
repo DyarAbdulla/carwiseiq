@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { MessageCircle, X, Send, Bot } from 'lucide-react';
 import { vazirmatn, inter } from '@/lib/fonts';
+import { cn } from '@/lib/utils';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -22,13 +23,21 @@ function stripMarkdown(text: string): string {
     .trim()
 }
 
+const GLASS_PANEL =
+  'bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] shadow-2xl overflow-hidden'
+
+const TITLE_GRADIENT =
+  'bg-gradient-to-r from-gray-100 to-gray-400 bg-clip-text text-transparent'
+
+const SCROLL_AREA =
+  'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20'
+
 export default function ChatBot() {
   const locale = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isDark, setIsDark] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const translations = {
@@ -86,35 +95,9 @@ export default function ChatBot() {
   const isRTL = locale === 'ku' || locale === 'ar';
   const fontClass = isRTL ? vazirmatn.className : inter.className;
 
-  const colors = {
-    bg: isDark ? 'bg-gray-900' : 'bg-white',
-    border: isDark ? 'border-gray-700' : 'border-gray-200',
-    text: isDark ? 'text-white' : 'text-gray-900',
-    textMuted: isDark ? 'text-gray-400' : 'text-gray-500',
-    inputBg: isDark ? 'bg-gray-800' : 'bg-gray-100',
-    messageBg: isDark ? 'bg-gray-800' : 'bg-gray-100',
-    shadow: isDark ? 'shadow-2xl' : 'shadow-xl'
-  };
-
-  useEffect(() => {
-    const checkTheme = () => {
-      const isDarkMode =
-        document.documentElement.classList.contains('dark') ||
-        (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      setIsDark(isDarkMode);
-    };
-    checkTheme();
-    const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-    return () => observer.disconnect();
-  }, []);
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const sendMessage = async (text?: string) => {
     const messageToSend = (text ?? input.trim()).trim()
@@ -186,7 +169,6 @@ export default function ChatBot() {
     setIsLoading(false);
   };
 
-  // Listen for open request from mobile menu
   useEffect(() => {
     const handler = () => setIsOpen(true)
     window.addEventListener('open-chatbot', handler)
@@ -195,9 +177,8 @@ export default function ChatBot() {
 
   return (
     <>
-      {/* Chat Button - Desktop only (md: and above); mobile uses menu item */}
       {!isOpen && (
-        <div className="hidden md:flex fixed bottom-20 right-6 z-50">
+        <div className="hidden md:flex fixed bottom-20 right-6 z-[60]">
           <button
             onClick={() => setIsOpen(true)}
             className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 animate-pulse hover:animate-none"
@@ -208,125 +189,215 @@ export default function ChatBot() {
         </div>
       )}
 
-      {/* Chat Modal - Full screen on mobile, floating widget on desktop; Vazirmatn for RTL */}
       {isOpen && (
         <div
-          className={`${fontClass} fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:left-auto z-50 flex flex-col overflow-hidden
-            sm:w-[400px] sm:max-h-[600px] sm:h-[600px]
-            w-full h-full sm:rounded-3xl sm:rounded-b-2xl
-            ${colors.bg} border-0 sm:border ${colors.border} ${colors.shadow}
-            pt-[env(safe-area-inset-top)] sm:pt-0 pb-[env(safe-area-inset-bottom)] sm:pb-0
-            ${isRTL ? 'sm:right-auto sm:left-6' : ''}`}
+          className={`${fontClass} fixed inset-0 z-[100] flex flex-col sm:items-end sm:justify-end sm:p-4 md:p-6`}
           dir={isRTL ? 'rtl' : 'ltr'}
         >
-          {/* Header - Keep purple gradient */}
-          <div
-            className={`flex-shrink-0 bg-gradient-to-r from-purple-600 to-purple-700 p-4 flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}
-          >
-            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
-              </div>
-              <div className={isRTL ? 'text-right' : 'text-left'}>
-                <h3 className="font-semibold text-white">{t.title}</h3>
-                <p className="text-white/80 text-sm">{t.subtitle}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="p-2 rounded-full text-white/90 hover:bg-white/20 transition-colors"
-              aria-label="Close chat"
-            >
-              <X className="w-5 h-5" />
-            </button>
+          {/* Layer 1–2: same treatment as About (static img + gradient; no CSS bg-fixed) */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+            <img
+              src="/background-about.jpg"
+              alt=""
+              className="h-full min-h-[100dvh] w-full object-cover object-center [transform:translateZ(0)]"
+            />
           </div>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/60 to-[#0a0f1c] backdrop-blur-[2px]"
+          />
 
-          {/* Messages */}
-          <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${colors.bg} scrollbar-thin scrollbar-thumb-slate-400/30 dark:scrollbar-thumb-white/20 min-h-0`}>
-            {messages.length === 0 && (
-              <div className={`text-center mt-8 ${isRTL ? 'text-right' : ''}`}>
-                <div className="w-16 h-16 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Bot className="w-8 h-8 text-purple-500" />
-                </div>
-                <p className={`text-lg ${colors.text}`}>{t.welcome}</p>
-                <p className={`text-sm mt-2 ${colors.textMuted}`}>{t.hint}</p>
-              </div>
+          {/* Glass shell: full viewport on mobile; floating card on sm+ */}
+          <div
+            className={cn(
+              'relative z-10 flex min-h-0 w-full flex-col sm:max-h-[600px] sm:w-[400px] sm:flex-none sm:rounded-3xl',
+              GLASS_PANEL,
+              /* Mobile: ~80px for app header/chrome; desktop: floating card */
+              'h-[calc(100dvh-80px)] max-h-[100dvh] sm:h-[min(600px,calc(100vh-5rem))]',
+              isRTL ? 'sm:ml-6 sm:mr-auto' : 'sm:mr-0'
             )}
-
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.role === 'user' ? (isRTL ? 'justify-start' : 'justify-end') : (isRTL ? 'justify-end' : 'justify-start')}`}
-              >
+          >
+            {/* Transparent header — gradient title */}
+            <div
+              className={cn(
+                'flex flex-shrink-0 items-center justify-between border-b border-white/[0.08] bg-transparent px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]',
+                isRTL && 'flex-row-reverse'
+              )}
+            >
+              <div className={cn('flex items-center gap-3', isRTL && 'flex-row-reverse')}>
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-purple-600 text-white ' + (isRTL ? 'rounded-tl-sm' : 'rounded-tr-sm')
-                      : `${colors.messageBg} ${colors.text} ${colors.border} border ` + (isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm')
-                  }`}
+                  className={cn(
+                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5',
+                    isLoading &&
+                      'shadow-[0_0_24px_rgba(168,85,247,0.55)] ring-2 ring-purple-500/40 animate-pulse'
+                  )}
                 >
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {msg.role === 'assistant' ? stripMarkdown(msg.content) : msg.content}
-                  </p>
+                  <Bot className="h-5 w-5 text-gray-200" />
+                </div>
+                <div className={isRTL ? 'text-right' : 'text-left'}>
+                  <h3 className={cn('text-base font-semibold sm:text-lg', TITLE_GRADIENT)}>
+                    {t.title}
+                  </h3>
+                  <p className="text-sm text-gray-400">{t.subtitle}</p>
                 </div>
               </div>
-            ))}
+              <button
+                onClick={() => setIsOpen(false)}
+                className="rounded-full p-2 text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Close chat"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-            {isLoading && (
-              <div className={`flex ${isRTL ? 'justify-end' : 'justify-start'}`}>
-                <div className={`${colors.messageBg} px-4 py-3 rounded-2xl ${colors.border} border ${isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}>
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                    <span className={`${colors.textMuted} text-sm`}>{t.thinking}</span>
+            {/* Messages */}
+            <div
+              className={cn(
+                'min-h-0 flex-1 space-y-4 overflow-y-auto bg-transparent p-4',
+                SCROLL_AREA
+              )}
+            >
+              {messages.length === 0 && (
+                <div className={cn('mt-6 text-center', isRTL && 'text-right')}>
+                  <div
+                    className={cn(
+                      'mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5',
+                      isLoading && 'shadow-[0_0_28px_rgba(168,85,247,0.45)] animate-pulse'
+                    )}
+                  >
+                    <Bot className="h-8 w-8 text-purple-300/90" />
+                  </div>
+                  <p className="text-lg leading-relaxed text-gray-100">{t.welcome}</p>
+                  <p className="mt-2 text-sm text-gray-400">{t.hint}</p>
+                </div>
+              )}
+
+              {messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'flex',
+                    msg.role === 'user'
+                      ? isRTL
+                        ? 'justify-start'
+                        : 'justify-end'
+                      : isRTL
+                        ? 'justify-end'
+                        : 'justify-start'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'max-w-[85%] rounded-2xl border p-3 leading-relaxed',
+                      msg.role === 'user'
+                        ? cn(
+                            'border-purple-500/20 bg-purple-500/10 text-gray-100',
+                            isRTL ? 'rounded-tl-sm' : 'rounded-tr-sm'
+                          )
+                        : cn(
+                            'border-white/10 bg-white/5 text-gray-100',
+                            isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'
+                          )
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {msg.role === 'assistant' ? stripMarkdown(msg.content) : msg.content}
+                    </p>
                   </div>
                 </div>
-              </div>
-            )}
+              ))}
 
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Area */}
-          <div className={`flex-shrink-0 p-4 border-t ${colors.border} ${colors.bg}`}>
-            {/* Quick reply suggestions - show when no messages yet */}
-            {messages.length === 0 && t.quickReplies && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {t.quickReplies.map((reply: string, idx: number) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => sendMessage(reply)}
-                    disabled={isLoading}
-                    className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors border ${colors.border} ${colors.inputBg} ${colors.text} hover:bg-purple-600/20 hover:border-purple-500/50 hover:text-purple-400 disabled:opacity-50 disabled:cursor-not-allowed ${isRTL ? 'text-right' : 'text-left'}`}
+              {isLoading && (
+                <div className={cn('flex', isRTL ? 'justify-end' : 'justify-start')}>
+                  <div
+                    className={cn(
+                      'rounded-2xl border border-white/10 bg-white/5 px-4 py-3',
+                      isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'
+                    )}
                   >
-                    {reply}
-                  </button>
-                ))}
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={cn(
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-purple-500/30 bg-purple-500/10',
+                          'shadow-[0_0_20px_rgba(168,85,247,0.5)] animate-pulse'
+                        )}
+                      >
+                        <Bot className="h-4 w-4 text-purple-200" />
+                      </div>
+                      <div className="flex gap-1">
+                        <span
+                          className="h-2 w-2 animate-bounce rounded-full bg-purple-400"
+                          style={{ animationDelay: '0ms' }}
+                        />
+                        <span
+                          className="h-2 w-2 animate-bounce rounded-full bg-purple-400"
+                          style={{ animationDelay: '150ms' }}
+                        />
+                        <span
+                          className="h-2 w-2 animate-bounce rounded-full bg-purple-400"
+                          style={{ animationDelay: '300ms' }}
+                        />
+                      </div>
+                      <span className="text-sm text-gray-400">{t.thinking}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <div className="flex-shrink-0 border-t border-white/[0.08] bg-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+              {messages.length === 0 && t.quickReplies && (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {t.quickReplies.map((reply: string, idx: number) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => sendMessage(reply)}
+                      disabled={isLoading}
+                      className={cn(
+                        'rounded-xl border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-left text-sm font-medium text-gray-200 transition-colors',
+                        'hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-white',
+                        'disabled:cursor-not-allowed disabled:opacity-50',
+                        isRTL && 'text-right'
+                      )}
+                    >
+                      {reply}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className={cn('flex items-center gap-2', isRTL && 'flex-row-reverse')}>
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && void sendMessage()}
+                  placeholder={t.placeholder}
+                  className={cn(
+                    'min-h-[48px] flex-1 rounded-full border border-white/[0.12] bg-white/[0.06] px-4 py-3 text-[16px] text-gray-100 shadow-inner shadow-black/20',
+                    'placeholder:text-gray-500 focus:border-purple-500/40 focus:outline-none focus:ring-2 focus:ring-purple-500/25',
+                    isRTL && 'text-right'
+                  )}
+                  disabled={isLoading}
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                />
+                <button
+                  type="button"
+                  onClick={() => void sendMessage()}
+                  disabled={isLoading || !input.trim()}
+                  className={cn(
+                    'flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-purple-500/30 bg-purple-600/80 text-white transition-all',
+                    'hover:border-purple-400/50 hover:bg-purple-500 hover:shadow-[0_0_24px_rgba(168,85,247,0.55)]',
+                    'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:shadow-none'
+                  )}
+                  aria-label="Send"
+                >
+                  <Send className={cn('h-5 w-5', isRTL && 'rotate-180')} />
+                </button>
               </div>
-            )}
-            <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                placeholder={t.placeholder}
-                className={`flex-1 ${colors.inputBg} ${colors.text} rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500/50 placeholder-gray-500 dark:placeholder-gray-400 ${colors.border} border ${isRTL ? 'text-right' : 'text-left'}`}
-                disabled={isLoading}
-                dir={isRTL ? 'rtl' : 'ltr'}
-              />
-              <button
-                type="button"
-                onClick={() => void sendMessage()}
-                disabled={isLoading || !input.trim()}
-                className="flex-shrink-0 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors"
-              >
-                <Send className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
-              </button>
             </div>
           </div>
         </div>

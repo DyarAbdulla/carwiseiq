@@ -1,4 +1,5 @@
 import { getRequestConfig } from 'next-intl/server';
+import type { AbstractIntlMessages } from 'next-intl';
 
 export const locales = ['en', 'ku', 'ar'] as const;
 export type Locale = (typeof locales)[number];
@@ -43,7 +44,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
-    messages,
+    messages: messages as AbstractIntlMessages,
     getMessageFallback({ namespace, key }: { namespace?: string; key: string }) {
       const path = [namespace, key].filter(Boolean).join('.')
       return path || ''

@@ -13,6 +13,7 @@ import {
   MoreVertical, Flag, Paperclip, X
 } from 'lucide-react'
 import { useLocale } from 'next-intl'
+import { buySellListingHref } from '@/lib/marketplaceLinks'
 
 interface Message {
   id: number
@@ -362,7 +363,9 @@ export default function ChatInterface({
                 <div className="absolute right-0 top-full mt-2 bg-gray-700 rounded-lg shadow-lg z-10 min-w-[200px]">
                   <button
                     onClick={() => {
-                      router.push(`/${locale}/buy-sell/${conversation.listing_id}`)
+                      router.push(
+                        buySellListingHref(locale, conversation.listing_id)
+                      )
                       setShowMenu(false)
                     }}
                     className="w-full text-left px-4 py-2 text-gray-300 hover:bg-gray-600 rounded-t-lg"

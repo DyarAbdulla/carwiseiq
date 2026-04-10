@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle2, Eye, Share2, Plus, List, MapPin } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
+import { buySellListingHref } from "@/lib/marketplaceLinks"
 
 function firstImage(images: unknown): string | null {
   if (!images || !Array.isArray(images)) return null
@@ -42,7 +43,10 @@ export default function SellSuccessPage() {
     })()
   }, [listingId])
 
-  const listingUrl = typeof window !== "undefined" ? `${window.location.origin}/${locale}/buy-sell/${listingId}` : ""
+  const listingUrl =
+    typeof window !== "undefined" && listingId
+      ? `${window.location.origin}${buySellListingHref(locale, listingId)}`
+      : ""
   const shareText = listing ? `Check out this car: ${listing.title || "Car"} - $${listing?.price?.toLocaleString()}` : "Check out this car on CarWiseIQ"
 
   const copyLink = () => {
@@ -106,9 +110,9 @@ export default function SellSuccessPage() {
 
         <div className="flex flex-col gap-3">
           <Button asChild className="w-full bg-indigo-600 hover:bg-indigo-500 min-h-[48px]">
-            <Link href={`/${locale}/buy-sell/${listingId}`}>
+            <a href={buySellListingHref(locale, listingId)}>
               <Eye className="h-5 w-5 mr-2" /> View My Listing
-            </Link>
+            </a>
           </Button>
 
           <div className="flex gap-2">

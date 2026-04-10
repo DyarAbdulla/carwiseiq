@@ -9,7 +9,7 @@ const nextConfig = {
   trailingSlash: false,
   swcMinify: true,
   eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
+  typescript: { ignoreBuildErrors: false },
 
   // Production performance: remove console.* and minify
   compiler: {
@@ -40,41 +40,8 @@ const nextConfig = {
   // Reduce memory during build (avoid heap OOM on Cloudflare)
   productionBrowserSourceMaps: false,
 
-  // OPTIMIZED: Add caching and security headers (CSP, HSTS, etc.)
-  async headers() {
-    const isProd = process.env.NODE_ENV === 'production';
-    const securityHeaders = [
-      { key: 'X-Content-Type-Options', value: 'nosniff' },
-      { key: 'X-Frame-Options', value: 'DENY' },
-      { key: 'X-XSS-Protection', value: '1; mode=block' },
-      { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-      { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=()' },
-    ];
-    if (isProd) {
-      securityHeaders.push(
-        { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains; preload' },
-        {
-          key: 'Content-Security-Policy',
-          value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://carwiseiq.com https://api.carwiseiq.com https://www.carwiseiq.com https://carwiseiq-production.up.railway.app https://*.railway.app; connect-src 'self' https://*.supabase.co https://*.koyeb.app https://*.railway.app https://api.carwiseiq.com; font-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
-        }
-      );
-    }
-    return [
-      { source: '/:path*', headers: securityHeaders },
-      {
-        source: '/images/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
-      {
-        source: '/assets/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
-      {
-        source: '/_next/static/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
-    ];
-  },
+  // Security/cache headers: use platform config (e.g. Cloudflare _headers) with `output: 'export'`
+  // — Next.js does not apply custom `headers()` to static export output.
 
   // Webpack: dev-friendly caching, watch options, and module resolution
   webpack: (config, { dev, isServer }) => {

@@ -8,6 +8,7 @@ import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { supabase } from '@/lib/supabase'
 import { useAuthSession } from '@/lib/useAuthSession'
 import { activityHelpers } from '@/lib/activityLogger'
+import { buySellListingHref } from '@/lib/marketplaceLinks'
 import type { CarListing, CarListingUpdate } from '@/lib/database.types'
 import type { Transmission, FuelType, CarCondition } from '@/lib/database.types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -955,12 +956,12 @@ function MyListingsContent() {
                           )}
                         </Button>
                       </div>
-                      <Link
-                        href={`/${locale}/buy-sell/${listing.id}`}
+                      <a
+                        href={buySellListingHref(locale, listing.id)}
                         className="block w-full text-center text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
                       >
                         View listing →
-                      </Link>
+                      </a>
                     </div>
                   </div>
                 </div>

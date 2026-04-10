@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { useLocale } from "next-intl"
 import { useSearchParams } from "next/navigation"
-import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { apiClient } from "@/lib/api"
 import { listingImageUrl } from "@/lib/utils"
+import { buySellListingHref } from "@/lib/marketplaceLinks"
 import { SoldBadge } from "@/components/ui/sold-badge"
 import { AdminListingControls } from "@/components/admin/AdminListingControls"
 import { Search, Car, Loader2, RefreshCw } from "lucide-react"
@@ -233,8 +233,8 @@ export default function AdminListingsPage() {
                       onCheckedChange={() => toggleSelect(l.id)}
                     />
                   </div>
-                  <Link
-                    href={`/${locale}/buy-sell/${l.id}`}
+                  <a
+                    href={buySellListingHref(locale, l.id)}
                     className="flex flex-1 gap-4 min-w-0"
                   >
                     <div className="relative h-20 w-28 shrink-0 rounded bg-gray-700 overflow-hidden">
@@ -260,7 +260,7 @@ export default function AdminListingsPage() {
                         {l.location_city}, {l.location_state} • {l.mileage?.toLocaleString()} {l.mileage_unit}
                       </p>
                     </div>
-                  </Link>
+                  </a>
                   <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                     <AdminListingControls
                       listingId={l.id}
