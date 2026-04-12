@@ -65,6 +65,93 @@ body {
   unicode-bidi: isolate;
 }
 
+/* ========== Auth (login / register only) welcome background + glass ========== */
+.auth-welcome-bg-wrap {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.auth-welcome-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url(/images/welcomebackground.jpeg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(2px);
+  -webkit-filter: blur(2px);
+  transform: scale(1.07);
+  -webkit-transform: scale(1.07);
+}
+
+@media (max-width: 767px) {
+  .auth-welcome-bg-image {
+    background-attachment: scroll;
+  }
+}
+
+@media (min-width: 768px) {
+  .auth-welcome-bg-image {
+    background-attachment: fixed;
+  }
+}
+
+.auth-welcome-bg-overlay-dark {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.auth-welcome-bg-overlay-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+.auth-glass-card {
+  background: rgba(15, 15, 25, 0.8) !important;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.auth-glass-input {
+  background: rgba(10, 10, 20, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc;
+}
+
+.auth-glass-input::placeholder {
+  color: rgb(148 163 184);
+}
+
+.auth-glass-input:focus-visible {
+  border-color: rgba(91, 127, 255, 0.65) !important;
+  box-shadow: 0 0 0 2px rgba(91, 127, 255, 0.25);
+}
+
+.auth-glass-social {
+  background: rgba(15, 15, 25, 0.55) !important;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #f8fafc !important;
+}
+
+.auth-glass-social:hover {
+  background: rgba(25, 25, 40, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.auth-or-divider-label {
+  background: rgba(15, 15, 25, 0.92);
+}
+
 /* Profile page: single background (animated gradient); hide body bg to avoid duplicate */
 body.profile-single-bg {
   background: transparent !important;

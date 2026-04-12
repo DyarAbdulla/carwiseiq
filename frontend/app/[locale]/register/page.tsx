@@ -19,6 +19,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Mail, Lock, Eye, EyeOff, User, Phone, Car } from 'lucide-react'
 import Link from 'next/link'
 import { GoogleIcon } from '@/components/GoogleIcon'
+import { AuthPageShell } from '@/components/auth/AuthPageShell'
+import { cn } from '@/lib/utils'
 
 const registerSchema = z
   .object({
@@ -144,8 +146,8 @@ function RegisterPageContent() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-200px)] items-center justify-center p-6 bg-[#0f1117]">
-      <Card className="w-full max-w-md border-[#2a2d3a] bg-[#1a1d29] text-white">
+    <AuthPageShell>
+      <Card className="auth-glass-card w-full max-w-md text-white shadow-none">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-white">{getT('register', 'Register')}</CardTitle>
           <CardDescription className="text-[#94a3b8]">
@@ -169,9 +171,10 @@ function RegisterPageContent() {
                   id="full_name"
                   type="text"
                   placeholder={t('fullNamePlaceholder')}
-                  className={`ps-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
-                    errors.full_name ? 'border-red-500 focus:border-red-500' : 'focus:border-[#5B7FFF]'
-                  }`}
+                  className={cn(
+                    'auth-glass-input ps-10',
+                    errors.full_name ? '!border-red-500 focus-visible:!border-red-500' : ''
+                  )}
                   {...register('full_name')}
                   disabled={isSubmitting}
                 />
@@ -187,9 +190,10 @@ function RegisterPageContent() {
                   id="email"
                   type="email"
                   placeholder={getT('emailPlaceholder', 'Enter your email')}
-                  className={`ps-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
-                    errors.email ? 'border-red-500 focus:border-red-500' : 'focus:border-[#5B7FFF]'
-                  }`}
+                  className={cn(
+                    'auth-glass-input ps-10',
+                    errors.email ? '!border-red-500 focus-visible:!border-red-500' : ''
+                  )}
                   {...register('email')}
                   disabled={isSubmitting}
                 />
@@ -205,7 +209,7 @@ function RegisterPageContent() {
                   id="phone_number"
                   type="tel"
                   placeholder="+1 234 567 8900"
-                  className="ps-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] focus:border-[#5B7FFF]"
+                  className="auth-glass-input ps-10"
                   {...register('phone_number')}
                   disabled={isSubmitting}
                 />
@@ -220,9 +224,10 @@ function RegisterPageContent() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder={getT('passwordPlaceholder', 'Enter your password')}
-                  className={`ps-10 pe-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
-                    errors.password ? 'border-red-500 focus:border-red-500' : 'focus:border-[#5B7FFF]'
-                  }`}
+                  className={cn(
+                    'auth-glass-input ps-10 pe-10',
+                    errors.password ? '!border-red-500 focus-visible:!border-red-500' : ''
+                  )}
                   {...register('password')}
                   disabled={isSubmitting}
                 />
@@ -247,9 +252,10 @@ function RegisterPageContent() {
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder={getT('confirmPasswordPlaceholder', 'Confirm your password')}
-                  className={`ps-10 pe-10 border-[#2a2d3a] bg-[#0f1117] text-white placeholder:text-[#94a3b8] ${
-                    errors.confirmPassword ? 'border-red-500 focus:border-red-500' : 'focus:border-[#5B7FFF]'
-                  }`}
+                  className={cn(
+                    'auth-glass-input ps-10 pe-10',
+                    errors.confirmPassword ? '!border-red-500 focus-visible:!border-red-500' : ''
+                  )}
                   {...register('confirmPassword')}
                   disabled={isSubmitting}
                 />
@@ -290,7 +296,7 @@ function RegisterPageContent() {
               type="submit"
               loading={isSubmitting}
               loadingText={getT('registering', 'Creating account...')}
-              className="w-full bg-[#5B7FFF] hover:bg-[#5B7FFF]/90 text-white"
+              className="w-full bg-gradient-to-r from-[#5B7FFF] to-purple-600 hover:from-[#4a6fe6] hover:to-purple-500 text-white font-semibold shadow-lg shadow-[#5B7FFF]/25"
             >
               {getT('register', 'Register')}
             </LoadingButton>
@@ -301,14 +307,14 @@ function RegisterPageContent() {
               <span className="w-full border-t border-[#2a2d3a]" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#1a1d29] px-2 text-[#94a3b8]">Or continue with</span>
+              <span className="auth-or-divider-label px-2 text-[#94a3b8]">Or continue with</span>
             </div>
           </div>
 
           <Button
             type="button"
             variant="outline"
-            className="w-full border-[#2a2d3a] bg-[#0f1117] text-white hover:bg-[#2a2d3a]"
+            className="auth-glass-social w-full h-11 font-medium"
             onClick={handleGoogleSignIn}
             disabled={isSubmitting || isGoogleLoading}
           >
@@ -324,13 +330,19 @@ function RegisterPageContent() {
           </p>
         </CardContent>
       </Card>
-    </div>
+    </AuthPageShell>
   )
 }
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-[#94a3b8]">Loading…</div>}>
+    <Suspense
+      fallback={
+        <AuthPageShell>
+          <span className="text-slate-300">Loading…</span>
+        </AuthPageShell>
+      }
+    >
       <RegisterPageContent />
     </Suspense>
   )
