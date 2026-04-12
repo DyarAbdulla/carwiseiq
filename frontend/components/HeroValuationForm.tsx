@@ -68,7 +68,7 @@ export function HeroValuationForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-2xl mx-auto mt-6 sm:mt-8 p-4 sm:p-6 pb-24 sm:pb-6 rounded-2xl bg-white/10 dark:bg-white/5 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl"
+      className="w-full max-w-2xl mx-auto mt-6 sm:mt-8 p-4 sm:p-6 pb-24 sm:pb-6 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl ring-1 ring-black/10"
       dir="ltr"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

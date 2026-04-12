@@ -67,7 +67,7 @@ const HeroSection = memo(function HeroSection({ t, locale, tCommon, onLearnMoreC
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="text-3xl min-[375px]:text-4xl sm:text-5xl md:text-5xl font-extrabold leading-tight tracking-tight text-center max-w-4xl mx-auto text-slate-900 dark:text-white drop-shadow-xl px-1"
+            className="text-3xl min-[375px]:text-4xl sm:text-5xl md:text-5xl font-extrabold leading-tight tracking-tight text-center max-w-4xl mx-auto text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.5)] px-1"
           >
             {t('smartestWay')}
           </motion.h1>
@@ -77,7 +77,7 @@ const HeroSection = memo(function HeroSection({ t, locale, tCommon, onLearnMoreC
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
-            className="max-w-2xl mx-auto text-[1rem] sm:text-lg md:text-xl text-slate-200 font-normal leading-relaxed px-2"
+            className="max-w-2xl mx-auto text-[1rem] sm:text-lg md:text-xl text-white font-normal leading-relaxed px-2 [text-shadow:0_2px_8px_rgba(0,0,0,0.5)]"
           >
             {t('heroSubheadline')}
           </motion.p>
