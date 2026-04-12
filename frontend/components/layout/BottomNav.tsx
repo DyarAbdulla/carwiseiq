@@ -10,8 +10,13 @@ import {
   ShoppingBag,
   MessageCircle,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
+import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
+
+const STORAGE_ONBOARDED = "carwise-onboarded"
+const STORAGE_TOOLTIP = "carwise-tooltip-shown"
 
 type NavKey = "home" | "predict" | "compare" | "market" | "ai"
 
@@ -28,10 +33,14 @@ export function BottomNav() {
   const locale = useLocale() || "en"
   const isRTL = locale === "ar" || locale === "ku"
   const t = useTranslations("nav")
+  const tOnboarding = useTranslations("onboarding")
 
   const basePathname = pathname.replace(new RegExp(`^/${locale}`), "") || "/"
 
   const [sparkleOnce, setSparkleOnce] = useState(false)
+  const [showPredictHint, setShowPredictHint] = useState(false)
+  const predictRef = useRef<HTMLAnchorElement | null>(null)
+  const [hintPos, setHintPos] = useState<{ left: number; top: number } | null>(null)
 
   useEffect(() => {
     try {
@@ -45,6 +54,62 @@ export function BottomNav() {
       return
     }
   }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (pathname.includes("/admin1129admin")) return
+    const isHome = basePathname === "/" || basePathname === ""
+    if (!isHome) {
+      setShowPredictHint(false)
+      return
+    }
+    try {
+      if (localStorage.getItem(STORAGE_ONBOARDED) !== "true") return
+      if (localStorage.getItem(STORAGE_TOOLTIP) === "true") return
+    } catch {
+      return
+    }
+    setShowPredictHint(true)
+    const id = window.setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_TOOLTIP, "true")
+      } catch {
+        /* ignore */
+      }
+      setShowPredictHint(false)
+      setHintPos(null)
+    }, 5000)
+    return () => window.clearTimeout(id)
+  }, [basePathname, pathname])
+
+  const dismissPredictHint = () => {
+    try {
+      localStorage.setItem(STORAGE_TOOLTIP, "true")
+    } catch {
+      /* ignore */
+    }
+    setShowPredictHint(false)
+    setHintPos(null)
+  }
+
+  useLayoutEffect(() => {
+    if (!showPredictHint || !predictRef.current) {
+      setHintPos(null)
+      return
+    }
+    const el = predictRef.current
+    const update = () => {
+      const r = el.getBoundingClientRect()
+      setHintPos({ left: r.left + r.width / 2, top: r.top })
+    }
+    update()
+    window.addEventListener("resize", update)
+    window.addEventListener("scroll", update, true)
+    return () => {
+      window.removeEventListener("resize", update)
+      window.removeEventListener("scroll", update, true)
+    }
+  }, [showPredictHint])
 
   if (pathname.includes("/admin1129admin")) {
     return null
@@ -81,7 +146,9 @@ export function BottomNav() {
           return (
             <Link
               key={key}
+              ref={key === "predict" ? predictRef : undefined}
               href={fullHref}
+              data-onboarding-predict-tab={key === "predict" ? "" : undefined}
               className={cn(
                 "relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 transition-all duration-200 ease-out active:scale-[0.96]",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6C5CE7]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f0f1e]"
@@ -137,6 +204,30 @@ export function BottomNav() {
           )
         })}
       </div>
+      {typeof document !== "undefined" &&
+        showPredictHint &&
+        hintPos &&
+        createPortal(
+          <AnimatePresence>
+            <motion.button
+              type="button"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.2 }}
+              className="fixed z-[95] max-w-[min(260px,calc(100vw-2rem))] -translate-x-1/2 cursor-pointer rounded-xl border border-white/15 bg-[rgba(20,20,40,0.96)] px-3 py-2.5 text-center text-sm font-medium text-white shadow-xl backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C5CE7]/60"
+              style={{
+                left: hintPos.left,
+                top: Math.max(8, hintPos.top - 52),
+              }}
+              onClick={dismissPredictHint}
+            >
+              <span className="pointer-events-none absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 translate-y-1/2 rotate-45 border-b border-r border-white/15 bg-[rgba(20,20,40,0.96)]" aria-hidden />
+              {tOnboarding("predictTooltip")}
+            </motion.button>
+          </AnimatePresence>,
+          document.body
+        )}
     </nav>
   )
 }

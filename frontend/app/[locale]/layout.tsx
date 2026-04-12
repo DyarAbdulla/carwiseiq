@@ -37,6 +37,10 @@ const ChatBot = dynamic(
   () => import('@/components/chat/ChatBot').then((m) => ({ default: m.default })),
   { ssr: false, loading: () => null }
 );
+const OnboardingModal = dynamic(
+  () => import('@/components/onboarding/OnboardingModal').then((m) => ({ default: m.OnboardingModal })),
+  { ssr: false, loading: () => null }
+);
 export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'ar' }, { locale: 'ku' }]
 }
@@ -123,6 +127,7 @@ export default async function LocaleLayout({
                 </div>
                 <CookieConsent />
                 <ChatBot />
+                <OnboardingModal />
               </PredictLoadingProvider>
             </ToastProvider>
           </ThemeProvider>

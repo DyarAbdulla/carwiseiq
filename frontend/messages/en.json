@@ -171,6 +171,24 @@
     "carWiseIQ": "CarWiseIQ",
     "account": "Account"
   },
+  "onboarding": {
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get Started",
+    "closeBackdrop": "Close welcome tour",
+    "progressLabel": "Tour progress",
+    "takeTour": "Take the Tour",
+    "predictTooltip": "Try your first prediction!",
+    "slide1Title": "Welcome to CarWiseIQ",
+    "slide1Subtitle": "The smartest way to value cars in Iraq & Kurdistan",
+    "slide2Title": "Instant Price Predictions",
+    "slide2Subtitle": "Get AI-powered valuations based on real market data. Know exactly what any car is worth.",
+    "slide3Title": "Compare & Browse",
+    "slide3Subtitle": "Compare cars side-by-side and browse the marketplace for the best deals.",
+    "slide4Title": "Your Personal Car Expert",
+    "slide4Subtitle": "Ask our AI anything about cars, prices, or the market.",
+    "tickerPrices": "$18,200|$21,500|$19,800|$24,300"
+  },
   "messagesPage": {
     "emptyTitle": "No messages yet",
     "emptyDesc": "Find cars and message sellers from listings.",

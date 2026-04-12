@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge'
 import { tKey } from '@/lib/i18n-dev'
 import { useTheme } from '@/context/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
+import { CARWISE_OPEN_ONBOARDING_EVENT } from '@/components/onboarding/OnboardingModal'
 
 const navItems = [
   { href: '/', labelKey: 'nav.home', icon: Car },
@@ -51,6 +52,7 @@ export function Header() {
   const t = useTranslations()
   const tCommon = useTranslations('common')
   const tAuth = useTranslations('auth')
+  const tOnboarding = useTranslations('onboarding')
   const pathname = usePathname() || ''
   const locale = useLocale() || 'en'
   const isRTL = locale === 'ar' || locale === 'ku'
@@ -457,6 +459,21 @@ export function Header() {
                       >
                         {tKey(t, 'nav.about')}
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          try {
+                            localStorage.removeItem('carwise-onboarded')
+                          } catch {
+                            /* ignore */
+                          }
+                          window.dispatchEvent(new Event(CARWISE_OPEN_ONBOARDING_EVENT))
+                          setMobileMenuOpen(false)
+                        }}
+                        className={cn(mobileNavItemClass(false), 'text-start')}
+                      >
+                        {tOnboarding('takeTour')}
+                      </button>
                     </nav>
 
                     {/* Logout when authenticated */}
