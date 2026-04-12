@@ -19,12 +19,21 @@ import { SellCarCTA } from "@/components/SellCarCTA"
 const currentYear = new Date().getFullYear()
 const YEARS = Array.from({ length: 15 }, (_, i) => currentYear - i)
 
+/** Always dark controls — hero sits on a dark image in every theme */
+const HERO_SELECT_TRIGGER =
+  "min-h-[44px] sm:min-h-[48px] w-full text-[16px] border-white/25 bg-[rgba(30,30,50,0.88)] text-white shadow-inner shadow-black/30 hover:bg-[rgba(30,30,50,0.95)] focus:ring-violet-400/40 [&>svg]:text-white/70"
+const HERO_SELECT_CONTENT =
+  "max-h-[min(60vh,360px)] border-white/15 bg-[rgba(22,22,38,0.98)] text-white shadow-2xl"
+const HERO_SELECT_ITEM =
+  "text-[15px] text-slate-100 focus:bg-white/12 focus:text-white dark:focus:bg-white/12 dark:focus:text-white"
+const HERO_INPUT =
+  "min-h-[44px] sm:min-h-[48px] text-[16px] border-white/25 bg-[rgba(30,30,50,0.88)] text-white placeholder:text-slate-400 shadow-inner shadow-black/30 focus-visible:ring-violet-400/40"
+
 export function HeroValuationForm() {
   const router = useRouter()
   const locale = useLocale() || "en"
   const t = useTranslations("home.heroForm")
   const tHome = useTranslations("home")
-  const tCommon = useTranslations("common")
 
   const [makes, setMakes] = useState<string[]>([])
   const [models, setModels] = useState<string[]>([])
@@ -77,15 +86,12 @@ export function HeroValuationForm() {
             {t("make")}
           </label>
           <Select value={make} onValueChange={setMake} disabled={loadingMakes}>
-            <SelectTrigger
-              id="hero-make"
-              className="min-h-[44px] sm:min-h-[48px] text-base bg-white/90 dark:bg-white/10 border-white/20 text-slate-900 dark:text-white"
-            >
+            <SelectTrigger id="hero-make" className={HERO_SELECT_TRIGGER}>
               <SelectValue placeholder={t("makePlaceholder")} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={HERO_SELECT_CONTENT}>
               {makes.map((m) => (
-                <SelectItem key={m} value={m}>
+                <SelectItem key={m} value={m} className={HERO_SELECT_ITEM}>
                   {m}
                 </SelectItem>
               ))}
@@ -97,15 +103,12 @@ export function HeroValuationForm() {
             {t("model")}
           </label>
           <Select value={model} onValueChange={setModel} disabled={!make}>
-            <SelectTrigger
-              id="hero-model"
-              className="min-h-[44px] sm:min-h-[48px] text-base bg-white/90 dark:bg-white/10 border-white/20 text-slate-900 dark:text-white"
-            >
+            <SelectTrigger id="hero-model" className={HERO_SELECT_TRIGGER}>
               <SelectValue placeholder={t("modelPlaceholder")} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={HERO_SELECT_CONTENT}>
               {models.map((m) => (
-                <SelectItem key={m} value={m}>
+                <SelectItem key={m} value={m} className={HERO_SELECT_ITEM}>
                   {m}
                 </SelectItem>
               ))}
@@ -117,15 +120,12 @@ export function HeroValuationForm() {
             {t("year")}
           </label>
           <Select value={year} onValueChange={setYear}>
-            <SelectTrigger
-              id="hero-year"
-              className="min-h-[44px] sm:min-h-[48px] text-base bg-white/90 dark:bg-white/10 border-white/20 text-slate-900 dark:text-white"
-            >
+            <SelectTrigger id="hero-year" className={HERO_SELECT_TRIGGER}>
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className={HERO_SELECT_CONTENT}>
               {YEARS.map((y) => (
-                <SelectItem key={y} value={String(y)}>
+                <SelectItem key={y} value={String(y)} className={HERO_SELECT_ITEM}>
                   {y}
                 </SelectItem>
               ))}
@@ -142,7 +142,7 @@ export function HeroValuationForm() {
             placeholder={t("mileagePlaceholder")}
             value={mileage}
             onChange={(e) => setMileage(e.target.value)}
-            className="min-h-[44px] sm:min-h-[48px] text-base bg-white/90 dark:bg-white/10 border-white/20 text-slate-900 dark:text-white placeholder:text-slate-500"
+            className={HERO_INPUT}
             min={0}
           />
         </div>
@@ -160,7 +160,7 @@ export function HeroValuationForm() {
           variant="outline"
           size="lg"
           showIcon={false}
-          className="flex-1 min-w-0 min-h-[48px] sm:min-h-[52px] border-2 border-slate-300 dark:border-white/30 bg-white/80 dark:bg-white/5 backdrop-blur-md hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-400 dark:hover:border-white/40 text-slate-900 dark:text-white text-sm sm:text-base sm:text-lg font-semibold rounded-xl touch-manipulation whitespace-normal break-words"
+          className="flex-1 min-w-0 min-h-[48px] sm:min-h-[52px] border-2 border-white/35 bg-white/[0.08] backdrop-blur-md hover:bg-white/[0.14] hover:border-white/45 text-white text-sm sm:text-base sm:text-lg font-semibold rounded-xl touch-manipulation whitespace-normal break-words"
         >
           <span>{tHome("nav.sellCar") || "Sell Car"}</span>
         </SellCarCTA>

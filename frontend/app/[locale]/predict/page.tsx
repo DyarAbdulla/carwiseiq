@@ -506,18 +506,32 @@ function PredictPageContent() {
 
   const searchParams = useSearchParams()
 
-  // Prefill from URL params (e.g. from HeroValuationForm or PopularCars)
+  // Prefill from URL params first, else sessionStorage (budget finder, etc.)
   useEffect(() => {
-    const make = searchParams?.get('make')
-    const model = searchParams?.get('model')
-    const year = searchParams?.get('year')
-    const mileage = searchParams?.get('mileage')
+    const raw = (k: string) => {
+      const v = searchParams?.get(k)
+      if (v == null || v === '') return ''
+      try {
+        return decodeURIComponent(v.trim())
+      } catch {
+        return v.trim()
+      }
+    }
+    const make = raw('make')
+    const model = raw('model')
+    const yearStr = raw('year')
+    const mileageStr = raw('mileage')
+
     if (make && model) {
+      const y = yearStr ? parseInt(yearStr, 10) : Number.NaN
+      const yearNum = Number.isFinite(y) ? y : new Date().getFullYear()
+      const m = mileageStr ? parseInt(mileageStr, 10) : Number.NaN
+      const mileageNum = Number.isFinite(m) ? Math.max(0, m) : 50000
       setPrefillData({
         make,
         model,
-        year: year ? parseInt(year, 10) : new Date().getFullYear(),
-        mileage: mileage ? parseInt(mileage, 10) : 50000,
+        year: yearNum,
+        mileage: mileageNum,
         trim: '',
         engine_size: 2.0,
         cylinders: 4,
@@ -526,41 +540,36 @@ function PredictPageContent() {
         location: '',
         color: '',
       })
+      return
     }
-  }, [searchParams])
 
-  // Check for prefill data from budget finder (sessionStorage)
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
-      try {
-        const prefill = sessionStorage.getItem('prefillCar')
-        if (prefill) {
-          try {
-            const data = JSON.parse(prefill)
-            const cleaned = sanitizeCarFeaturesFromUnknown(data)
-            if (cleaned) {
-              setPrefillData(cleaned)
-              sessionStorage.removeItem('prefillCar')
-              // Show toast notification
-              if (toast?.toast) {
-                toast.toast({
-                  title: tCommon?.('success') || 'Success',
-                  description: `Car details loaded: ${cleaned.make} ${cleaned.model} (${cleaned.year})`,
-                })
-              }
-            }
-          } catch (e) {
-            // Invalid JSON, ignore
-            console.error('Failed to parse prefill data:', e)
+    if (typeof window === 'undefined' || !window.sessionStorage) return
+    try {
+      const prefill = sessionStorage.getItem('prefillCar')
+      if (prefill) {
+        try {
+          const data = JSON.parse(prefill)
+          const cleaned = sanitizeCarFeaturesFromUnknown(data)
+          if (cleaned) {
+            setPrefillData(cleaned)
             sessionStorage.removeItem('prefillCar')
+            if (toast?.toast) {
+              toast.toast({
+                title: tCommon?.('success') || 'Success',
+                description: `Car details loaded: ${cleaned.make} ${cleaned.model} (${cleaned.year})`,
+              })
+            }
           }
+        } catch (e) {
+          console.error('Failed to parse prefill data:', e)
+          sessionStorage.removeItem('prefillCar')
         }
-      } catch (error) {
-        console.error('SessionStorage access error:', error)
       }
+    } catch (error) {
+      console.error('SessionStorage access error:', error)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- toast/tCommon stable enough; avoid re-running sessionStorage branch
+  }, [searchParams])
 
   // Clear images when form is cleared (formFeatures becomes null/empty)
   useEffect(() => {

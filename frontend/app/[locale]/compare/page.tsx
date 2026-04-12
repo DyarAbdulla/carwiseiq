@@ -931,18 +931,18 @@ function ComparePageContent() {
           }}
         />
 
-        {/* Header - Modern Design */}
+        {/* Header - Modern Design (block + horizontal padding avoids bg-clip-text clipping on mobile) */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="mb-8 md:mb-12 text-center relative"
+          className="mb-8 md:mb-12 text-center relative w-full overflow-x-visible px-2 sm:px-4"
         >
-          <div className="relative inline-block">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-white via-indigo-200 to-purple-200 bg-clip-text text-transparent">
+          <div className="relative w-full max-w-4xl mx-auto">
+            <h1 className="block w-full px-1 sm:px-2 text-3xl md:text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-slate-900 via-indigo-600 to-purple-600 dark:from-white dark:via-indigo-200 dark:to-purple-200 bg-clip-text text-transparent [box-decoration-break:clone] break-words leading-tight">
               {(t && typeof t === 'function' ? t('title') : null) || 'Compare Cars'}
             </h1>
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full blur-sm opacity-60" />
+            <div className="mx-auto mt-1 h-1 w-24 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full blur-sm opacity-60" />
           </div>
           <motion.p
             initial={{ opacity: 0 }}

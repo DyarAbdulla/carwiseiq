@@ -187,14 +187,17 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
             form.setValue('location', first, { shouldValidate: true, shouldDirty: false })
           }
 
-          const defaultMake = SAMPLE_CAR.make || form.getValues('make')
-          const defaultModel = SAMPLE_CAR.model || form.getValues('model')
-          if (defaultMake && defaultMake.trim() !== '') {
+          const defaultMake = (form.getValues('make') || SAMPLE_CAR.make || '').trim()
+          const defaultModel = (form.getValues('model') || SAMPLE_CAR.model || '').trim()
+          if (defaultMake) {
             setSelectedMake(defaultMake)
-            updateModelsForMake(defaultMake)
-            if (defaultModel && defaultModel.trim() !== '') {
+            if (defaultModel) {
+              updateModelsForMake(defaultMake, { resetModel: false })
+              form.setValue('model', defaultModel, { shouldValidate: true })
               setSelectedModel(defaultModel)
               await loadTrims(defaultMake, defaultModel)
+            } else {
+              updateModelsForMake(defaultMake, { resetModel: true })
             }
           }
         }
@@ -210,10 +213,18 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
     }
   }, [])
 
-  // Update models when make changes
+  // When make/model cache loads, refresh model list without wiping a valid prefill
   useEffect(() => {
-    if (selectedMake) {
-      updateModelsForMake(selectedMake)
+    if (!selectedMake) return
+    const list = modelsByMake[selectedMake] || []
+    setModels(list)
+    const currentModel = form.getValues('model')?.trim() || ''
+    if (currentModel && list.length > 0 && !list.includes(currentModel)) {
+      form.setValue('model', '', { shouldValidate: true })
+      setSelectedModel('')
+      setTrims([])
+      form.setValue('trim', '')
+      form.clearErrors('trim')
     }
   }, [selectedMake, modelsByMake])
 
@@ -261,24 +272,36 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
     }
   }, [makeValue, modelValue, yearValue])
 
-  // Update form when prefillData changes
+  // Update form when prefillData changes (URL params, sessionStorage, etc.)
   useEffect(() => {
-    if (prefillData) {
-      form.reset({
-        year: Math.min(PREDICT_YEAR_MAX, Math.max(PREDICT_YEAR_MIN, prefillData.year)),
-        mileage: prefillData.mileage,
-        engine_size: prefillData.engine_size,
-        cylinders: prefillData.cylinders,
-        make: prefillData.make,
-        model: prefillData.model,
-        trim: prefillData.trim || '',
-        condition: prefillData.condition as any,
-        fuel_type: prefillData.fuel_type as any,
-        location: prefillData.location,
-        color: prefillData.color || '',
-      })
-      setSelectedMake(prefillData.make)
-      updateModelsForMake(prefillData.make)
+    if (!prefillData) return
+    form.reset({
+      year: Math.min(PREDICT_YEAR_MAX, Math.max(PREDICT_YEAR_MIN, prefillData.year)),
+      mileage: prefillData.mileage,
+      engine_size: prefillData.engine_size,
+      cylinders: prefillData.cylinders,
+      make: prefillData.make,
+      model: prefillData.model,
+      trim: prefillData.trim || '',
+      condition: prefillData.condition as any,
+      fuel_type: prefillData.fuel_type as any,
+      location: prefillData.location,
+      color: prefillData.color || '',
+    })
+    setSelectedMake(prefillData.make)
+    updateModelsForMake(prefillData.make, { resetModel: false })
+    form.setValue('model', prefillData.model, { shouldValidate: true })
+    setSelectedModel(prefillData.model)
+    void loadTrims(prefillData.make, prefillData.model)
+
+    const step1Check = step1Schema.safeParse({
+      make: prefillData.make,
+      model: prefillData.model,
+      year: prefillData.year,
+      trim: prefillData.trim || '',
+    })
+    if (step1Check.success) {
+      setCurrentStep(2)
     }
   }, [prefillData])
 
@@ -327,18 +350,28 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
     }
   }
 
-  const updateModelsForMake = (make: string) => {
+  const updateModelsForMake = (make: string, opts?: { resetModel?: boolean }) => {
+    const resetModel = opts?.resetModel !== false
     if (!make || make.trim() === '') {
       setModels([])
+      if (resetModel) {
+        form.setValue('model', '')
+        setSelectedModel('')
+        setTrims([])
+        form.setValue('trim', '')
+        form.clearErrors('trim')
+      }
       return
     }
     const cachedModels = modelsByMake[make] || []
     setModels(cachedModels)
-    form.setValue('model', '')
-    setSelectedModel('')
-    setTrims([])
-    form.setValue('trim', '')
-    form.clearErrors('trim')
+    if (resetModel) {
+      form.setValue('model', '')
+      setSelectedModel('')
+      setTrims([])
+      form.setValue('trim', '')
+      form.clearErrors('trim')
+    }
   }
 
   const loadTrims = async (make: string, model: string) => {
@@ -634,7 +667,7 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
                         if (value && value !== selectedMake) {
                           form.setValue('make', value)
                           setSelectedMake(value)
-                          updateModelsForMake(value)
+                          updateModelsForMake(value, { resetModel: true })
                         }
                       }}
                       options={makes}

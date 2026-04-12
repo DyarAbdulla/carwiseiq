@@ -685,19 +685,6 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
     <>
       <ListingStructuredData listing={listing} />
       <div className="relative min-h-0 text-slate-900 dark:text-gray-100">
-        {/* Back button - top left, always visible on mobile */}
-        <Link
-          href={`/${locale}/buy-sell`}
-          className="!fixed md:!absolute top-20 left-3 sm:left-4 md:top-6 md:left-6 !z-[100] group"
-        >
-          <button className="flex items-center gap-2 bg-slate-800/90 backdrop-blur-md hover:bg-slate-900/95 border border-white/20 hover:border-white/30 rounded-full px-3 py-2.5 sm:px-4 sm:py-2.5 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 min-w-[44px] min-h-[44px] touch-manipulation">
-            <ChevronLeft className="w-5 h-5 text-white flex-shrink-0" />
-            <span className="hidden sm:inline text-white font-medium text-sm whitespace-nowrap">
-              {t('backToMarketplace') || 'Back'}
-            </span>
-          </button>
-        </Link>
-
         <div className={`max-w-7xl mx-auto px-3 sm:px-6 md:px-8 pt-0 ${hasContact ? 'pb-36 md:pb-16' : 'pb-12 md:pb-16'} md:pt-0 scroll-smooth overflow-x-hidden bg-transparent`} style={hasContact ? { paddingBottom: 'max(9rem, 160px)' } : undefined}>
           {/* Owner Management Panel - Mobile Only - At Top */}
           {isOwner && (
@@ -716,8 +703,20 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
 
           {/* Mobile: full-width swipe gallery + dots */}
           <div className="relative mb-4 md:hidden -mx-3 sm:-mx-6">
+            <Link
+              href={`/${locale}/buy-sell`}
+              className="absolute start-3 top-3 z-30 group touch-manipulation"
+              scroll={true}
+            >
+              <span className="flex items-center gap-2 bg-slate-900/85 backdrop-blur-md hover:bg-slate-950/95 border border-white/25 rounded-full px-3 py-2.5 shadow-lg active:scale-95 min-w-[44px] min-h-[44px]">
+                <ChevronLeft className="w-5 h-5 text-white shrink-0 rtl:rotate-180" />
+                <span className="hidden min-[400px]:inline text-white font-medium text-sm whitespace-nowrap">
+                  {t('backToMarketplace') || 'Back'}
+                </span>
+              </span>
+            </Link>
             {listing?.id && (
-              <div className="absolute left-3 top-3 z-20">
+              <div className="absolute end-3 top-3 z-20">
                 <div className="[&>button]:bg-black/55 [&>button]:backdrop-blur-md [&>button]:rounded-full [&>button]:p-2.5 [&>button]:min-w-[44px] [&>button]:min-h-[44px]">
                   <FavoriteButton
                     listingId={listing.id}
@@ -843,6 +842,19 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                 }
               }}
             >
+              <Link
+                href={`/${locale}/buy-sell`}
+                className="absolute start-4 top-4 z-30 group touch-manipulation"
+                onClick={(e) => e.stopPropagation()}
+                scroll={true}
+              >
+                <span className="flex items-center gap-2 bg-slate-900/85 backdrop-blur-md hover:bg-slate-950/95 border border-white/25 rounded-full px-3 py-2 shadow-lg min-h-[44px]">
+                  <ChevronLeft className="w-5 h-5 text-white shrink-0 rtl:rotate-180" />
+                  <span className="text-white font-medium text-sm whitespace-nowrap">
+                    {t('backToMarketplace') || 'Back'}
+                  </span>
+                </span>
+              </Link>
               {isSold && (
                 <div className="absolute top-0 left-0 right-0 z-30 py-3 bg-red-600/95 text-white text-center font-bold text-lg shadow-lg backdrop-blur-sm" aria-hidden>
                   SOLD
@@ -1007,8 +1019,8 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                         <CalendarDays className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
                       </div>
                     </div>
-                    <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('year')}</p>
-                    <p className="text-slate-900 dark:text-white font-bold text-lg md:text-xl">{listing.year}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('year')}</p>
+                    <p className="text-base md:text-lg font-semibold leading-snug text-gray-900 dark:text-white">{listing.year}</p>
                   </div>
                   <div className="flex h-full min-h-[132px] flex-col rounded-xl border border-white/10 bg-slate-950/40 p-3 shadow-sm transition-colors hover:border-violet-500/30 md:p-5">
                     <div className="flex items-center gap-3 mb-2">
@@ -1016,8 +1028,8 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                         <Gauge className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
                       </div>
                     </div>
-                    <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('mileage')}</p>
-                    <p className="text-slate-900 dark:text-white font-bold text-base md:text-xl leading-tight">{listing.mileage?.toLocaleString()} {listing.mileage_unit || 'km'}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('mileage')}</p>
+                    <p className="text-base md:text-lg font-semibold leading-snug text-gray-900 dark:text-white">{listing.mileage?.toLocaleString()} {listing.mileage_unit || 'km'}</p>
                   </div>
                   <div className="flex h-full min-h-[132px] flex-col rounded-xl border border-white/10 bg-slate-950/40 p-3 shadow-sm transition-colors hover:border-violet-500/30 md:p-5">
                     <div className="flex items-center gap-3 mb-2">
@@ -1025,8 +1037,8 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                         <Fuel className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
                       </div>
                     </div>
-                    <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('fuelType')}</p>
-                    <p className="text-slate-900 dark:text-white font-bold text-base md:text-xl">{listing.fuel_type || '—'}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('fuelType')}</p>
+                    <p className="text-base md:text-lg font-semibold leading-snug text-gray-900 dark:text-white">{listing.fuel_type || '—'}</p>
                   </div>
                   <div className="flex h-full min-h-[132px] flex-col rounded-xl border border-white/10 bg-slate-950/40 p-3 shadow-sm transition-colors hover:border-violet-500/30 md:p-5">
                     <div className="flex items-center gap-3 mb-2">
@@ -1034,8 +1046,8 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                         <Cog className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
                       </div>
                     </div>
-                    <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('transmission')}</p>
-                    <p className="text-slate-900 dark:text-white font-bold text-base md:text-xl">{listing.transmission || '—'}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('transmission')}</p>
+                    <p className="text-base md:text-lg font-semibold leading-snug text-gray-900 dark:text-white">{listing.transmission || '—'}</p>
                   </div>
                   <div className="flex h-full min-h-[132px] flex-col rounded-xl border border-white/10 bg-slate-950/40 p-3 shadow-sm transition-colors hover:border-violet-500/30 md:p-5">
                     <div className="flex items-center gap-3 mb-2">
@@ -1043,8 +1055,8 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                         <Award className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
                       </div>
                     </div>
-                    <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('condition')}</p>
-                    <span className={`inline-block rounded-lg border px-2.5 py-1.5 text-xs font-bold md:px-3 md:text-sm ${conditionClass(String(listing.condition || ''))}`}>{listing.condition}</span>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('condition')}</p>
+                    <span className={`inline-block rounded-lg border px-2.5 py-1.5 text-base font-semibold md:px-3 ${conditionClass(String(listing.condition || ''))}`}>{listing.condition}</span>
                   </div>
                   {listing.color && (
                     <div className="flex h-full min-h-[132px] flex-col rounded-xl border border-white/10 bg-slate-950/40 p-3 shadow-sm transition-colors hover:border-violet-500/30 md:p-5">
@@ -1053,8 +1065,8 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                           <Palette className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
                         </div>
                       </div>
-                      <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('color')}</p>
-                      <p className="text-slate-900 dark:text-white font-bold text-base md:text-xl">{listing.color}</p>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('color')}</p>
+                      <p className="text-base md:text-lg font-semibold leading-snug text-gray-900 dark:text-white">{listing.color}</p>
                     </div>
                   )}
                   <div className="flex h-full min-h-[132px] flex-col rounded-xl border border-white/10 bg-slate-950/40 p-3 shadow-sm transition-colors hover:border-violet-500/30 md:p-5">
@@ -1063,8 +1075,8 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                         <MapPin className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
                       </div>
                     </div>
-                    <p className="text-slate-600 dark:text-gray-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('location')}</p>
-                    <p className="text-slate-900 dark:text-white font-bold text-sm md:text-xl leading-tight">{[listing.location_city, listing.location_state, listing.location_country].filter(Boolean).join(', ') || listing.location || '—'}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('location')}</p>
+                    <p className="text-base md:text-lg font-semibold leading-snug text-gray-900 dark:text-white">{[listing.location_city, listing.location_state, listing.location_country].filter(Boolean).join(', ') || listing.location || '—'}</p>
                   </div>
                 </div>
               </div>

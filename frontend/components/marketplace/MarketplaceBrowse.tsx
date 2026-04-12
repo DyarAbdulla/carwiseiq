@@ -456,9 +456,9 @@ export function MarketplaceBrowse() {
   )
 
   return (
-    <div className="relative w-full min-h-0 overflow-x-hidden text-slate-900 dark:text-slate-100">
+    <div className="relative w-full min-h-0 overflow-x-clip text-slate-900 dark:text-slate-100">
       <div className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 md:px-8 md:pb-20 md:pt-10">
-        <h1 className="mb-6 text-3xl font-bold tracking-tight text-slate-900 dark:text-white md:text-4xl">
+        <h1 className="mb-6 w-full max-w-full break-words px-0.5 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:px-1 md:text-4xl">
           {t("title")}
         </h1>
 
