@@ -77,18 +77,24 @@ export function CookieConsent() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-[#1a1d29] border-t border-[#2a2d3a] shadow-lg">
-        <Card className="max-w-6xl mx-auto border-[#2a2d3a] bg-[#1a1d29]">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
-              <div className="flex items-start gap-3 flex-1">
-                <Cookie className="h-6 w-6 text-blue-500 mt-1 flex-shrink-0" />
-                <div className="flex-1">
-                  <h3 className="text-white font-semibold mb-1">Cookie Consent</h3>
+      {/* z-[100]: above bottom nav (90), below dialogs (1100). Mobile: sit above tab bar + safe area. */}
+      <div
+        className="fixed left-0 right-0 z-[100] max-h-[45vh] overflow-y-auto border-t border-[#2a2d3a] bg-[#1a1d29] p-3 shadow-lg sm:p-4 max-md:bottom-[calc(4rem+env(safe-area-inset-bottom,0px))] md:bottom-6 md:max-h-none md:overflow-visible"
+        role="region"
+        aria-label="Cookie consent"
+      >
+        <Card className="mx-auto max-w-6xl border-[#2a2d3a] bg-[#1a1d29]">
+          <CardContent className="pt-4 pb-4 md:pt-6 md:pb-6">
+            <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
+              <div className="flex min-w-0 flex-1 items-start gap-3">
+                <Cookie className="mt-1 h-6 w-6 flex-shrink-0 text-blue-500" />
+                <div className="min-w-0 flex-1">
+                  <h3 className="mb-1 font-semibold text-white">Cookie Consent</h3>
                   <p className="text-sm text-[#94a3b8]">
                     We use cookies to enhance your browsing experience, analyze site traffic, and personalize content.
                     By clicking "Accept All", you consent to our use of cookies.{' '}
                     <button
+                      type="button"
                       onClick={() => setShowSettings(true)}
                       className="text-blue-500 hover:underline"
                     >
@@ -97,28 +103,29 @@ export function CookieConsent() {
                   </p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 w-full md:w-auto">
+              <div className="flex w-full flex-shrink-0 flex-wrap gap-2 md:w-auto">
                 <Button
                   onClick={handleRejectAll}
                   variant="outline"
                   size="sm"
-                  className="border-gray-600 text-gray-300"
+                  className="min-h-[44px] flex-1 border-gray-600 text-gray-300 sm:flex-none"
                 >
                   Reject All
                 </Button>
                 <Button
+                  type="button"
                   onClick={() => setShowSettings(true)}
                   variant="outline"
                   size="sm"
-                  className="border-gray-600 text-gray-300"
+                  className="min-h-[44px] flex-1 border-gray-600 text-gray-300 sm:flex-none"
                 >
-                  <Settings className="h-4 w-4 mr-1" />
+                  <Settings className="mr-1 h-4 w-4" />
                   Customize
                 </Button>
                 <Button
                   onClick={handleAcceptAll}
                   size="sm"
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="min-h-[44px] flex-1 bg-blue-600 hover:bg-blue-700 sm:flex-none"
                 >
                   Accept All
                 </Button>

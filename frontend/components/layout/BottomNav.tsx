@@ -10,7 +10,7 @@ import {
   ShoppingBag,
   MessageCircle,
 } from "lucide-react"
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -39,8 +39,8 @@ export function BottomNav() {
 
   const [sparkleOnce, setSparkleOnce] = useState(false)
   const [showPredictHint, setShowPredictHint] = useState(false)
-  const predictRef = useRef<HTMLAnchorElement | null>(null)
-  const [hintPos, setHintPos] = useState<{ left: number; top: number } | null>(null)
+  /** Tooltip only when bottom nav is visible (md:hidden breakpoint) */
+  const [isMobileNavViewport, setIsMobileNavViewport] = useState(false)
 
   useEffect(() => {
     try {
@@ -53,6 +53,15 @@ export function BottomNav() {
     } catch {
       return
     }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const mq = window.matchMedia("(max-width: 767px)")
+    const apply = () => setIsMobileNavViewport(mq.matches)
+    apply()
+    mq.addEventListener("change", apply)
+    return () => mq.removeEventListener("change", apply)
   }, [])
 
   useEffect(() => {
@@ -77,7 +86,6 @@ export function BottomNav() {
         /* ignore */
       }
       setShowPredictHint(false)
-      setHintPos(null)
     }, 5000)
     return () => window.clearTimeout(id)
   }, [basePathname, pathname])
@@ -89,27 +97,10 @@ export function BottomNav() {
       /* ignore */
     }
     setShowPredictHint(false)
-    setHintPos(null)
   }
 
-  useLayoutEffect(() => {
-    if (!showPredictHint || !predictRef.current) {
-      setHintPos(null)
-      return
-    }
-    const el = predictRef.current
-    const update = () => {
-      const r = el.getBoundingClientRect()
-      setHintPos({ left: r.left + r.width / 2, top: r.top })
-    }
-    update()
-    window.addEventListener("resize", update)
-    window.addEventListener("scroll", update, true)
-    return () => {
-      window.removeEventListener("resize", update)
-      window.removeEventListener("scroll", update, true)
-    }
-  }, [showPredictHint])
+  /** Predict is 2nd tab LTR; with flex-row-reverse (RTL) it is 2nd from the right → 70% from left. */
+  const predictTooltipLeftPct = isRTL ? 70 : 30
 
   if (pathname.includes("/admin1129admin")) {
     return null
@@ -146,7 +137,6 @@ export function BottomNav() {
           return (
             <Link
               key={key}
-              ref={key === "predict" ? predictRef : undefined}
               href={fullHref}
               data-onboarding-predict-tab={key === "predict" ? "" : undefined}
               className={cn(
@@ -206,23 +196,26 @@ export function BottomNav() {
       </div>
       {typeof document !== "undefined" &&
         showPredictHint &&
-        hintPos &&
+        isMobileNavViewport &&
         createPortal(
           <AnimatePresence>
             <motion.button
               type="button"
-              initial={{ opacity: 0, y: 6 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
+              exit={{ opacity: 0, y: 6 }}
               transition={{ duration: 0.2 }}
-              className="fixed z-[95] max-w-[min(260px,calc(100vw-2rem))] -translate-x-1/2 cursor-pointer rounded-xl border border-white/15 bg-[rgba(20,20,40,0.96)] px-3 py-2.5 text-center text-sm font-medium text-white shadow-xl backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C5CE7]/60"
+              className="fixed z-[105] max-w-[min(280px,calc(100vw-2rem))] -translate-x-1/2 cursor-pointer rounded-lg border border-white/12 bg-[rgba(20,20,40,0.95)] px-4 py-2 text-center text-sm font-medium text-white shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C5CE7]/60"
               style={{
-                left: hintPos.left,
-                top: Math.max(8, hintPos.top - 52),
+                left: `${predictTooltipLeftPct}%`,
+                bottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))",
               }}
               onClick={dismissPredictHint}
             >
-              <span className="pointer-events-none absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 translate-y-1/2 rotate-45 border-b border-r border-white/15 bg-[rgba(20,20,40,0.96)]" aria-hidden />
+              <span
+                className="pointer-events-none absolute left-1/2 top-full -translate-x-1/2 border-[7px] border-transparent border-t-[rgba(20,20,40,0.95)]"
+                aria-hidden
+              />
               {tOnboarding("predictTooltip")}
             </motion.button>
           </AnimatePresence>,
