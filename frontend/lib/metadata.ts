@@ -17,9 +17,9 @@ const localeMeta: Record<string, { title: string; description: string }> = {
       "Get accurate AI-powered car price estimates for Iraq and Kurdistan. Compare vehicles, find market values, and buy or sell smarter.",
   },
   ku: {
-    title: "CarWiseIQ - نرخاندنی ئۆتۆمبێل بە AI بۆ کوردستان و عێراق",
+    title: "CarWiseIQ - نرخاندنی ئۆتۆمبێل بە زیرەکی دەستکرد بۆ کوردستان و عێراق",
     description:
-      "نرخاندنی وردی ئۆتۆمبێل بە زیرەکی دەستکرد. بەراورد بکە، نرخی بازاڕ بدۆزەرەوە، و کڕین و فرۆشتنی زیرەکانە بکە.",
+      "نرخاندنی وردی ئۆتۆمبێل بە زیرەکی دەستکرد و فێربوونی ئامێری. بەراورد بکە، نرخی بازاڕ بدۆزەرەوە، کڕین و فرۆشتن بە متمانە بکە.",
   },
   ar: {
     title: "CarWiseIQ - تقييم السيارات بالذكاء الاصطناعي للعراق وكردستان",

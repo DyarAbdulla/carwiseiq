@@ -337,16 +337,16 @@ const RegionalIntelligenceSection = memo(function RegionalIntelligenceSection({ 
             <Card className="border border-white/10 max-md:border-white/20 bg-white/[0.03] backdrop-blur-xl p-3 sm:p-6 md:p-8 hover:bg-white/[0.05] hover:border-white/20 hover:scale-[1.02] hover:shadow-xl hover:shadow-black/20 transition-all duration-300">
               <div className="space-y-6">
                 <div className="flex items-center justify-between p-4 bg-purple-600/10 rounded-lg">
-                  <span className="text-[#94a3b8]">Market Coverage</span>
-                  <span className="text-2xl font-bold text-purple-400">Iraq & Kurdistan</span>
+                  <span className="text-[#94a3b8]">{t('regionalIntelligence.marketCoverageLabel')}</span>
+                  <span className="text-2xl font-bold text-purple-400">{t('regionalIntelligence.marketCoverageValue')}</span>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-purple-600/10 rounded-lg">
-                  <span className="text-[#94a3b8]">Regional Data Points</span>
-                  <span className="text-2xl font-bold text-purple-400">60,000+</span>
+                  <span className="text-[#94a3b8]">{t('regionalIntelligence.dataPointsLabel')}</span>
+                  <span className="text-2xl font-bold text-purple-400">{t('regionalIntelligence.dataPointsValue')}</span>
                 </div>
                 <div className="flex items-center justify-between p-4 bg-purple-600/10 rounded-lg">
-                  <span className="text-[#94a3b8]">Local Makes</span>
-                  <span className="text-2xl font-bold text-purple-400">50+</span>
+                  <span className="text-[#94a3b8]">{t('regionalIntelligence.makesLabel')}</span>
+                  <span className="text-2xl font-bold text-purple-400">{t('regionalIntelligence.makesValue')}</span>
                 </div>
               </div>
             </Card>
@@ -911,7 +911,7 @@ const TrustBarSection = memo(function TrustBarSection({ t }: { t: (k: string) =>
                 <Database className="h-6 w-6 text-indigo-400" aria-hidden="true" />
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">55,000+</div>
+                <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{t('trustBarListingsValue')}</div>
                 <div className="text-sm text-slate-600 dark:text-slate-300">{t('analyzedCount')}</div>
               </div>
             </div>
@@ -922,7 +922,7 @@ const TrustBarSection = memo(function TrustBarSection({ t }: { t: (k: string) =>
                 <Award className="h-6 w-6 text-purple-400" aria-hidden="true" />
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">99%</div>
+                <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{t('trustBarAccuracyValue')}</div>
                 <div className="text-sm text-slate-600 dark:text-slate-300">{t('trustBarAccuracy')}</div>
               </div>
             </div>

@@ -366,8 +366,8 @@ export default function DocsPage() {
       response: {
         status: 200,
         body: {
-          top_makes: [{ make: 'Toyota', count: 12000 }],
-          fuel_type_distribution: [{ fuel_type: 'Gasoline', count: 50000, percentage: 80 }],
+          top_makes: [{ make: 'Toyota', count: 10132 }, { make: 'Kia', count: 8211 }],
+          fuel_type_distribution: [{ fuel_type: 'petrol', count: 45000, percentage: 72 }],
           price_trends_by_year: [{ year: 2020, average_price: 18750 }],
           price_by_condition: [{ condition: 'Good', average_price: 18000 }],
         },

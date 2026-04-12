@@ -2,7 +2,8 @@
 import { useState } from 'react'
 import { useTranslations, useLocale, useMessages } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Phone, Mail, ChevronDown, FileText, Plus, X } from 'lucide-react'
+import { Phone, Mail, FileText, Plus, X } from 'lucide-react'
+import { LEGAL_CONTACT } from '@/lib/legalContact'
 
 function safeT(t: ReturnType<typeof useTranslations<'terms'>>, key: string): string | undefined {
   try {
@@ -26,6 +27,40 @@ function getItems(
   }
   const oldVal = safeT(t, oldKey)
   if (oldVal) return oldVal.split('|').map((s) => s.trim()).filter(Boolean)
+   return []
+}
+
+type FaqQa = { question: string; answer: string }
+
+/** Build FAQ entries from sections.faq.questions: objects {question, answer} or strings paired with terms.faq.qN.answer */
+function normalizeTermsSectionFaq(
+  sections: Record<string, unknown> | undefined,
+  t: ReturnType<typeof useTranslations<'terms'>>
+): FaqQa[] {
+  const faqBlock = sections?.faq as { questions?: unknown } | undefined
+  const raw = faqBlock?.questions
+  if (!Array.isArray(raw) || raw.length === 0) return []
+
+  const first = raw[0]
+  if (
+    first &&
+    typeof first === 'object' &&
+    typeof (first as { question?: unknown }).question === 'string' &&
+    typeof (first as { answer?: unknown }).answer === 'string'
+  ) {
+    return (raw as { question: string; answer: string }[]).filter(
+      (x) => typeof x.question === 'string' && typeof x.answer === 'string'
+    )
+  }
+
+  if (raw.every((x) => typeof x === 'string')) {
+    return (raw as string[]).map((question, i) => {
+      const qKey = `q${i + 1}`
+      const answer = safeT(t, `faq.${qKey}.answer`) ?? ''
+      return { question, answer }
+    })
+  }
+
   return []
 }
 
@@ -43,16 +78,14 @@ export default function TermsPage() {
   })
 
   const toggleFaq = (index: number) => {
-    setOpenFaq(openFaq === index ? null : index)
+    setOpenFaq((prev) => (prev === index ? null : index))
   }
 
   const companyName = safeT(t, 'company') ?? safeT(t, 'companyName') ?? 'CarWiseIQ'
   const companyLocation = safeT(t, 'subtitle') ?? safeT(t, 'companyLocation') ?? ''
 
-  const faqQuestions: string[] = Array.isArray(sections?.faq?.questions)
-    ? (sections.faq.questions as string[])
-    : []
-  const useNewFaq = faqQuestions.length > 0
+  const faqFromSections = normalizeTermsSectionFaq(sections, t)
+  const useSectionFaq = faqFromSections.length > 0
   const faqItems = ['q1', 'q2', 'q3', 'q4', 'q5', 'q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14']
 
   return (
@@ -389,54 +422,49 @@ export default function TermsPage() {
           >
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">19. {(safeT(t, 'sections.faq.title') ?? safeT(t, 'faq.title'))}</h2>
             <div className="space-y-3">
-              {useNewFaq
-                ? faqQuestions.map((question, index) => (
-                    <div
-                      key={index}
-                      className="border border-slate-300 dark:border-white/10 rounded-lg overflow-hidden bg-slate-50 dark:bg-white/5 p-4"
+              {(useSectionFaq ? faqFromSections : faqItems.map((qKey) => ({ qKey }))).map((entry, index) => {
+                const question =
+                  'qKey' in entry ? t(`faq.${entry.qKey}.question`) : entry.question
+                const answer =
+                  'qKey' in entry ? t(`faq.${entry.qKey}.answer`) : entry.answer
+                const key = 'qKey' in entry ? entry.qKey : `faq-${index}`
+                const isOpen = openFaq === index
+                return (
+                  <motion.div
+                    key={key}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    className="border border-slate-300 dark:border-white/10 rounded-lg overflow-hidden bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleFaq(index)}
+                      className="w-full flex items-center justify-between gap-3 p-4 text-start hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                     >
-                      <p className="font-semibold text-slate-900 dark:text-white">{question}</p>
-                    </div>
-                  ))
-                : faqItems.map((qKey, index) => {
-                    const question = t(`faq.${qKey}.question`)
-                    const answer = t(`faq.${qKey}.answer`)
-                    const isOpen = openFaq === index
-                    return (
-                      <motion.div
-                        key={qKey}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                        className="border border-slate-300 dark:border-white/10 rounded-lg overflow-hidden bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                      >
-                        <button
-                          onClick={() => toggleFaq(index)}
-                          className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                        >
-                          <span className="font-semibold text-slate-900 dark:text-white pr-4">{question}</span>
-                          <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} className="shrink-0">
-                            {isOpen ? <X className="h-5 w-5 text-[#8B5CF6]" /> : <Plus className="h-5 w-5 text-[#8B5CF6]" />}
-                          </motion.div>
-                        </button>
-                        <AnimatePresence>
-                          {isOpen && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.3, ease: 'easeInOut' }}
-                              className="overflow-hidden"
-                            >
-                              <div className="p-4 pt-0 text-slate-700 dark:text-gray-300 leading-relaxed border-t border-slate-300 dark:border-white/10">
-                                {answer}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                      <span className="font-semibold text-slate-900 dark:text-white pe-2">{question}</span>
+                      <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} className="shrink-0">
+                        {isOpen ? <X className="h-5 w-5 text-[#8B5CF6]" /> : <Plus className="h-5 w-5 text-[#8B5CF6]" />}
                       </motion.div>
-                    )
-                  })}
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          className="overflow-hidden"
+                        >
+                          <div className="p-4 pt-0 text-slate-700 dark:text-gray-300 leading-relaxed border-t border-slate-300 dark:border-white/10">
+                            {answer}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                )
+              })}
             </div>
           </motion.section>
 
@@ -450,33 +478,42 @@ export default function TermsPage() {
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">20. {(safeT(t, 'sections.contact.title') ?? safeT(t, 'sections.contactUs.title'))}</h2>
             <p className="text-slate-700 dark:text-gray-300 leading-relaxed mb-6">{(safeT(t, 'sections.contact.content') ?? safeT(t, 'sections.contactUs.description'))}</p>
 
-            <div className="bg-gradient-to-r from-[#8B5CF6]/10 to-purple-500/10 border border-[#8B5CF6]/20 rounded-2xl p-6 md:p-8 space-y-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                <div className="flex items-center gap-4 flex-1">
+            <div
+              dir="ltr"
+              className="bg-gradient-to-r from-[#8B5CF6]/10 to-purple-500/10 border border-[#8B5CF6]/20 rounded-2xl p-6 md:p-8 text-left"
+            >
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8">
+                <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-[#8B5CF6]/20 border border-[#8B5CF6]/30 flex items-center justify-center shrink-0">
                     <Phone className="h-6 w-6 text-[#8B5CF6]" />
                   </div>
-                  <div>
-                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-1">{(safeT(t, 'sections.contact.phone') ?? safeT(t, 'sections.contactUs.phoneLabel')) ?? 'Phone'}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-1" dir="auto">
+                      {(safeT(t, 'sections.contact.phone') ?? safeT(t, 'sections.contactUs.phoneLabel')) ?? 'Phone'}
+                    </p>
                     <a
-                      href="tel:+9647774472106"
-                      className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white hover:text-[#8B5CF6] transition-colors"
+                      href={LEGAL_CONTACT.phoneTelHref}
+                      dir="ltr"
+                      className="block text-xl md:text-2xl font-bold tabular-nums tracking-normal text-slate-900 dark:text-white hover:text-[#8B5CF6] transition-colors text-left"
                     >
-                      {(safeT(t, 'sections.contact.phoneNumber') ?? safeT(t, 'contactPhone')) ?? '0777 447 2106'}
+                      {LEGAL_CONTACT.phoneDisplay}
                     </a>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 flex-1">
+                <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0">
                     <Mail className="h-6 w-6 text-purple-400" />
                   </div>
-                  <div>
-                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-1">{(safeT(t, 'sections.contact.email') ?? safeT(t, 'sections.contactUs.emailLabel')) ?? 'Email'}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-1" dir="auto">
+                      {(safeT(t, 'sections.contact.email') ?? safeT(t, 'sections.contactUs.emailLabel')) ?? 'Email'}
+                    </p>
                     <a
-                      href="mailto:carwise15@gmail.com"
-                      className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white hover:text-[#8B5CF6] transition-colors break-all"
+                      href={LEGAL_CONTACT.emailMailto}
+                      dir="ltr"
+                      className="block text-left text-xl md:text-2xl font-bold text-slate-900 dark:text-white hover:text-[#8B5CF6] transition-colors break-all"
                     >
-                      {(safeT(t, 'sections.contact.emailAddress') ?? safeT(t, 'contactEmail')) ?? 'carwise15@gmail.com'}
+                      {LEGAL_CONTACT.email}
                     </a>
                   </div>
                 </div>

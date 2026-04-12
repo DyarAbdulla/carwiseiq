@@ -27,6 +27,9 @@ export interface Database {
           email: string
           full_name: string | null
           phone_number: string | null
+          location: string | null
+          avatar_url: string | null
+          profile_settings: Json
           role: UserRole
           created_at: string
           updated_at: string
@@ -37,6 +40,9 @@ export interface Database {
           email: string
           full_name?: string | null
           phone_number?: string | null
+          location?: string | null
+          avatar_url?: string | null
+          profile_settings?: Json
           role?: UserRole
           created_at?: string
           updated_at?: string
@@ -47,6 +53,9 @@ export interface Database {
           email?: string
           full_name?: string | null
           phone_number?: string | null
+          location?: string | null
+          avatar_url?: string | null
+          profile_settings?: Json
           role?: UserRole
           created_at?: string
           updated_at?: string

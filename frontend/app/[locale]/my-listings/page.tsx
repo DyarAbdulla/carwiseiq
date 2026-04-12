@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { apiClient } from '@/lib/api'
 import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { supabase } from '@/lib/supabase'
-import { useAuthSession } from '@/lib/useAuthSession'
+import { useAuthContext } from '@/context/AuthContext'
 import { activityHelpers } from '@/lib/activityLogger'
 import { buySellListingHref } from '@/lib/marketplaceLinks'
 import type { CarListing, CarListingUpdate } from '@/lib/database.types'
@@ -124,8 +124,8 @@ function MyListingsContent() {
   const { toast } = useToast()
   const t = useTranslations()
 
-  // Use deterministic auth session hook
-  const { user: currentUser, sessionLoaded } = useAuthSession()
+  // Same auth source as Profile page (AuthContext / Supabase session)
+  const { user: currentUser, loading: authLoading } = useAuthContext()
   const [listings, setListings] = useState<CarListing[]>([])
   const didOpenEditRef = useRef<string | null>(null)
   const fetchAbortControllerRef = useRef<AbortController | null>(null)
@@ -254,7 +254,7 @@ function MyListingsContent() {
   // STEP 2: After session loads, fetch listings if user exists (with timeout)
   useEffect(() => {
     // Reset loading state when session or user changes
-    if (!sessionLoaded) {
+    if (authLoading) {
       if (process.env.NODE_ENV === 'development') {
         console.log('[MyListings] [FETCH_LISTINGS] Waiting for session to load...')
       }
@@ -262,7 +262,6 @@ function MyListingsContent() {
       return
     }
 
-    // CRITICAL: Always resolve loading state when sessionLoaded is true
     if (!currentUser) {
       if (process.env.NODE_ENV === 'development') {
         console.log('[MyListings] [FETCH_LISTINGS] No user, redirecting to login')
@@ -295,7 +294,7 @@ function MyListingsContent() {
         fetchAbortControllerRef.current.abort()
       }
     }
-  }, [sessionLoaded, currentUser, router, locale, fetchListings])
+  }, [authLoading, currentUser, router, locale, fetchListings])
 
   const openEdit = useCallback((listing: CarListing) => {
     if (!currentUser?.id) {
@@ -433,7 +432,7 @@ function MyListingsContent() {
     const editId = searchParams?.get('edit')
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('[MyListings] [EDIT_PARAM] editId:', editId, 'sessionLoaded:', sessionLoaded, 'currentUser:', !!currentUser)
+      console.log('[MyListings] [EDIT_PARAM] editId:', editId, 'authLoading:', authLoading, 'currentUser:', !!currentUser)
     }
 
     // No edit ID, nothing to do
@@ -451,7 +450,7 @@ function MyListingsContent() {
     }
 
     // Wait for session to load
-    if (!sessionLoaded) {
+    if (authLoading) {
       if (process.env.NODE_ENV === 'development') {
         console.log('[MyListings] [EDIT_PARAM] Waiting for session to load...')
       }
@@ -572,7 +571,7 @@ function MyListingsContent() {
     }
 
     fetchAndOpen()
-  }, [sessionLoaded, currentUser, listings, searchParams, locale, router, openEdit, toast, fetchListingById])
+  }, [authLoading, currentUser, listings, searchParams, locale, router, openEdit, toast, fetchListingById])
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -652,7 +651,7 @@ function MyListingsContent() {
   }
 
   // Show loading state while session is loading
-  if (!sessionLoaded) {
+  if (authLoading) {
     return (
       <div className="container px-4 sm:px-6 lg:px-8 py-6 md:py-10">
         <div className="mx-auto max-w-7xl flex flex-col items-center justify-center min-h-[280px] gap-4">

@@ -19,6 +19,11 @@ import { getRecentSearches, removeRecentSearch, formatRelativeTime, type RecentS
 import { motion } from 'framer-motion'
 import { apiClient } from '@/lib/api'
 import type { DatasetStats } from '@/lib/types'
+import {
+  MODEL_FIT_R2_PERCENT,
+  MODEL_FIT_R2_SCORE,
+  TRAINING_LISTING_COUNT_EXACT,
+} from '@/lib/platformPublicStats'
 
 interface LearnMoreModalProps {
   open: boolean
@@ -240,19 +245,27 @@ export function LearnMoreModal({ open, onOpenChange }: LearnMoreModalProps) {
                 <CardContent className="space-y-2 pt-0">
                   <div className="text-xs">
                     <span className="text-[#94a3b8]">{t('modelInfo.model')}: </span>
-                    <span className="text-white">Random Forest Regressor</span>
+                    <span className="text-white">Ensemble regressor (production)</span>
                   </div>
                   <div className="text-xs">
                     <span className="text-[#94a3b8]">{t('modelInfo.r2Score')}: </span>
-                    <span className="font-semibold text-green-400">0.9996 (99.96% R²)</span>
+                    <span className="font-semibold text-green-400">
+                      {MODEL_FIT_R2_SCORE.toFixed(3)} (~{MODEL_FIT_R2_PERCENT}% R²)
+                    </span>
                   </div>
                   <div className="text-xs">
                     <span className="text-[#94a3b8]">Training Data: </span>
-                    <span className="text-white">{datasetStats?.total_cars.toLocaleString() || '62,181'} vehicles</span>
+                    <span className="text-white">
+                      {(datasetStats != null
+                        ? datasetStats.total_cars
+                        : TRAINING_LISTING_COUNT_EXACT
+                      ).toLocaleString(locale)}{' '}
+                      vehicles
+                    </span>
                   </div>
                   <div className="text-xs">
                     <span className="text-[#94a3b8]">Model Accuracy: </span>
-                    <span className="font-semibold text-green-400">99.96%</span>
+                    <span className="font-semibold text-green-400">~{MODEL_FIT_R2_PERCENT}% R²</span>
                   </div>
                 </CardContent>
               </CollapsibleContent>
@@ -356,15 +369,23 @@ export function LearnMoreModal({ open, onOpenChange }: LearnMoreModalProps) {
                   </div>
                   <div className="p-2 bg-[#1a1d29] rounded text-xs">
                     <div className="font-semibold mb-1 text-white">{t('trust.trainingDataset')}:</div>
-                    <div className="text-[#94a3b8]">{datasetStats?.total_cars.toLocaleString() || '62,181'} vehicles</div>
+                    <div className="text-[#94a3b8]">
+                      {(datasetStats != null
+                        ? datasetStats.total_cars
+                        : TRAINING_LISTING_COUNT_EXACT
+                      ).toLocaleString(locale)}{' '}
+                      vehicles
+                    </div>
                   </div>
                   <div className="p-2 bg-[#1a1d29] rounded text-xs">
                     <div className="font-semibold mb-1 text-white">{t('trust.modelAccuracy')}:</div>
-                    <div className="text-[#94a3b8]">99.96% (R² = 0.9996)</div>
+                    <div className="text-[#94a3b8]">
+                      ~{MODEL_FIT_R2_PERCENT}% (R² {MODEL_FIT_R2_SCORE.toFixed(2)})
+                    </div>
                   </div>
                   <div className="p-2 bg-[#1a1d29] rounded text-xs">
                     <div className="font-semibold mb-1 text-white">{t('trust.lastUpdate')}:</div>
-                    <div className="text-[#94a3b8]">January 2025</div>
+                    <div className="text-[#94a3b8]">April 2026</div>
                   </div>
                 </CardContent>
               </CollapsibleContent>

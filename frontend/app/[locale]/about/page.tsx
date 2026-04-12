@@ -394,7 +394,7 @@ export default function AboutPage() {
         <motion.section {...sectionMotion}>
           <SectionHeading icon={BarChart3}>{t("statsTitle")}</SectionHeading>
           <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
-            <AnimatedStat end={60000} suffix="+" label={t("statCars")} />
+            <AnimatedStat end={62000} suffix="+" label={t("statCars")} />
             <AnimatedStat
               end={95.9}
               suffix="%"
@@ -407,7 +407,7 @@ export default function AboutPage() {
           {/* 5th stat: full-width row, centered (balanced below the 4-column grid) */}
           <div className="mt-6 flex w-full justify-center sm:mt-8">
             <div className="w-full max-w-sm sm:max-w-md">
-              <AnimatedStat end={50} suffix="+" label={t("statBrands")} />
+              <AnimatedStat end={90} suffix="+" label={t("statBrands")} />
             </div>
           </div>
         </motion.section>

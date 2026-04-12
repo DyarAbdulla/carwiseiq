@@ -1,14 +1,15 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { Camera, Loader2, Check, X } from 'lucide-react'
+import { useId, useState } from 'react'
+import { Camera, Loader2, Check, X, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
+import { cn } from '@/lib/utils'
 
 const ACCEPTED_TYPES = 'image/jpeg,image/jpg,image/png,image/webp'
-const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
+const MAX_SIZE_BYTES = 2 * 1024 * 1024 // 2MB
 const AVATAR_SIZE = 200
 
 function resizeImageToSquare(file: File): Promise<Blob> {
@@ -46,28 +47,26 @@ function resizeImageToSquare(file: File): Promise<Blob> {
 interface ProfileAvatarUploadProps {
   userId: string
   currentAvatarUrl: string | null
-  fallbackLetter: string
+  /** One or two characters (initials); falls back to user icon if empty */
+  initials: string
   onAvatarChange: (url: string | null) => void
+  /** Tailwind size classes for the circle, e.g. h-28 w-28 */
+  sizeClassName?: string
 }
 
 export function ProfileAvatarUpload({
   userId,
   currentAvatarUrl,
-  fallbackLetter,
+  initials,
   onAvatarChange,
+  sizeClassName = 'h-28 w-28',
 }: ProfileAvatarUploadProps) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputId = useId()
   const { toast } = useToast()
   const [uploading, setUploading] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [pendingBlob, setPendingBlob] = useState<Blob | null>(null)
-
-  const storageKey = `profile_avatar_${userId}`
-
-  const handleCameraClick = () => {
-    inputRef.current?.click()
-  }
 
   const processFile = async (file: File) => {
     const type = file.type?.toLowerCase()
@@ -77,7 +76,7 @@ export function ProfileAvatarUpload({
       return
     }
     if (file.size > MAX_SIZE_BYTES) {
-      toast({ title: 'File too large', description: 'Maximum size is 5MB.', variant: 'destructive' })
+      toast({ title: 'File too large', description: 'Maximum size is 2MB.', variant: 'destructive' })
       return
     }
     try {
@@ -103,57 +102,30 @@ export function ProfileAvatarUpload({
     const previewUrlToRevoke = previewUrl
     setUploading(true)
     try {
-      let finalUrl: string | null = null
+      const objectPath = `${userId}/avatar.jpg`
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(objectPath, blobToSave, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      })
+      if (uploadError) {
+        throw new Error(uploadError.message || 'Upload failed. Ensure the avatars bucket exists and you are signed in.')
+      }
+      const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(objectPath)
+      const finalUrl = urlData?.publicUrl
+      if (!finalUrl) throw new Error('Could not get public URL for avatar.')
 
-      // 1) Try Supabase Storage first (only if bucket exists and upload succeeds)
+      const { error: rowErr } = await supabase.from('users').update({ avatar_url: finalUrl }).eq('id', userId)
+      if (rowErr) throw new Error(rowErr.message || 'Could not save avatar URL.')
+
+      const { error: authErr } = await supabase.auth.updateUser({ data: { avatar_url: finalUrl } })
+      if (authErr) console.warn('[ProfileAvatarUpload] auth metadata:', authErr)
+
       try {
-        if (supabase?.storage) {
-          const fileName = `${userId}-${Date.now()}.jpg`
-          const { error: uploadError } = await supabase.storage.from('avatars').upload(fileName, blobToSave, {
-            contentType: 'image/jpeg',
-            upsert: true,
-          })
-          if (!uploadError) {
-            const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(fileName)
-            finalUrl = urlData?.publicUrl ?? null
-          }
-        }
+        localStorage.removeItem(`profile_avatar_${userId}`)
       } catch {
-        // Bucket missing or upload failed – will use fallback
+        /* ignore */
       }
 
-      // 2) Fallback: convert blob to base64 data URL and store in localStorage
-      if (!finalUrl) {
-        finalUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => {
-            const result = reader.result
-            if (typeof result === 'string') resolve(result)
-            else reject(new Error('Failed to read image as data URL'))
-          }
-          reader.onerror = () => reject(reader.error || new Error('FileReader failed'))
-          reader.readAsDataURL(blobToSave)
-        })
-      }
-
-      // 3) Persist: always save to localStorage; updateUser only for storage URLs (avoid huge base64 in metadata)
-      const isBase64 = finalUrl.startsWith('data:')
-      if (typeof window !== 'undefined' && finalUrl) {
-        try {
-          localStorage.setItem(storageKey, finalUrl)
-        } catch {
-          // localStorage full or disabled
-        }
-      }
-      if (!isBase64 && finalUrl) {
-        try {
-          await supabase.auth.updateUser({ data: { avatar_url: finalUrl } })
-        } catch {
-          // Still show success – avatar is in localStorage
-        }
-      }
-
-      // 4) Update UI and close modal
       onAvatarChange(finalUrl)
       setPreviewOpen(false)
       setPreviewUrl(null)
@@ -183,9 +155,7 @@ export function ProfileAvatarUpload({
     setPendingBlob(null)
   }
 
-  const displayUrl =
-    currentAvatarUrl ||
-    (typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null)
+  const displayUrl = currentAvatarUrl
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
@@ -193,40 +163,67 @@ export function ProfileAvatarUpload({
     if (file) processFile(file)
   }
 
+  const safeInitials = initials.trim().slice(0, 2).toUpperCase()
+
   return (
     <>
       <input
-        ref={inputRef}
+        id={inputId}
         type="file"
         accept={ACCEPTED_TYPES}
-        className="hidden"
+        className="sr-only"
         onChange={handleFileChange}
       />
       <div
-        className="relative group"
+        className="relative mx-auto w-fit"
         onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
         onDrop={handleDrop}
       >
-        <div className="w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg shadow-indigo-500/50 ring-4 ring-indigo-500/20">
-          {displayUrl ? (
-            <img
-              src={displayUrl}
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            fallbackLetter
+        <label
+          htmlFor={inputId}
+          className={cn(
+            'group relative flex cursor-pointer rounded-full focus-within:outline-none focus-within:ring-2 focus-within:ring-violet-400 focus-within:ring-offset-2 focus-within:ring-offset-slate-950',
+            sizeClassName
           )}
-        </div>
-        <div className="absolute inset-0 rounded-full bg-indigo-500/30 blur-xl -z-10 animate-pulse" />
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); handleCameraClick() }}
-          className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-white/80 dark:bg-white/10 backdrop-blur-md border border-slate-200 dark:border-white/20 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/20 transition-all focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:ring-offset-2 focus:ring-offset-slate-900 cursor-pointer"
-          aria-label="Change profile picture"
         >
-          <Camera className="h-4 w-4 text-slate-700 dark:text-white" />
-        </button>
+          <span className="sr-only">Change profile picture</span>
+          <div
+            className={cn(
+              'relative flex h-full w-full items-center justify-center overflow-hidden rounded-full',
+              'bg-gradient-to-br from-violet-600 via-fuchsia-600 to-indigo-700',
+              'shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_12px_40px_-12px_rgba(139,92,246,0.65)]',
+              'ring-2 ring-violet-400/35 ring-offset-2 ring-offset-transparent dark:ring-offset-[#0b0d12]'
+            )}
+          >
+            {displayUrl ? (
+              <img src={displayUrl} alt="" className="h-full w-full object-cover" />
+            ) : safeInitials ? (
+              <span className="select-none text-2xl font-semibold tracking-tight text-white drop-shadow-sm sm:text-3xl">
+                {safeInitials}
+              </span>
+            ) : (
+              <User className="h-10 w-10 text-white/90 sm:h-12 sm:w-12" strokeWidth={1.5} />
+            )}
+          </div>
+          {/* Hover / focus upload overlay */}
+          <div
+            className={cn(
+              'pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5 rounded-full',
+              'bg-slate-950/55 opacity-0 backdrop-blur-[2px] transition-all duration-200',
+              'group-hover:opacity-100 group-focus-within:opacity-100'
+            )}
+          >
+            <Camera className="h-6 w-6 text-white" strokeWidth={1.75} />
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-white/95">
+              Upload
+            </span>
+          </div>
+        </label>
+        {/* Soft outer glow */}
+        <div
+          className="absolute -inset-3 -z-10 rounded-full bg-violet-500/25 blur-2xl dark:bg-violet-600/20"
+          aria-hidden
+        />
       </div>
 
       <Dialog open={previewOpen} onOpenChange={(open) => !open && handleCancelPreview()}>

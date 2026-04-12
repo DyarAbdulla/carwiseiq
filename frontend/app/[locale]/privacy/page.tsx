@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslations, useLocale, useMessages } from 'next-intl'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Phone, Mail, ChevronDown, Shield } from 'lucide-react'
+import { LEGAL_CONTACT } from '@/lib/legalContact'
 
 function safeT(t: ReturnType<typeof useTranslations<'privacy'>>, key: string): string | undefined {
   try {
@@ -67,7 +68,7 @@ export default function PrivacyPage() {
   })
 
   const toggleFaq = (index: number) => {
-    setOpenFaq(openFaq === index ? null : index)
+    setOpenFaq((prev) => (prev === index ? null : index))
   }
 
   const companyName = safeT(t, 'company') ?? safeT(t, 'companyName') ?? 'CarWiseIQ'
@@ -344,15 +345,16 @@ export default function PrivacyPage() {
                         className="border border-slate-300 dark:border-white/10 rounded-lg overflow-hidden bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                       >
                         <button
+                          type="button"
                           onClick={() => toggleFaq(index)}
-                          className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                          className="w-full flex items-center justify-between gap-3 p-4 text-start hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                         >
-                          <span className="font-semibold text-slate-900 dark:text-white pr-4">{item.question}</span>
+                          <span className="font-semibold text-slate-900 dark:text-white pe-2">{item.question}</span>
                           <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} className="shrink-0">
                             <ChevronDown className="h-5 w-5 text-indigo-400" />
                           </motion.div>
                         </button>
-                        <AnimatePresence>
+                        <AnimatePresence initial={false}>
                           {isOpen && (
                             <motion.div
                               initial={{ height: 0, opacity: 0 }}
@@ -371,14 +373,46 @@ export default function PrivacyPage() {
                     )
                   })
                 : useNewFaq
-                  ? faqQuestions.map((question, index) => (
-                      <div
+                  ? faqQuestions.map((question, index) => {
+                    const qKey = `q${index + 1}`
+                    const answer = safeT(t, `faq.${qKey}.answer`) ?? ''
+                    const isOpen = openFaq === index
+                    return (
+                      <motion.div
                         key={index}
-                        className="border border-slate-300 dark:border-white/10 rounded-lg overflow-hidden bg-slate-50 dark:bg-white/5 p-4"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        className="border border-slate-300 dark:border-white/10 rounded-lg overflow-hidden bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                       >
-                        <p className="font-semibold text-slate-900 dark:text-white">{question}</p>
-                      </div>
-                    ))
+                        <button
+                          type="button"
+                          onClick={() => toggleFaq(index)}
+                          className="w-full flex items-center justify-between gap-3 p-4 text-start hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                        >
+                          <span className="font-semibold text-slate-900 dark:text-white pe-2">{question}</span>
+                          <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} className="shrink-0">
+                            <ChevronDown className="h-5 w-5 text-indigo-400" />
+                          </motion.div>
+                        </button>
+                        <AnimatePresence initial={false}>
+                          {isOpen && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="p-4 pt-0 text-slate-700 dark:text-gray-300 leading-relaxed border-t border-slate-300 dark:border-white/10">
+                                {answer}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    )
+                  })
                   : faqItems.map((qKey, index) => {
                     const question = t(`faq.${qKey}.question`)
                     const answer = t(`faq.${qKey}.answer`)
@@ -392,15 +426,16 @@ export default function PrivacyPage() {
                         className="border border-slate-300 dark:border-white/10 rounded-lg overflow-hidden bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
                       >
                         <button
+                          type="button"
                           onClick={() => toggleFaq(index)}
-                          className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                          className="w-full flex items-center justify-between gap-3 p-4 text-start hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                         >
-                          <span className="font-semibold text-slate-900 dark:text-white pr-4">{question}</span>
+                          <span className="font-semibold text-slate-900 dark:text-white pe-2">{question}</span>
                           <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.3 }} className="shrink-0">
                             <ChevronDown className="h-5 w-5 text-indigo-400" />
                           </motion.div>
                         </button>
-                        <AnimatePresence>
+                        <AnimatePresence initial={false}>
                           {isOpen && (
                             <motion.div
                               initial={{ height: 0, opacity: 0 }}
@@ -431,33 +466,42 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">{getSectionHeading(t, 'sections.contact.number', 'sections.contact.title', 'sections.contactUs.title')}</h2>
             <p className="text-slate-700 dark:text-gray-300 leading-relaxed mb-6">{safeT(t, 'sections.contact.content') ?? safeT(t, 'sections.contactUs.description') ?? ''}</p>
 
-            <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl p-6 md:p-8 space-y-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                <div className="flex items-center gap-4 flex-1">
+            <div
+              dir="ltr"
+              className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 rounded-2xl p-6 md:p-8 text-left"
+            >
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8">
+                <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
                     <Phone className="h-6 w-6 text-indigo-400" />
                   </div>
-                  <div>
-                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-1">{safeT(t, 'sections.contact.phone') ?? safeT(t, 'sections.contactUs.phoneLabel') ?? 'Phone'}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-1" dir="auto">
+                      {safeT(t, 'sections.contact.phone') ?? safeT(t, 'sections.contactUs.phoneLabel') ?? 'Phone'}
+                    </p>
                     <a
-                      href="tel:+9647774472106"
-                      className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white hover:text-indigo-400 transition-colors"
+                      href={LEGAL_CONTACT.phoneTelHref}
+                      dir="ltr"
+                      className="block text-left text-xl md:text-2xl font-bold tabular-nums tracking-normal text-slate-900 dark:text-white hover:text-indigo-400 transition-colors"
                     >
-                      {safeT(t, 'sections.contact.phoneNumber') ?? safeT(t, 'contactPhone') ?? '0777 447 2106'}
+                      {LEGAL_CONTACT.phoneDisplay}
                     </a>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 flex-1">
+                <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0">
                     <Mail className="h-6 w-6 text-purple-400" />
                   </div>
-                  <div>
-                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-1">{safeT(t, 'sections.contact.email') ?? safeT(t, 'sections.contactUs.emailLabel') ?? 'Email'}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-slate-600 dark:text-slate-300 text-sm mb-1" dir="auto">
+                      {safeT(t, 'sections.contact.email') ?? safeT(t, 'sections.contactUs.emailLabel') ?? 'Email'}
+                    </p>
                     <a
-                      href="mailto:carwise15@gmail.com"
-                      className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white hover:text-purple-400 transition-colors break-all"
+                      href={LEGAL_CONTACT.emailMailto}
+                      dir="ltr"
+                      className="block text-left text-xl md:text-2xl font-bold text-slate-900 dark:text-white hover:text-purple-400 transition-colors break-all"
                     >
-                      {safeT(t, 'sections.contact.emailAddress') ?? safeT(t, 'contactEmail') ?? 'carwise15@gmail.com'}
+                      {LEGAL_CONTACT.email}
                     </a>
                   </div>
                 </div>

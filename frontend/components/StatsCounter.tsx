@@ -1,8 +1,13 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useTranslations } from "next-intl"
-import { Database, Users, Award } from "lucide-react"
+import { useLocale, useTranslations } from "next-intl"
+import { Database, Factory, Award } from "lucide-react"
+import {
+  MODEL_FIT_R2_PERCENT,
+  TRAINING_LISTING_COUNT_DISPLAY,
+  UNIQUE_MAKE_COUNT_DISPLAY,
+} from "@/lib/platformPublicStats"
 
 function useCountUp(end: number, duration = 2000, startOnMount = true) {
   const [count, setCount] = useState(0)
@@ -41,8 +46,9 @@ function useCountUp(end: number, duration = 2000, startOnMount = true) {
 
 export function StatsCounter() {
   const t = useTranslations("home.stats")
-  const { count: carsValued, ref: carsRef } = useCountUp(55000, 2000)
-  const { count: happyUsers, ref: usersRef } = useCountUp(12000, 2000)
+  const locale = useLocale() || "en"
+  const { count: listingsCount, ref: carsRef } = useCountUp(TRAINING_LISTING_COUNT_DISPLAY, 2000)
+  const { count: makesCount, ref: makesRef } = useCountUp(UNIQUE_MAKE_COUNT_DISPLAY, 2000)
 
   return (
     <section className="relative z-10 w-full py-8 sm:py-10" aria-labelledby="stats-title">
@@ -55,20 +61,20 @@ export function StatsCounter() {
               </div>
               <div>
                 <span ref={carsRef} className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
-                  {carsValued.toLocaleString()}+
+                  {listingsCount.toLocaleString(locale)}+
                 </span>
-                <div className="text-sm text-slate-600 dark:text-slate-300">{t("carsValued")}</div>
+                <div className="text-sm text-slate-600 dark:text-slate-300">{t("listingsAnalyzed")}</div>
               </div>
             </div>
             <div className="flex items-center gap-3 rtl:flex-row-reverse rtl:gap-3" role="listitem">
               <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
-                <Users className="h-6 w-6 text-purple-400" aria-hidden />
+                <Factory className="h-6 w-6 text-purple-400" aria-hidden />
               </div>
               <div>
-                <span ref={usersRef} className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
-                  {happyUsers.toLocaleString()}+
+                <span ref={makesRef} className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
+                  {makesCount.toLocaleString(locale)}+
                 </span>
-                <div className="text-sm text-slate-600 dark:text-slate-300">{t("happyUsers")}</div>
+                <div className="text-sm text-slate-600 dark:text-slate-300">{t("makesCovered")}</div>
               </div>
             </div>
             <div className="flex items-center gap-3 rtl:flex-row-reverse rtl:gap-3" role="listitem">
@@ -76,8 +82,10 @@ export function StatsCounter() {
                 <Award className="h-6 w-6 text-blue-400" aria-hidden />
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">99%</div>
-                <div className="text-sm text-slate-600 dark:text-slate-300">{t("accuracyRate")}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+                  {MODEL_FIT_R2_PERCENT}%
+                </div>
+                <div className="text-sm text-slate-600 dark:text-slate-300">{t("modelFitR2")}</div>
               </div>
             </div>
           </div>

@@ -18,7 +18,6 @@ let globalSessionState: AuthSessionState = {
 }
 
 let globalListeners: Set<() => void> = new Set()
-let isInitialized = false
 let authSubscription: { unsubscribe: () => void } | null = null
 
 const notifyListeners = () => {
@@ -28,20 +27,13 @@ const notifyListeners = () => {
 let initPromise: Promise<void> | null = null
 
 const initializeAuth = async (): Promise<void> => {
-  // If already initialized, return immediately
-  if (isInitialized) return
-
-  // If initialization is in progress, wait for it
+  // Always await the same promise: concurrent callers must not return early
+  // while getSession() is still in flight (otherwise sessionLoaded stays false forever).
   if (initPromise) {
     return initPromise
   }
 
-  // Start initialization
   initPromise = (async () => {
-    if (isInitialized) return
-
-    isInitialized = true
-
     // CRITICAL: Load initial session immediately - this MUST complete
     try {
       const { data: { session }, error } = await supabase.auth.getSession()

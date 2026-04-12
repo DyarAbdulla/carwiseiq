@@ -2,17 +2,32 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
-import { User, Lock, Download, Trash2, Eye, EyeOff, Shield, Smartphone, History, Monitor } from 'lucide-react'
+import {
+  UserCircle,
+  Lock,
+  Download,
+  Trash2,
+  Eye,
+  EyeOff,
+  Shield,
+  Smartphone,
+  History,
+  Monitor,
+  Mail,
+  Phone,
+  MapPin,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { useAuthContext } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
+import type { Json } from '@/lib/database.types'
 import { LoadingButton } from '@/components/common/LoadingButton'
 import { PasswordStrength } from '@/components/common/PasswordStrength'
 import { ProfileAvatarUpload } from '@/components/profile/ProfileAvatarUpload'
@@ -35,6 +50,22 @@ export default function ProfilePage() {
     email_verified: false,
     avatar_url: null as string | null
   })
+
+  const avatarInitials = useMemo(() => {
+    const n = profile.full_name?.trim() ?? ''
+    if (n) {
+      const parts = n.split(/\s+/).filter(Boolean)
+      if (parts.length >= 2) {
+        const a = parts[0][0] ?? ''
+        const b = parts[parts.length - 1][0] ?? ''
+        return (a + b).toUpperCase()
+      }
+      return n.slice(0, 2).toUpperCase()
+    }
+    const local = profile.email?.split('@')[0] ?? ''
+    return (local.slice(0, 2) || 'U').toUpperCase()
+  }, [profile.full_name, profile.email])
+
   type Section = 'profile' | 'security' | 'privacy'
   const [activeSection, setActiveSection] = useState<Section>('profile')
 
@@ -62,8 +93,9 @@ export default function ProfilePage() {
   const [deleteConfirmChecked, setDeleteConfirmChecked] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  // Security & Privacy preferences (persist to localStorage; backend can sync later)
-  const PREF_KEY = 'carwise_profile_prefs'
+  const [prefsHydrated, setPrefsHydrated] = useState(false)
+
+  // Security & Privacy preferences (persisted to public.users.profile_settings)
   const [securityPrefs, setSecurityPrefs] = useState({
     twoFactorEnabled: false,
     twoFactorMethod: 'email' as 'sms' | 'email',
@@ -108,15 +140,31 @@ export default function ProfilePage() {
   const loadProfile = useCallback(async () => {
     if (!user) return
     setLoading(true)
+    setPrefsHydrated(false)
     try {
-      const meta = user.user_metadata || {}
-      const full = (meta.full_name as string) || (meta.name as string) || ''
-      const phone = (meta.phone_number as string) || ''
-      const loc = (meta.location as string) || ''
-      let avatarUrl = (meta.avatar_url as string) || null
-      if (!avatarUrl && typeof window !== 'undefined') {
-        avatarUrl = localStorage.getItem(`profile_avatar_${user.id}`)
+      const mockSessions = [
+        { id: '1', device: 'Windows', browser: 'Chrome', location: 'Local', lastActive: new Date().toISOString() }
+      ]
+      const mockHistory = [
+        { date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), location: 'Local', device: 'Chrome on Windows', ip: '127.0.0.1', suspicious: false }
+      ]
+
+      const { data: row, error: rowError } = await supabase
+        .from('users')
+        .select('full_name, phone_number, avatar_url, location, profile_settings')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (rowError) {
+        console.error('[Profile] users row:', rowError)
       }
+
+      const meta = user.user_metadata || {}
+      const full = row?.full_name ?? (meta.full_name as string) ?? (meta.name as string) ?? ''
+      const phone = row?.phone_number ?? (meta.phone_number as string) ?? ''
+      const loc = row?.location ?? (meta.location as string) ?? ''
+      const avatarUrl = row?.avatar_url ?? (meta.avatar_url as string) ?? null
+
       setProfile({
         full_name: full,
         email: user.email || '',
@@ -126,51 +174,48 @@ export default function ProfilePage() {
         avatar_url: avatarUrl
       })
       setProfileData({ full_name: full, phone, location: loc })
+
+      const ps = row?.profile_settings as { security?: Partial<typeof securityPrefs>; privacy?: Partial<typeof privacyPrefs> } | null
+      setSecurityPrefs((p) => {
+        let next = { ...p }
+        if (ps?.security && typeof ps.security === 'object') {
+          next = { ...next, ...ps.security }
+        }
+        if (!next.activeSessions?.length) next = { ...next, activeSessions: mockSessions }
+        if (!next.loginHistory?.length) next = { ...next, loginHistory: mockHistory }
+        return next
+      })
+      setPrivacyPrefs((p) => (ps?.privacy && typeof ps.privacy === 'object' ? { ...p, ...ps.privacy } : p))
     } catch (error: unknown) {
       toast({ title: tCommon('error'), description: t('failedLoadProfile'), variant: 'destructive' })
     } finally {
       setLoading(false)
+      setPrefsHydrated(true)
     }
   }, [user, toast, t, tCommon])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    try {
-      const raw = localStorage.getItem(PREF_KEY)
-      if (raw) {
-        const data = JSON.parse(raw)
-        if (data.security) setSecurityPrefs((p) => ({ ...p, ...data.security }))
-        if (data.privacy) setPrivacyPrefs((p) => ({ ...p, ...data.privacy }))
-      }
-      const mockSessions = [
-        { id: '1', device: 'Windows', browser: 'Chrome', location: 'Local', lastActive: new Date().toISOString() }
-      ]
-      const mockHistory = [
-        { date: new Date().toLocaleDateString(), time: new Date().toLocaleTimeString(), location: 'Local', device: 'Chrome on Windows', ip: '127.0.0.1', suspicious: false }
-      ]
-      setSecurityPrefs((p) => ({
-        ...p,
-        activeSessions: p.activeSessions.length ? p.activeSessions : mockSessions,
-        loginHistory: p.loginHistory.length ? p.loginHistory : mockHistory
-      }))
-    } catch (_) {}
-  }, [])
+    if (!user || !prefsHydrated) return
+    const t = setTimeout(() => {
+      const payload = { security: securityPrefs, privacy: privacyPrefs }
+      void supabase
+        .from('users')
+        .update({ profile_settings: payload as unknown as Json })
+        .eq('id', user.id)
+        .then(({ error }) => {
+          if (error) console.error('[Profile] persist profile_settings:', error)
+        })
+    }, 450)
+    return () => clearTimeout(t)
+  }, [securityPrefs, privacyPrefs, user, prefsHydrated])
 
   const savePrefs = useCallback((updates: { security?: Partial<typeof securityPrefs>; privacy?: Partial<typeof privacyPrefs> }) => {
     setSecurityPrefs((p) => (updates.security ? { ...p, ...updates.security } : p))
     setPrivacyPrefs((p) => (updates.privacy ? { ...p, ...updates.privacy } : p))
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = localStorage.getItem(PREF_KEY)
-        const data = raw ? JSON.parse(raw) : {}
-        if (updates.security) data.security = { ...data.security, ...updates.security }
-        if (updates.privacy) data.privacy = { ...data.privacy, ...updates.privacy }
-        localStorage.setItem(PREF_KEY, JSON.stringify(data))
-      } catch (_) {}
-    }
   }, [])
 
   const handleSaveProfile = async () => {
+    if (!user) return
     setSavingProfile(true)
     try {
       const { error } = await supabase.auth.updateUser({
@@ -181,6 +226,15 @@ export default function ProfilePage() {
         }
       })
       if (error) throw error
+      const { error: rowErr } = await supabase
+        .from('users')
+        .update({
+          full_name: profileData.full_name || null,
+          phone_number: profileData.phone || null,
+          location: profileData.location || null,
+        })
+        .eq('id', user.id)
+      if (rowErr) throw rowErr
       toast({ title: t('profileUpdated'), description: t('profileUpdatedDesc') })
       setEditingProfile(false)
       await loadProfile()
@@ -310,6 +364,9 @@ export default function ProfilePage() {
     toast({ title: t('signedOutAll'), description: t('signedOutAllDesc') })
   }
 
+  const glassPanel =
+    'backdrop-blur-xl bg-white/90 dark:bg-white/[0.055] border border-slate-200/90 dark:border-white/[0.08] rounded-2xl shadow-xl shadow-slate-900/[0.06] dark:shadow-[0_24px_60px_-24px_rgba(0,0,0,0.65)] ring-1 ring-slate-200/50 dark:ring-violet-500/[0.08]'
+
   if (authLoading) {
     return (
       <div className="flex min-h-[calc(100vh-200px)] items-center justify-center p-6 bg-slate-50 dark:bg-[#0f1117]">
@@ -346,52 +403,106 @@ export default function ProfilePage() {
           <p className="text-slate-600 dark:text-slate-400">{t('subtitle')}</p>
         </div>
 
-        {/* Grid: no background; only child cards have glass */}
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 !bg-transparent">
-          {/* Sidebar column - no wrapper background */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr] !bg-transparent">
           <div className="relative !bg-transparent">
-            {/* Sidebar - Frosted glass card (only visible "box") */}
-            <div className="backdrop-blur-xl bg-white/80 dark:bg-white/[0.07] border border-slate-200/80 dark:border-white/10 rounded-2xl p-6 h-fit lg:sticky lg:top-24 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/50 dark:ring-white/5">
-            {/* Avatar with Glow */}
-            <div className="flex flex-col items-center mb-6">
-              {user && (
-                <ProfileAvatarUpload
-                  userId={user.id}
-                  currentAvatarUrl={profile.avatar_url}
-                  fallbackLetter={profile.full_name?.charAt(0).toUpperCase() || profile.email?.charAt(0).toUpperCase() || 'U'}
-                  onAvatarChange={(url) => setProfile((p) => ({ ...p, avatar_url: url }))}
-                />
+            <div
+              className={cn(
+                glassPanel,
+                'h-fit p-6 md:p-7 lg:sticky lg:top-24'
               )}
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-4">{profile.full_name || tAuth('user')}</h2>
-              <p className="text-sm text-slate-600 dark:text-slate-400">{profile.email}</p>
-              {profile.email_verified && (
-                <Badge className="mt-2 bg-green-500/20 text-green-400 border-green-500/30">
-                  Verified
-                </Badge>
-              )}
-            </div>
+            >
+              <div className="flex flex-col items-center text-center">
+                {user && (
+                  <ProfileAvatarUpload
+                    userId={user.id}
+                    currentAvatarUrl={profile.avatar_url}
+                    initials={avatarInitials}
+                    onAvatarChange={(url) => setProfile((p) => ({ ...p, avatar_url: url }))}
+                  />
+                )}
+                <h2 className="mt-5 text-lg font-bold tracking-tight text-slate-900 dark:text-white md:text-xl">
+                  {profile.full_name || tAuth('user')}
+                </h2>
+                <p className="mt-1 max-w-[240px] truncate text-xs text-slate-600 dark:text-slate-400 md:text-sm">
+                  {profile.email}
+                </p>
+                {profile.email_verified && (
+                  <Badge className="mt-3 border border-emerald-500/35 bg-emerald-500/15 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                    {t('verified')}
+                  </Badge>
+                )}
+              </div>
 
-            {/* Navigation - touch-friendly on mobile */}
-            <nav className="space-y-2">
-              <button
-                onClick={() => setActiveSection('profile')}
-                className={`w-full text-left px-4 py-3 min-h-[44px] rounded-lg transition-colors touch-manipulation ${activeSection === 'profile' ? 'bg-indigo-100 dark:bg-white/10 text-indigo-900 dark:text-white font-medium' : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}
+              <div
+                className="my-6 h-px w-full bg-gradient-to-r from-transparent via-violet-400/25 to-transparent dark:via-white/10"
+                aria-hidden
+              />
+
+              <nav
+                className="grid grid-cols-3 gap-2 lg:grid-cols-1 lg:gap-1.5"
+                aria-label={t('title')}
               >
-                {t('profileInfo')}
-              </button>
-              <button
-                onClick={() => setActiveSection('security')}
-                className={`w-full text-left px-4 py-3 min-h-[44px] rounded-lg transition-colors touch-manipulation ${activeSection === 'security' ? 'bg-indigo-100 dark:bg-white/10 text-indigo-900 dark:text-white font-medium' : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}
-              >
-                {t('security')}
-              </button>
-              <button
-                onClick={() => setActiveSection('privacy')}
-                className={`w-full text-left px-4 py-3 min-h-[44px] rounded-lg transition-colors touch-manipulation ${activeSection === 'privacy' ? 'bg-indigo-100 dark:bg-white/10 text-indigo-900 dark:text-white font-medium' : 'hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300'}`}
-              >
-                {t('privacy')}
-              </button>
-            </nav>
+                <button
+                  type="button"
+                  title={t('profileInfo')}
+                  onClick={() => setActiveSection('profile')}
+                  className={cn(
+                    'flex min-h-[48px] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 lg:justify-start lg:px-4',
+                    'touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950',
+                    activeSection === 'profile'
+                      ? 'border border-violet-500/40 bg-violet-500/15 text-violet-950 shadow-[0_0_28px_-8px_rgba(139,92,246,0.55)] dark:border-violet-400/35 dark:bg-violet-500/10 dark:text-white'
+                      : 'border border-transparent text-slate-600 hover:border-slate-200/80 hover:bg-slate-100/90 dark:text-slate-400 dark:hover:border-white/10 dark:hover:bg-white/[0.06] dark:hover:text-white'
+                  )}
+                >
+                  <UserCircle
+                    className={cn(
+                      'h-5 w-5 shrink-0',
+                      activeSection === 'profile' ? 'text-violet-600 dark:text-violet-300' : 'text-slate-500 dark:text-slate-500'
+                    )}
+                  />
+                  <span className="hidden min-w-0 truncate sm:inline">{t('profileInfo')}</span>
+                </button>
+                <button
+                  type="button"
+                  title={t('security')}
+                  onClick={() => setActiveSection('security')}
+                  className={cn(
+                    'flex min-h-[48px] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 lg:justify-start lg:px-4',
+                    'touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950',
+                    activeSection === 'security'
+                      ? 'border border-violet-500/40 bg-violet-500/15 text-violet-950 shadow-[0_0_28px_-8px_rgba(139,92,246,0.55)] dark:border-violet-400/35 dark:bg-violet-500/10 dark:text-white'
+                      : 'border border-transparent text-slate-600 hover:border-slate-200/80 hover:bg-slate-100/90 dark:text-slate-400 dark:hover:border-white/10 dark:hover:bg-white/[0.06] dark:hover:text-white'
+                  )}
+                >
+                  <Lock
+                    className={cn(
+                      'h-5 w-5 shrink-0',
+                      activeSection === 'security' ? 'text-violet-600 dark:text-violet-300' : 'text-slate-500 dark:text-slate-500'
+                    )}
+                  />
+                  <span className="hidden min-w-0 truncate sm:inline">{t('security')}</span>
+                </button>
+                <button
+                  type="button"
+                  title={t('privacy')}
+                  onClick={() => setActiveSection('privacy')}
+                  className={cn(
+                    'flex min-h-[48px] items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 lg:justify-start lg:px-4',
+                    'touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-slate-950',
+                    activeSection === 'privacy'
+                      ? 'border border-violet-500/40 bg-violet-500/15 text-violet-950 shadow-[0_0_28px_-8px_rgba(139,92,246,0.55)] dark:border-violet-400/35 dark:bg-violet-500/10 dark:text-white'
+                      : 'border border-transparent text-slate-600 hover:border-slate-200/80 hover:bg-slate-100/90 dark:text-slate-400 dark:hover:border-white/10 dark:hover:bg-white/[0.06] dark:hover:text-white'
+                  )}
+                >
+                  <Shield
+                    className={cn(
+                      'h-5 w-5 shrink-0',
+                      activeSection === 'privacy' ? 'text-violet-600 dark:text-violet-300' : 'text-slate-500 dark:text-slate-500'
+                    )}
+                  />
+                  <span className="hidden min-w-0 truncate sm:inline">{t('privacy')}</span>
+                </button>
+              </nav>
             </div>
           </div>
 
@@ -402,18 +513,21 @@ export default function ProfilePage() {
               <>
             {/* Email Verification Banner */}
             {!profile.email_verified && (
-              <div className="backdrop-blur-xl bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div>
-                    <p className="text-yellow-400 font-medium">{t('pleaseVerifyEmail')}</p>
-                    <p className="text-yellow-300/80 text-sm mt-1">
-                      {t('verifyEmailDesc')}
-                    </p>
+              <div
+                className={cn(
+                  glassPanel,
+                  'border-amber-400/35 bg-amber-500/[0.07] p-5 dark:border-amber-400/25 dark:bg-amber-500/10'
+                )}
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-amber-800 dark:text-amber-200">{t('pleaseVerifyEmail')}</p>
+                    <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-100/75">{t('verifyEmailDesc')}</p>
                   </div>
                   <Button
                     onClick={() => router.push(`/${locale}/verify-email?email=${encodeURIComponent(profile.email)}`)}
                     variant="outline"
-                    className="border-yellow-500/50 text-yellow-400 hover:bg-yellow-500/10 h-12"
+                    className="h-11 shrink-0 border-amber-500/45 text-amber-800 hover:bg-amber-500/15 dark:text-amber-200 dark:hover:bg-amber-500/10"
                   >
                     {t('verifyEmail')}
                   </Button>
@@ -421,186 +535,137 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* Profile Information */}
-            <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('profileInfoTitle')}</h2>
-                <p className="text-slate-600 dark:text-slate-400 text-sm">
-                  {t('profileInfoDesc')}
-                </p>
+            <div className={cn(glassPanel, 'overflow-hidden p-6 md:p-8')}>
+              <div className="flex flex-col gap-4 border-b border-slate-200/80 pb-6 dark:border-white/[0.08] sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white md:text-2xl">
+                    {t('profileInfoTitle')}
+                  </h2>
+                  <p className="mt-1 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    {t('profileInfoDesc')}
+                  </p>
+                </div>
+                {!editingProfile && (
+                  <Button
+                    type="button"
+                    onClick={() => setEditingProfile(true)}
+                    className="h-11 shrink-0 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 font-semibold text-white shadow-lg shadow-violet-900/25 transition hover:from-violet-500 hover:to-fuchsia-500 hover:brightness-105 focus-visible:ring-violet-400 dark:shadow-violet-950/40"
+                  >
+                    {t('editProfile')}
+                  </Button>
+                )}
               </div>
-              <div className="space-y-4">
+
+              <div className="pt-6">
                 {!editingProfile ? (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label className="text-slate-600 dark:text-[#94a3b8]">{t('fullName')}</Label>
-                        <p className="text-slate-900 dark:text-white mt-1">{profile.full_name || t('notSet')}</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+                      <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-4 transition-colors hover:border-violet-300/50 dark:border-white/[0.08] dark:bg-white/[0.04] dark:hover:border-violet-500/30">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300/90">
+                          <UserCircle className="h-3.5 w-3.5" aria-hidden />
+                          {t('fullName')}
+                        </div>
+                        <p className="mt-2 break-words text-base font-medium text-slate-900 dark:text-white">
+                          {profile.full_name || t('notSet')}
+                        </p>
                       </div>
-                      <div>
-                        <Label className="text-slate-600 dark:text-[#94a3b8]">{t('email')}</Label>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-slate-900 dark:text-white">{profile.email}</p>
+                      <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-4 transition-colors hover:border-violet-300/50 dark:border-white/[0.08] dark:bg-white/[0.04] dark:hover:border-violet-500/30">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300/90">
+                          <Mail className="h-3.5 w-3.5" aria-hidden />
+                          {t('email')}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <p className="min-w-0 break-all text-base font-medium text-slate-900 dark:text-white">
+                            {profile.email}
+                          </p>
                           {profile.email_verified ? (
-                            <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">{t('verified')}</span>
+                            <span className="rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-300">
+                              {t('verified')}
+                            </span>
                           ) : (
-                            <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">{t('unverified')}</span>
+                            <span className="rounded-md border border-amber-500/35 bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+                              {t('unverified')}
+                            </span>
                           )}
                         </div>
                       </div>
-                      <div>
-                        <Label className="text-slate-600 dark:text-[#94a3b8]">{t('phone')}</Label>
-                        <p className="text-slate-900 dark:text-white mt-1">{profile.phone || t('notSet')}</p>
+                      <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-4 transition-colors hover:border-violet-300/50 dark:border-white/[0.08] dark:bg-white/[0.04] dark:hover:border-violet-500/30">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300/90">
+                          <Phone className="h-3.5 w-3.5" aria-hidden />
+                          {t('phone')}
+                        </div>
+                        <p className="mt-2 break-words text-base font-medium text-slate-900 dark:text-white">
+                          {profile.phone || t('notSet')}
+                        </p>
                       </div>
-                      <div>
-                        <Label className="text-slate-600 dark:text-[#94a3b8]">{t('location')}</Label>
-                        <p className="text-slate-900 dark:text-white mt-1">{profile.location || t('notSet')}</p>
+                      <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-4 transition-colors hover:border-violet-300/50 dark:border-white/[0.08] dark:bg-white/[0.04] dark:hover:border-violet-500/30">
+                        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-violet-700 dark:text-violet-300/90">
+                          <MapPin className="h-3.5 w-3.5" aria-hidden />
+                          {t('location')}
+                        </div>
+                        <p className="mt-2 break-words text-base font-medium text-slate-900 dark:text-white">
+                          {profile.location || t('notSet')}
+                        </p>
                       </div>
                     </div>
-                    <Button onClick={() => setEditingProfile(true)} className="mt-4">
-                      {t('editProfile')}
-                    </Button>
                   </>
                 ) : (
-                  <>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="full_name" className="text-slate-900 dark:text-white">{t('fullName')}</Label>
-                        <Input
-                          id="full_name"
-                          value={profileData.full_name}
-                          onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
-                          placeholder={t('enterFullName')}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="phone" className="text-slate-900 dark:text-white">{t('phone')}</Label>
-                        <Input
-                          id="phone"
-                          value={profileData.phone}
-                          onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                          placeholder={t('enterPhone')}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="location" className="text-slate-900 dark:text-white">{t('location')}</Label>
-                        <Input
-                          id="location"
-                          value={profileData.location}
-                          onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
-                          placeholder={t('enterLocation')}
-                        />
-                      </div>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="full_name" className="text-slate-800 dark:text-slate-200">
+                        {t('fullName')}
+                      </Label>
+                      <Input
+                        id="full_name"
+                        value={profileData.full_name}
+                        onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                        placeholder={t('enterFullName')}
+                        className="mt-1.5 border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.05] dark:text-white dark:placeholder:text-slate-500 focus-visible:ring-violet-500"
+                      />
                     </div>
-                    <div className="flex gap-2 mt-4">
+                    <div>
+                      <Label htmlFor="phone" className="text-slate-800 dark:text-slate-200">
+                        {t('phone')}
+                      </Label>
+                      <Input
+                        id="phone"
+                        value={profileData.phone}
+                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                        placeholder={t('enterPhone')}
+                        className="mt-1.5 border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.05] dark:text-white dark:placeholder:text-slate-500 focus-visible:ring-violet-500"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="location" className="text-slate-800 dark:text-slate-200">
+                        {t('location')}
+                      </Label>
+                      <Input
+                        id="location"
+                        value={profileData.location}
+                        onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
+                        placeholder={t('enterLocation')}
+                        className="mt-1.5 border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.05] dark:text-white dark:placeholder:text-slate-500 focus-visible:ring-violet-500"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:gap-3">
                       <LoadingButton
                         onClick={handleSaveProfile}
                         loading={savingProfile}
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="h-11 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 font-semibold text-white shadow-md shadow-violet-900/20 hover:from-violet-500 hover:to-fuchsia-500 dark:shadow-violet-950/30"
                       >
                         {t('saveChanges')}
                       </LoadingButton>
                       <Button
+                        type="button"
                         variant="outline"
+                        className="h-11 rounded-xl border-slate-300 bg-white/80 dark:border-white/15 dark:bg-transparent dark:text-slate-200 dark:hover:bg-white/5"
                         onClick={() => {
                           setEditingProfile(false)
-                          setProfileData({ full_name: profile.full_name || '', phone: profile.phone || '', location: profile.location || '' })
-                        }}
-                      >
-                        {tCommon('cancel')}
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Change Password */}
-            <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('changePassword')}</h2>
-                <p className="text-slate-600 dark:text-slate-400 text-sm">
-                  {t('changePasswordDesc')}
-                </p>
-              </div>
-              <div>
-                {!changingPassword ? (
-                  <Button onClick={() => setChangingPassword(true)} variant="outline">
-                    {t('changePassword')}
-                  </Button>
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="current_password" className="text-slate-900 dark:text-white">{t('currentPassword')}</Label>
-                      <div className="relative mt-1">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500 dark:text-[#94a3b8]" />
-                        <Input
-                          id="current_password"
-                          type={showPasswords.current ? 'text' : 'password'}
-                          value={passwordData.current}
-                          onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
-                          className="absolute right-3 top-3 text-[#94a3b8]"
-                        >
-                          {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="new_password" className="text-slate-900 dark:text-white">{t('newPassword')}</Label>
-                      <div className="relative mt-1">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500 dark:text-[#94a3b8]" />
-                        <Input
-                          id="new_password"
-                          type={showPasswords.new ? 'text' : 'password'}
-                          value={passwordData.new}
-                          onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
-                          className="absolute right-3 top-3 text-[#94a3b8]"
-                        >
-                          {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      {passwordData.new && <PasswordStrength password={passwordData.new} className="mt-2" />}
-                    </div>
-                    <div>
-                      <Label htmlFor="confirm_password" className="text-slate-900 dark:text-white">{t('confirmNewPassword')}</Label>
-                      <div className="relative mt-1">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500 dark:text-[#94a3b8]" />
-                        <Input
-                          id="confirm_password"
-                          type={showPasswords.confirm ? 'text' : 'password'}
-                          value={passwordData.confirm}
-                          onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
-                          className="absolute right-3 top-3 text-[#94a3b8]"
-                        >
-                          {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <LoadingButton
-                        onClick={handleChangePassword}
-                        loading={savingProfile}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        {t('updatePassword')}
-                      </LoadingButton>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setChangingPassword(false)
-                          setPasswordData({ current: '', new: '', confirm: '' })
+                          setProfileData({
+                            full_name: profile.full_name || '',
+                            phone: profile.phone || '',
+                            location: profile.location || '',
+                          })
                         }}
                       >
                         {tCommon('cancel')}
@@ -609,37 +674,186 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Data Export - quick link */}
-            <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
-              <div className="mb-4">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('dataExport')}</h2>
-                <p className="text-slate-600 dark:text-slate-400 text-sm">
-                  {t('dataExportDesc')}
-                </p>
-              </div>
-              <Button onClick={handleExportData} variant="outline" className="w-full md:w-auto">
-                <Download className="h-4 w-4 mr-2" />
-                {t('downloadMyData')}
-              </Button>
-            </div>
+              <div
+                className="my-8 h-px w-full bg-gradient-to-r from-transparent via-violet-400/30 to-transparent dark:via-white/10"
+                aria-hidden
+              />
 
-            <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
-              <div className="mb-4">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('notificationSettingsCardTitle')}</h2>
-                <p className="text-slate-600 dark:text-slate-400 text-sm">
-                  {t('notificationSettingsCardDesc')}
-                </p>
+              <div className="relative rounded-xl border border-slate-200/80 bg-slate-50/40 pl-4 dark:border-white/[0.07] dark:bg-white/[0.03] md:pl-6 md:pr-2 md:pt-1 md:pb-2">
+                <div
+                  className="absolute left-0 top-3 h-[calc(100%-1.5rem)] w-0.5 rounded-full bg-gradient-to-b from-violet-500 to-fuchsia-500 md:top-4"
+                  aria-hidden
+                />
+                <div className="py-4 pl-3 md:py-5 md:pl-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-700 dark:bg-violet-500/20 dark:text-violet-200">
+                        <Lock className="h-5 w-5" aria-hidden />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('changePassword')}</h3>
+                        <p className="mt-0.5 max-w-lg text-sm text-slate-600 dark:text-slate-400">
+                          {t('changePasswordDesc')}
+                        </p>
+                      </div>
+                    </div>
+                    {!changingPassword && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setChangingPassword(true)}
+                        className="h-10 shrink-0 rounded-xl border-violet-500/35 bg-violet-500/5 font-medium text-violet-800 hover:bg-violet-500/10 dark:border-violet-400/30 dark:text-violet-200 dark:hover:bg-violet-500/15"
+                      >
+                        {t('changePassword')}
+                      </Button>
+                    )}
+                  </div>
+
+                  {changingPassword && (
+                    <div className="mt-6 space-y-4 border-t border-slate-200/80 pt-6 dark:border-white/[0.08]">
+                      <div>
+                        <Label htmlFor="current_password" className="text-slate-800 dark:text-slate-200">
+                          {t('currentPassword')}
+                        </Label>
+                        <div className="relative mt-1.5">
+                          <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+                          <Input
+                            id="current_password"
+                            type={showPasswords.current ? 'text' : 'password'}
+                            value={passwordData.current}
+                            onChange={(e) => setPasswordData({ ...passwordData, current: e.target.value })}
+                            className="border-slate-200 bg-white pl-9 dark:border-white/10 dark:bg-white/[0.05] dark:text-white focus-visible:ring-violet-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                          >
+                            {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <Label htmlFor="new_password" className="text-slate-800 dark:text-slate-200">
+                          {t('newPassword')}
+                        </Label>
+                        <div className="relative mt-1.5">
+                          <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+                          <Input
+                            id="new_password"
+                            type={showPasswords.new ? 'text' : 'password'}
+                            value={passwordData.new}
+                            onChange={(e) => setPasswordData({ ...passwordData, new: e.target.value })}
+                            className="border-slate-200 bg-white pl-9 dark:border-white/10 dark:bg-white/[0.05] dark:text-white focus-visible:ring-violet-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                          >
+                            {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                        {passwordData.new && <PasswordStrength password={passwordData.new} className="mt-2" />}
+                      </div>
+                      <div>
+                        <Label htmlFor="confirm_password" className="text-slate-800 dark:text-slate-200">
+                          {t('confirmNewPassword')}
+                        </Label>
+                        <div className="relative mt-1.5">
+                          <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+                          <Input
+                            id="confirm_password"
+                            type={showPasswords.confirm ? 'text' : 'password'}
+                            value={passwordData.confirm}
+                            onChange={(e) => setPasswordData({ ...passwordData, confirm: e.target.value })}
+                            className="border-slate-200 bg-white pl-9 dark:border-white/10 dark:bg-white/[0.05] dark:text-white focus-visible:ring-violet-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                          >
+                            {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+                        <LoadingButton
+                          onClick={handleChangePassword}
+                          loading={savingProfile}
+                          className="h-11 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 font-semibold text-white shadow-md shadow-violet-900/20 hover:from-violet-500 hover:to-fuchsia-500"
+                        >
+                          {t('updatePassword')}
+                        </LoadingButton>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-11 rounded-xl border-slate-300 dark:border-white/15 dark:text-slate-200 dark:hover:bg-white/5"
+                          onClick={() => {
+                            setChangingPassword(false)
+                            setPasswordData({ current: '', new: '', confirm: '' })
+                          }}
+                        >
+                          {tCommon('cancel')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <Button
-                variant="outline"
-                className="w-full md:w-auto border-[#6C5CE7]/40 text-[#6C5CE7] hover:bg-[#6C5CE7]/10"
-                onClick={() => router.push(`/${locale}/settings/notifications`)}
-              >
-                <Smartphone className="h-4 w-4 mr-2" />
-                {t('openNotificationSettings')}
-              </Button>
+
+              <div
+                className="my-8 h-px w-full bg-gradient-to-r from-transparent via-violet-400/30 to-transparent dark:via-white/10"
+                aria-hidden
+              />
+
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200/90 bg-gradient-to-br from-slate-50/90 to-white p-5 dark:border-white/[0.08] dark:from-white/[0.05] dark:to-white/[0.02] sm:flex-row sm:items-center">
+                  <div className="flex min-w-0 flex-1 gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-700 dark:bg-violet-500/20 dark:text-violet-200">
+                      <Download className="h-6 w-6" aria-hidden />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-slate-900 dark:text-white">{t('dataExport')}</h3>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{t('dataExportDesc')}</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleExportData}
+                    className="h-11 w-full shrink-0 rounded-xl border border-violet-500/40 bg-violet-500/10 font-semibold text-violet-800 shadow-sm hover:bg-violet-500/15 dark:text-violet-200 dark:hover:bg-violet-500/20 sm:w-auto sm:min-w-[160px]"
+                    variant="outline"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    {t('downloadMyData')}
+                  </Button>
+                </div>
+
+                <div className="flex flex-col justify-between gap-4 rounded-xl border border-slate-200/90 bg-gradient-to-br from-slate-50/90 to-white p-5 dark:border-white/[0.08] dark:from-white/[0.05] dark:to-white/[0.02] sm:flex-row sm:items-center">
+                  <div className="flex min-w-0 flex-1 gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/15 text-fuchsia-800 dark:bg-fuchsia-500/20 dark:text-fuchsia-200">
+                      <Smartphone className="h-6 w-6" aria-hidden />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-slate-900 dark:text-white">{t('notificationSettingsCardTitle')}</h3>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                        {t('notificationSettingsCardDesc')}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 w-full shrink-0 rounded-xl border-fuchsia-500/35 bg-fuchsia-500/5 font-semibold text-fuchsia-900 hover:bg-fuchsia-500/10 dark:border-fuchsia-400/30 dark:text-fuchsia-200 dark:hover:bg-fuchsia-500/15 sm:w-auto sm:min-w-[160px]"
+                    onClick={() => router.push(`/${locale}/settings/notifications`)}
+                  >
+                    <Smartphone className="mr-2 h-4 w-4" />
+                    {t('openNotificationSettings')}
+                  </Button>
+                </div>
+              </div>
             </div>
               </>
             )}
@@ -647,7 +861,7 @@ export default function ProfilePage() {
             {activeSection === 'security' && (
               <div className="space-y-6">
                 {/* Two-Factor Authentication */}
-                <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+                <div className={cn(glassPanel, 'p-6')}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-[#8B5CF6]/20">
@@ -692,7 +906,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Active Sessions */}
-                <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+                <div className={cn(glassPanel, 'p-6')}>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 rounded-lg bg-[#8B5CF6]/20">
                       <Monitor className="h-5 w-5 text-[#8B5CF6]" />
@@ -721,7 +935,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Login History */}
-                <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+                <div className={cn(glassPanel, 'p-6')}>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 rounded-lg bg-[#8B5CF6]/20">
                       <History className="h-5 w-5 text-[#8B5CF6]" />
@@ -760,7 +974,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Security Questions (optional) */}
-                <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+                <div className={cn(glassPanel, 'p-6')}>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 rounded-lg bg-[#8B5CF6]/20">
                       <Shield className="h-5 w-5 text-[#8B5CF6]" />
@@ -777,7 +991,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Trusted Devices */}
-                <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+                <div className={cn(glassPanel, 'p-6')}>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 rounded-lg bg-[#8B5CF6]/20">
                       <Smartphone className="h-5 w-5 text-[#8B5CF6]" />
@@ -806,7 +1020,7 @@ export default function ProfilePage() {
             {activeSection === 'privacy' && (
               <div className="space-y-6">
                 {/* Account Visibility */}
-                <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+                <div className={cn(glassPanel, 'p-6')}>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t('accountVisibility')}</h2>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -841,7 +1055,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Communication Preferences */}
-                <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+                <div className={cn(glassPanel, 'p-6')}>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t('communicationPrefs')}</h2>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -864,7 +1078,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Data Management */}
-                <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+                <div className={cn(glassPanel, 'p-6')}>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t('dataManagement')}</h2>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between flex-wrap gap-2">
@@ -889,7 +1103,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Cookie Preferences */}
-                <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+                <div className={cn(glassPanel, 'p-6')}>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t('cookiePreferences')}</h2>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -912,7 +1126,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Privacy Settings */}
-                <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+                <div className={cn(glassPanel, 'p-6')}>
                   <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4">{t('privacySettings')}</h2>
                   <div className="space-y-4">
                     <div>
