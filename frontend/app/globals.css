@@ -851,3 +851,68 @@ h2 {
     animation: none !important;
   }
 }
+
+/* ===== Sell car flow: full-bleed photo background (all steps) ===== */
+.sell-flow-root {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  min-height: 100lvh;
+}
+
+.sell-flow-bg-layers {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.sell-flow-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/sellbackground.avif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(1px);
+  -webkit-filter: blur(1px);
+  transform: scale(1.06);
+  transform-origin: center center;
+}
+
+.sell-flow-bg-overlay-dark {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.sell-flow-bg-overlay-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+}
+
+/* iOS / mobile: avoid fixed-attachment quirks; layer scrolls with tall sell-flow-root */
+@media (max-width: 767px) {
+  .sell-flow-bg-layers {
+    position: absolute;
+    inset: 0;
+    min-height: 100dvh;
+  }
+
+  .sell-flow-bg-image {
+    background-attachment: scroll;
+    min-height: 100%;
+  }
+}
+
+/* Glass panels (step forms, stepper shell, media dropzone base) */
+.sell-glass {
+  background: rgba(15, 15, 25, 0.75);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}

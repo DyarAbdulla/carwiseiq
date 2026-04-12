@@ -13,8 +13,10 @@ import {
 } from "@dnd-kit/core"
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Camera, Video, X, Star, Play } from "lucide-react"
+import { Camera, Video, X, Star, Play, UploadCloud, Sparkles } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import type { WizardMediaItem } from "@/context/SellWizardContext"
+import { cn } from "@/lib/utils"
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024   // 5MB
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024  // 50MB
@@ -49,6 +51,7 @@ function SortablePreview({
   onSetCover,
   coverLabel,
   setCoverLabel,
+  setCoverTooltip,
   removeLabel,
   dragLabel,
 }: {
@@ -57,6 +60,7 @@ function SortablePreview({
   onSetCover: (id: string) => void
   coverLabel: string
   setCoverLabel: string
+  setCoverTooltip: string
   removeLabel: string
   dragLabel: string
 }) {
@@ -71,8 +75,8 @@ function SortablePreview({
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative aspect-square rounded-lg overflow-hidden bg-gray-700/80 border border-gray-600 ${
-        isDragging ? "z-10 opacity-90 ring-2 ring-indigo-500" : ""
+      className={`relative aspect-square rounded-2xl overflow-hidden bg-gray-800/90 border border-white/10 shadow-lg ${
+        isDragging ? "z-10 opacity-95 ring-2 ring-violet-500 scale-[1.02]" : ""
       }`}
     >
       {item.isVideo ? (
@@ -96,28 +100,32 @@ function SortablePreview({
       )}
 
       {item.isCover && (
-        <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-xs font-medium bg-indigo-600 text-white flex items-center gap-1">
-          <Star className="h-3 w-3 fill-current" />
+        <span className="absolute top-2 left-2 px-2.5 py-1 rounded-lg text-[11px] font-bold uppercase tracking-wide bg-gradient-to-r from-violet-600 to-indigo-600 text-white flex items-center gap-1 shadow-lg border border-white/20">
+          <Star className="h-3.5 w-3.5 fill-amber-200 text-amber-100" />
           {coverLabel}
         </span>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-        <p className="text-white text-xs truncate" title={item.file.name}>{item.file.name}</p>
-        <p className="text-gray-300 text-xs">{formatSize(item.file.size)}</p>
+      <div className="absolute bottom-0 left-0 right-0 p-2.5 bg-gradient-to-t from-black via-black/85 to-transparent">
+        <p className="text-white text-xs font-medium truncate drop-shadow-md" title={item.file.name}>{item.file.name}</p>
+        <p className="text-violet-200/90 text-xs font-semibold">{formatSize(item.file.size)}</p>
       </div>
 
       <div className="absolute top-2 right-2 flex flex-col gap-1">
         {!item.isCover && (
-          <button
-            type="button"
-            onClick={() => onSetCover(item.id)}
-            className="p-1.5 rounded-full bg-black/60 hover:bg-indigo-600 text-white transition-colors"
-            title={setCoverLabel}
-            aria-label={setCoverLabel}
-          >
-            <Star className="h-4 w-4" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => onSetCover(item.id)}
+                className="p-2 rounded-full bg-black/70 hover:bg-violet-600 text-white transition-colors border border-white/10 shadow-md"
+                aria-label={setCoverLabel}
+              >
+                <Star className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">{setCoverTooltip}</TooltipContent>
+          </Tooltip>
         )}
         <button
           type="button"
@@ -132,7 +140,7 @@ function SortablePreview({
       <div
         {...attributes}
         {...listeners}
-        className="absolute bottom-2 left-2 p-1.5 rounded bg-black/60 text-white cursor-grab active:cursor-grabbing"
+        className="absolute bottom-2 left-2 p-2 rounded-lg bg-black/70 text-white cursor-grab active:cursor-grabbing border border-white/10"
         aria-label={dragLabel}
       >
         <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6h2v2H8V6zm0 5h2v2H8v-2zm0 5h2v2H8v-2zm5-10h2v2h-2V6zm0 5h2v2h-2v-2zm0 5h2v2h-2v-2z"/></svg>
@@ -235,11 +243,16 @@ export function MediaUploadStep({
   }, [])
 
   const canAdd = media.length < MAX_FILES
-  const count = media.length
-  // 4–10 inclusive: 4 is valid (>= MIN_FILES), 10 is valid (<= MAX_FILES)
-  const isValid = count >= MIN_FILES && count <= MAX_FILES
+  const totalFiles = media.length
+  // Minimum applies to photos only (copy: "Minimum N images"); videos are optional extras.
+  const imageCount = media.reduce((n, m) => n + (m.isVideo ? 0 : 1), 0)
+  // 4–10 inclusive: 4 images is valid (>= MIN_FILES), 10 total files max (<= MAX_FILES)
+  const isValid = imageCount >= MIN_FILES && totalFiles <= MAX_FILES
+
+  const photoMinPct = Math.min(100, Math.round((imageCount / MIN_FILES) * 100))
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="space-y-6">
       <input
         ref={inputRef}
@@ -257,26 +270,32 @@ export function MediaUploadStep({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => canAdd && inputRef.current?.click()}
-        className={`
-          min-h-[180px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center gap-2
-          transition-all cursor-pointer backdrop-blur-sm
-          ${dragging 
-            ? "border-indigo-500/50 bg-indigo-500/10 shadow-lg shadow-indigo-500/20" 
-            : "border-white/20 hover:border-white/30 bg-white/5 hover:bg-white/10"
-          }
-          ${!canAdd ? "pointer-events-none opacity-60" : ""}
-        `}
+        className={cn(
+          "group relative min-h-[220px] sell-glass !border-2 !border-dashed flex flex-col items-center justify-center gap-3 transition-all duration-300 cursor-pointer overflow-hidden",
+          dragging
+            ? "!border-violet-400/70 bg-violet-500/15 shadow-xl shadow-violet-500/25 scale-[1.01]"
+            : "!border-white/25 hover:!border-violet-400/50 hover:shadow-lg hover:shadow-violet-500/10",
+          !canAdd && "pointer-events-none opacity-60"
+        )}
       >
-        <div className="flex gap-4 text-gray-400">
-          <Camera className="h-10 w-10" />
-          <Video className="h-10 w-10" />
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.12),transparent_70%)]" />
+        <div className="relative flex items-center justify-center gap-5 text-violet-300/90">
+          <UploadCloud className={`h-12 w-12 transition-transform duration-300 ${dragging ? "scale-110" : "group-hover:scale-105"}`} />
+          <div className="hidden sm:flex gap-2">
+            <Camera className="h-9 w-9 opacity-80" />
+            <Video className="h-9 w-9 opacity-80" />
+          </div>
         </div>
-        <p className="text-white font-medium">
-          {canAdd ? t("mediaDropOrClick") : t("mediaMaxFiles", { max: String(MAX_FILES) })}
-        </p>
-        <p className="text-sm text-gray-400">
-          {t("mediaFormats")}
-        </p>
+        <div className="relative text-center space-y-1 px-4">
+          <p className="text-white font-semibold text-lg flex items-center justify-center gap-2">
+            <Sparkles className="h-4 w-4 text-amber-300/90" />
+            {canAdd ? t("mediaDropTitle") : t("mediaMaxFiles", { max: String(MAX_FILES) })}
+          </p>
+          <p className="text-sm text-gray-400 max-w-md mx-auto">
+            {canAdd ? t("mediaDropSubtitle") : t("mediaMaxFiles", { max: String(MAX_FILES) })}
+          </p>
+          <p className="text-xs text-gray-500">{t("mediaFormats")}</p>
+        </div>
       </div>
 
       {/* Requirements */}
@@ -295,10 +314,30 @@ export function MediaUploadStep({
         <p key={i} className="text-red-400 text-sm">{e}</p>
       ))}
 
-      {/* Count */}
-      <p className={`text-sm font-medium ${isValid ? "text-emerald-400" : "text-amber-400"}`}>
-        {count}/{MAX_FILES} files · {count >= MIN_FILES ? t("mediaCountOk") : t("mediaAddMore", { min: String(MIN_FILES) })}
-      </p>
+      {/* Photo minimum progress */}
+      <div className="sell-glass p-4 space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <span className={imageCount >= MIN_FILES ? "text-emerald-400 font-medium" : "text-amber-300 font-medium"}>
+            {t("mediaPhotoProgress", { current: String(imageCount), min: String(MIN_FILES) })}
+            {imageCount >= MIN_FILES ? ` ${t("mediaCountOk")}` : ""}
+          </span>
+          <span className="text-gray-500 text-xs">
+            {t("mediaFileCount", { current: String(totalFiles), max: String(MAX_FILES) })}
+          </span>
+        </div>
+        <div className="h-2 rounded-full bg-black/40 overflow-hidden border border-white/5">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-500",
+              imageCount >= MIN_FILES ? "bg-gradient-to-r from-emerald-500 to-teal-400" : "bg-gradient-to-r from-violet-600 to-indigo-500"
+            )}
+            style={{ width: `${photoMinPct}%` }}
+          />
+        </div>
+        {imageCount >= MIN_FILES ? (
+          <p className="text-xs text-emerald-400/90">{t("mediaPhotoProgressMet", { max: String(MAX_FILES) })}</p>
+        ) : null}
+      </div>
 
       {/* Preview grid with reorder */}
       {media.length > 0 && (
@@ -308,7 +347,7 @@ export function MediaUploadStep({
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={media.map((m) => m.id)}>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-5">
               {media.map((item) => (
                 <SortablePreview
                   key={item.id}
@@ -317,6 +356,7 @@ export function MediaUploadStep({
                   onSetCover={onSetCover}
                   coverLabel={t("cover")}
                   setCoverLabel={t("mediaSetCover")}
+                  setCoverTooltip={t("mediaTooltipSetCover")}
                   removeLabel={t("mediaRemove")}
                   dragLabel={t("mediaDragReorder")}
                 />
@@ -327,8 +367,16 @@ export function MediaUploadStep({
       )}
 
       {/* Export for parent */}
-      <span className="sr-only" data-min={MIN_FILES} data-max={MAX_FILES} data-count={count} data-valid={String(isValid)} />
+      <span
+        className="sr-only"
+        data-min={MIN_FILES}
+        data-max={MAX_FILES}
+        data-count={totalFiles}
+        data-image-count={imageCount}
+        data-valid={String(isValid)}
+      />
     </div>
+    </TooltipProvider>
   )
 }
 

@@ -1,14 +1,15 @@
 "use client"
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useSellWizard } from "@/context/SellWizardContext"
-import { useAuthContext } from "@/context/AuthContext"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
+import { MEDIA_MAX, MEDIA_MIN } from "@/components/sell/MediaUploadStep"
+import { maskIraqiMobileDisplay, normalizeIraqiNationalDigits } from "@/lib/iraqPhone"
 import {
   Edit,
   MapPin,
@@ -16,9 +17,15 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  Phone,
+  MessageCircle,
+  Clock,
+  Sparkles,
 } from "lucide-react"
 import type { Transmission, FuelType, CarCondition } from "@/lib/database.types"
 import { notifyNewListingPublished } from "@/lib/push/push-client"
+import { computeListingCompletenessScore } from "@/lib/sellListingScore"
+import { cn } from "@/lib/utils"
 
 function mapTransmission(v: string): Transmission {
   if (v === "Manual") return "manual"
@@ -39,10 +46,34 @@ function mapCondition(v: string): CarCondition {
   return "excellent"
 }
 
-function maskPhone(p: string): string {
-  const d = p.replace(/\D/g, "")
-  if (d.length < 4) return p
-  return `+964 XXX XXX **${d.slice(-2)}`
+function countWizardImages(media: { isVideo: boolean }[]): number {
+  return media.reduce((n, m) => n + (m.isVideo ? 0 : 1), 0)
+}
+
+function urlsMatchMedia(mediaLength: number, uploadedMediaUrls: string[]): boolean {
+  if (uploadedMediaUrls.length !== mediaLength) return false
+  return uploadedMediaUrls.every((u) => typeof u === "string" && u.trim().length > 0)
+}
+
+const IQD_PER_USD = 1320
+
+const BEST_TIME_IDS: Record<
+  string,
+  "bestTimeMorning" | "bestTimeAfternoon" | "bestTimeEvening" | "bestTimeAnytime"
+> = {
+  morning: "bestTimeMorning",
+  afternoon: "bestTimeAfternoon",
+  evening: "bestTimeEvening",
+  anytime: "bestTimeAnytime",
+}
+
+function SpecRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-[minmax(10rem,38%)_1fr] gap-1 sm:gap-4 py-3.5 border-b border-white/10 last:border-0">
+      <dt className="text-[11px] font-bold uppercase tracking-wider text-gray-500">{label}</dt>
+      <dd className="text-[15px] text-gray-100 leading-snug">{children}</dd>
+    </div>
+  )
 }
 
 export default function SellStep5Page() {
@@ -51,7 +82,6 @@ export default function SellStep5Page() {
   const t = useTranslations("sell")
   const tFooter = useTranslations("footer")
   const { toast } = useToast()
-  const { user } = useAuthContext()
   const {
     location,
     media,
@@ -68,15 +98,67 @@ export default function SellStep5Page() {
   const [publishing, setPublishing] = useState(false)
   const publishSubmitted = useRef(false)
 
-  const canPublish =
-    agreeTerms &&
-    agreeSeller &&
+  useEffect(() => {
+    publishSubmitted.current = false
+  }, [])
+
+  const imageCount = useMemo(() => countWizardImages(media), [media])
+
+  const mediaReady = useMemo(() => {
+    if (!media.length) return false
+    if (imageCount < MEDIA_MIN || media.length > MEDIA_MAX) return false
+    return urlsMatchMedia(media.length, uploadedMediaUrls)
+  }, [media.length, imageCount, uploadedMediaUrls])
+
+  const coreFieldsOk =
     !!location?.city &&
     !!carDetails?.make &&
     !!carDetails?.model &&
     !!carDetails?.year &&
-    !!contact?.phone &&
-    uploadedMediaUrls.length > 0
+    !!contact?.phone
+
+  const canPublish = agreeTerms && agreeSeller && coreFieldsOk && mediaReady
+
+  const completeness = useMemo(
+    () =>
+      computeListingCompletenessScore({
+        location: location ?? null,
+        imageCount,
+        totalMedia: media.length,
+        uploadedCount: uploadedMediaUrls.length,
+        carDetails: carDetails ?? null,
+        contact: contact ?? null,
+      }),
+    [location, imageCount, media.length, uploadedMediaUrls.length, carDetails, contact]
+  )
+
+  const scoreLabel = useMemo(() => {
+    if (completeness >= 85) return t("listingScoreExcellent")
+    if (completeness >= 65) return t("listingScoreGood")
+    return t("listingScoreFair")
+  }, [completeness, t])
+
+  const priceNum = parseFloat(String(carDetails?.price ?? ""))
+  const iqdApprox =
+    Number.isFinite(priceNum) && priceNum > 0 ? Math.round(priceNum * IQD_PER_USD) : null
+
+  const orderedMedia = useMemo(
+    () => [...media].sort((a, b) => (a.isCover ? -1 : b.isCover ? 1 : a.order - b.order)),
+    [media]
+  )
+
+  const heroMedia = orderedMedia[0]
+  const thumbMedia = orderedMedia.slice(1, 10)
+
+  const bestTimeDisplay = useMemo(() => {
+    const ids = contact?.bestTimeToCall ?? []
+    return ids
+      .map((id) => {
+        const k = BEST_TIME_IDS[id]
+        return k ? t(k) : id
+      })
+      .join(", ")
+  }, [contact?.bestTimeToCall, t])
 
   const handlePublish = useCallback(async () => {
     console.log("=== STARTING PUBLISH ===")
@@ -93,12 +175,66 @@ export default function SellStep5Page() {
     const currentUserId = sessionData.session.user.id
     console.log("Current Supabase user ID:", currentUserId)
 
-    if (!canPublish || !location || !carDetails || !contact) {
-      console.error("=== PUBLISH FAILED ===", "canPublish or required data missing", { canPublish, hasLocation: !!location, hasCarDetails: !!carDetails, hasContact: !!contact })
+    if (!location || !carDetails || !contact) {
+      toast({
+        title: t("publishBlockedTitle"),
+        description: t("publishBlockedFields"),
+        variant: "destructive",
+      })
       return
     }
+
+    const imgCount = countWizardImages(media)
+    const urlsOk = urlsMatchMedia(media.length, uploadedMediaUrls)
+    const mediaOk =
+      media.length > 0 &&
+      imgCount >= MEDIA_MIN &&
+      media.length <= MEDIA_MAX &&
+      urlsOk
+
+    const fieldsOk =
+      !!location.city &&
+      !!carDetails.make &&
+      !!carDetails.model &&
+      !!carDetails.year &&
+      !!contact.phone
+
+    if (!fieldsOk) {
+      toast({
+        title: t("publishBlockedTitle"),
+        description: t("publishBlockedFields"),
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!agreeTerms || !agreeSeller) {
+      toast({
+        title: t("publishBlockedTitle"),
+        description: t("publishBlockedAgreements"),
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!mediaOk) {
+      let description = t("publishBlockedMediaPhotos", { min: String(MEDIA_MIN) })
+      if (!media.length) description = t("publishBlockedMediaSync")
+      else if (media.length > MEDIA_MAX) description = t("publishBlockedMediaMax", { max: String(MEDIA_MAX) })
+      else if (imgCount < MEDIA_MIN) description = t("publishBlockedMediaPhotos", { min: String(MEDIA_MIN) })
+      else if (!uploadedMediaUrls.length) description = t("publishBlockedMediaSync")
+      else if (!urlsOk) description = t("publishBlockedMediaMismatch")
+
+      toast({
+        title: t("publishBlockedTitle"),
+        description,
+        variant: "destructive",
+      })
+      return
+    }
+
     if (publishSubmitted.current) {
-      console.log("[Publish] Blocked: already submitted (double-click)")
+      toast({ title: t("publishWait"), duration: 2500 })
       return
     }
 
@@ -137,12 +273,13 @@ export default function SellStep5Page() {
       const fullDesc = [contact.description, extra.length ? extra.join(". ") : null].filter(Boolean).join("\n\n") || null
       const title = `${carDetails.year} ${carDetails.make} ${carDetails.model}`.trim()
 
-      const phoneDigits = contact.phone.replace(/\D/g, "").replace(/^964/, "").slice(-10)
-      const phoneFull = `+964${phoneDigits}`
+      const phoneDigits = normalizeIraqiNationalDigits(contact.phone)
+      const phoneFull = phoneDigits.length === 10 ? `+964${phoneDigits}` : null
+      const waDigits = normalizeIraqiNationalDigits(contact.whatsapp || "")
       const whatsappFull = contact.whatsappSameAsPhone
         ? phoneFull
-        : (contact.whatsapp || "").replace(/\D/g, "").length >= 10
-          ? `+964${contact.whatsapp.replace(/\D/g, "").replace(/^964/, "").slice(-10)}`
+        : waDigits.length === 10
+          ? `+964${waDigits}`
           : phoneFull
 
       // Payload must match car_listings schema exactly. Columns: user_id, title, make, model, year, price, mileage, transmission, fuel_type, condition, location, description, images, is_sold, status, phone, whatsapp. Omit: id, sold_at, created_at, updated_at (defaults).
@@ -273,9 +410,8 @@ export default function SellStep5Page() {
 
       setPublishedListingId(id)
       clearDraft()
-      setPublishing(false)
-      toast({ title: "Listing published", description: "Your car is now live on CarWiseIQ." })
-      router.push(`/${locale}/sell/success?id=${id}`)
+      toast({ title: t("publishSuccessTitle"), description: t("publishSuccessDescription") })
+      router.replace(`/${locale}/sell/success?id=${encodeURIComponent(id)}`)
     } catch (e: unknown) {
       console.error("=== PUBLISH FAILED - Exception ===", e)
       
@@ -289,15 +425,49 @@ export default function SellStep5Page() {
       publishSubmitted.current = false
       setPublishing(false)
       const msg = e instanceof Error ? e.message : String(e)
-      toast({ title: "Error", description: msg, variant: "destructive" })
-    } finally {
-      setPublishing(false)
+      toast({
+        title: t("publishDbError"),
+        description: msg || t("uploadFailedGeneric"),
+        variant: "destructive",
+      })
     }
-  }, [canPublish, location, media.length, uploadedMediaUrls, carDetails, contact, setPublishedListingId, clearDraft, router, locale, toast, t])
+  }, [
+    agreeTerms,
+    agreeSeller,
+    location,
+    media,
+    uploadedMediaUrls,
+    carDetails,
+    contact,
+    setPublishedListingId,
+    clearDraft,
+    router,
+    locale,
+    toast,
+    t,
+  ])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        router.push(`/${locale}/sell/step4`)
+        return
+      }
+      if (e.key !== "Enter" || e.shiftKey) return
+      const el = e.target as HTMLElement
+      if (el.tagName === "TEXTAREA" || el.tagName === "INPUT" || el.isContentEditable) return
+      if (canPublish && !publishing) {
+        e.preventDefault()
+        void handlePublish()
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [router, locale, canPublish, publishing, handlePublish])
 
   if (!location || !carDetails || !contact) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-12 min-h-[70vh]">
+      <div className="relative z-10 flex flex-col items-center justify-center gap-4 py-12 min-h-[70vh]">
         <p className="text-gray-400">{t("missingData")}</p>
         <Button variant="outline" onClick={() => router.push(`/${locale}/sell/step1`)} className="border-gray-600 text-gray-300">
           {t("startOver")}
@@ -307,171 +477,306 @@ export default function SellStep5Page() {
   }
 
   return (
-    <div className="relative px-4 py-12 md:py-16">
-      {/* Ambient gradient glow - Enhanced for active step */}
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-gradient-radial from-indigo-500/20 via-purple-500/10 to-transparent blur-3xl opacity-60" />
-      </div>
-      
+    <div className="relative px-4 py-8 md:py-14 animate-in fade-in duration-500 z-10">
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-3">{t("reviewTitle")}</h1>
-          <p className="text-gray-400 text-lg">{t("reviewDescription")}</p>
-        </div>
+        <header className="text-center space-y-4 mb-2">
+          <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{t("reviewTitle")}</h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">{t("reviewDescription")}</p>
 
-        {/* 1. Media */}
-        <div className="backdrop-blur-xl bg-black/30 border border-white/10 rounded-2xl p-6 shadow-xl">
-          <div className="flex flex-row items-center justify-between mb-4">
+          <div className="sell-glass ring-1 ring-violet-500/25 p-5 text-left max-w-xl mx-auto shadow-lg shadow-violet-900/20">
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-violet-300" />
+                <span className="text-sm font-semibold text-white">{t("listingScoreTitle")}</span>
+              </div>
+              <span className="text-2xl font-bold tabular-nums bg-gradient-to-r from-white to-violet-200 bg-clip-text text-transparent">
+                {completeness}
+                <span className="text-base font-medium text-gray-500">/100</span>
+              </span>
+            </div>
+            <div className="h-2 rounded-full bg-white/10 overflow-hidden mb-2">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-400 transition-all duration-700 ease-out"
+                style={{ width: `${completeness}%` }}
+              />
+            </div>
+            <p className="text-sm text-violet-200/90">{scoreLabel}</p>
+            <p className="text-xs text-gray-500 mt-1">{t("listingScoreHint")}</p>
+          </div>
+        </header>
+
+        {/* Media — hero + thumbnails */}
+        <div className="sell-glass p-5 md:p-6 shadow-xl shadow-black/25">
+          <div className="flex flex-row items-center justify-between mb-5">
             <h3 className="text-lg font-semibold text-white">{t("photosVideos")}</h3>
-            <Button variant="outline" size="sm" asChild className="border-white/10 text-gray-300 hover:bg-white/5">
+            <Button variant="outline" size="sm" asChild className="border-white/12 bg-white/[0.03] text-gray-200 hover:bg-white/10">
               <Link href={`/${locale}/sell/step2`}>
-                <Edit className="h-4 w-4 mr-1" /> {t("edit")}
+                <Edit className="h-4 w-4 mr-1.5" /> {t("edit")}
               </Link>
             </Button>
           </div>
-          <div>
-            {media.length > 0 ? (
-              <>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {media.slice(0, 8).map((m) => (
-                    <div key={m.id} className="aspect-square rounded-lg overflow-hidden bg-gray-700 relative">
+          {media.length > 0 && heroMedia ? (
+            <>
+              <div className="relative aspect-[16/9] rounded-2xl overflow-hidden bg-black/50 border border-white/10 shadow-inner">
+                {heroMedia.isVideo ? (
+                  <video src={heroMedia.previewUrl} muted playsInline className="w-full h-full object-cover" />
+                ) : (
+                  <img src={heroMedia.previewUrl} alt="" className="w-full h-full object-cover" />
+                )}
+                {heroMedia.isCover && (
+                  <span className="absolute top-3 left-3 px-3 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg border border-white/20">
+                    {t("cover")}
+                  </span>
+                )}
+              </div>
+              {thumbMedia.length > 0 && (
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                  {thumbMedia.map((m) => (
+                    <div
+                      key={m.id}
+                      className="relative shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden border border-white/10 bg-gray-800"
+                    >
                       {m.isVideo ? (
                         <video src={m.previewUrl} muted className="w-full h-full object-cover" />
                       ) : (
                         <img src={m.previewUrl} alt="" className="w-full h-full object-cover" />
                       )}
-                      {m.isCover && (
-                        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-xs bg-indigo-600 text-white">{t("cover")}</span>
-                      )}
                     </div>
                   ))}
                 </div>
-                {uploadedMediaUrls.length === 0 && (
-                  <p className="mt-2 text-amber-400 text-sm">
-                    <Link href={`/${locale}/sell/step2`} className="underline">Go to Media</Link> and click Continue to upload.
-                  </p>
-                )}
-              </>
-            ) : (
-              <p className="text-gray-400">{t("noMedia")}</p>
-            )}
-          </div>
-        </div>
-
-        {/* 2. Car Details */}
-        <div className="backdrop-blur-xl bg-black/30 border border-white/10 rounded-2xl p-6 shadow-xl">
-          <div className="flex flex-row items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">{t("carDetails")}</h3>
-            <Button variant="outline" size="sm" asChild className="border-white/10 text-gray-300 hover:bg-white/5">
-              <Link href={`/${locale}/sell/step3`}>
-                <Edit className="h-4 w-4 mr-2" /> {t("edit")}
-              </Link>
-            </Button>
-          </div>
-          <div className="space-y-2 text-gray-300">
-            <p className="text-white font-semibold">{carDetails.year} {carDetails.make} {carDetails.model}</p>
-            <p className="text-xl font-bold text-indigo-400">${carDetails.price ? parseFloat(carDetails.price).toLocaleString() : "0"}</p>
-            <p>Mileage: {carDetails.mileage ? parseInt(carDetails.mileage, 10).toLocaleString() : "0"} km</p>
-            <p>Transmission: {carDetails.transmission || "—"}</p>
-            <p>Fuel: {carDetails.fuel_type || "—"}</p>
-            <p>Condition: {carDetails.condition || "—"}</p>
-            <p>Color: {carDetails.color || "—"}</p>
-            {carDetails.features?.length ? <p>Features: {carDetails.features.join(", ")}</p> : null}
-          </div>
-        </div>
-
-        {/* 3. Location */}
-        <div className="backdrop-blur-xl bg-black/30 border border-white/10 rounded-2xl p-6 shadow-xl">
-          <div className="flex flex-row items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2"><MapPin className="h-4 w-4" /> {t("location")}</h3>
-            <Button variant="outline" size="sm" asChild className="border-white/10 text-gray-300 hover:bg-white/5">
-              <Link href={`/${locale}/sell/step1`}>
-                <Edit className="h-4 w-4 mr-2" /> {t("edit")}
-              </Link>
-            </Button>
-          </div>
-          <div className="text-gray-300">
-            {location.city}{location.neighborhood ? `, ${location.neighborhood}` : ""}, Iraq
-          </div>
-        </div>
-
-        {/* 4. Contact */}
-        <div className="backdrop-blur-xl bg-black/30 border border-white/10 rounded-2xl p-6 shadow-xl">
-          <div className="flex flex-row items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">{t("contact")}</h3>
-            <Button variant="outline" size="sm" asChild className="border-white/10 text-gray-300 hover:bg-white/5">
-              <Link href={`/${locale}/sell/step4`}>
-                <Edit className="h-4 w-4 mr-2" /> {t("edit")}
-              </Link>
-            </Button>
-          </div>
-          <div className="space-y-1 text-gray-300">
-            <p>Phone: {maskPhone(contact.phone)}</p>
-            {!contact.whatsappSameAsPhone && contact.whatsapp && <p>WhatsApp: {maskPhone(contact.whatsapp)}</p>}
-            {contact.preferredContact && <p>Preferred: {contact.preferredContact}</p>}
-            {contact.bestTimeToCall?.length ? <p>Best time: {contact.bestTimeToCall.join(", ")}</p> : null}
-            {contact.description && <p className="mt-2 text-sm">{contact.description.slice(0, 120)}…</p>}
-          </div>
-        </div>
-
-        {/* Terms */}
-        <div className="backdrop-blur-xl bg-black/30 border border-white/10 rounded-2xl p-6 shadow-xl">
-          <h3 className="text-lg font-semibold text-white mb-4">{t("agreements")}</h3>
-          <div className="space-y-4">
-            <label className="flex items-start gap-3 cursor-pointer">
-              <Checkbox checked={agreeTerms} onCheckedChange={(c) => setAgreeTerms(!!c)} />
-              <span className="text-gray-300 text-sm">
-                {t("agreeTermsBefore")}
-                <Link href={`/${locale}/privacy`} className="text-indigo-400 hover:underline">{tFooter("privacy")}</Link>
-                {t("agreeTermsMid")}
-                <Link href={`/${locale}/terms`} className="text-indigo-400 hover:underline">{tFooter("terms")}</Link>
-                {t("agreeTermsAfter")}
-              </span>
-            </label>
-
-            <div>
-              <button
-                type="button"
-                onClick={() => setPrivacyOpen((o) => !o)}
-                className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-300"
-              >
-                {privacyOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                {t("privacySummary")}
-              </button>
-              {privacyOpen && (
-                <ul className="mt-2 text-sm text-gray-500 list-disc list-inside space-y-1">
-                  <li>{t("privacy1")}</li>
-                  <li>{t("privacy2")}</li>
-                  <li>{t("privacy3")}</li>
-                  <li>{t("privacy4")}</li>
-                </ul>
               )}
-            </div>
+              {uploadedMediaUrls.length === 0 && (
+                <p className="mt-4 text-amber-300/95 text-sm rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-3">
+                  <Link href={`/${locale}/sell/step2`} className="text-amber-200 underline underline-offset-2 font-medium">
+                    {t("stepMedia")}
+                  </Link>
+                  {" — "}
+                  {t("mediaNotSynced")}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-gray-400">{t("noMedia")}</p>
+          )}
+        </div>
 
-            <label className="flex items-start gap-3 cursor-pointer">
-              <Checkbox checked={agreeSeller} onCheckedChange={(c) => setAgreeSeller(!!c)} />
-              <span className="text-gray-300 text-sm">
-                {t("agreeSeller")}
+        {/* Car details — spec table */}
+        <div className="sell-glass p-5 md:p-6 shadow-xl shadow-black/25">
+          <div className="flex flex-row items-center justify-between mb-2">
+            <h3 className="text-lg font-semibold text-white">{t("reviewSpecsTitle")}</h3>
+            <Button variant="outline" size="sm" asChild className="border-white/12 bg-white/[0.03] text-gray-200 hover:bg-white/10">
+              <Link href={`/${locale}/sell/step3`}>
+                <Edit className="h-4 w-4 mr-1.5" /> {t("edit")}
+              </Link>
+            </Button>
+          </div>
+          <p className="text-xl font-bold text-white mb-4">
+            {carDetails.year} {carDetails.make} {carDetails.model}
+          </p>
+          <dl>
+            <SpecRow label={t("price")}>
+              <span className="text-violet-300 font-semibold">
+                ${carDetails.price ? parseFloat(carDetails.price).toLocaleString() : "0"}
               </span>
-            </label>
+              {iqdApprox != null && (
+                <span className="block text-sm text-gray-400 font-normal mt-1">
+                  {t("iqdApprox", { amount: iqdApprox.toLocaleString() })}
+                </span>
+              )}
+            </SpecRow>
+            <SpecRow label={t("mileage")}>
+              {carDetails.mileage ? parseInt(carDetails.mileage, 10).toLocaleString() : "0"}
+            </SpecRow>
+            <SpecRow label={t("transmission")}>{carDetails.transmission || "—"}</SpecRow>
+            <SpecRow label={t("fuelType")}>{carDetails.fuel_type || "—"}</SpecRow>
+            <SpecRow label={t("condition")}>{carDetails.condition || "—"}</SpecRow>
+            <SpecRow label={t("color")}>{carDetails.color || "—"}</SpecRow>
+            {carDetails.previous_owners ? (
+              <SpecRow label={t("previousOwners")}>{carDetails.previous_owners}</SpecRow>
+            ) : null}
+            {carDetails.accident_history ? (
+              <SpecRow label={t("accidentHistory")}>{carDetails.accident_history}</SpecRow>
+            ) : null}
+            {carDetails.features?.length ? (
+              <SpecRow label={t("additionalFeatures")}>{carDetails.features.join(", ")}</SpecRow>
+            ) : null}
+          </dl>
+        </div>
+
+        {/* Location card */}
+        <div className="sell-glass p-5 md:p-6 shadow-xl shadow-black/25">
+          <div className="flex flex-row items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-violet-400" /> {t("location")}
+            </h3>
+            <Button variant="outline" size="sm" asChild className="border-white/12 bg-white/[0.03] text-gray-200 hover:bg-white/10">
+              <Link href={`/${locale}/sell/step1`}>
+                <Edit className="h-4 w-4 mr-1.5" /> {t("edit")}
+              </Link>
+            </Button>
+          </div>
+          <div className="grid md:grid-cols-5 gap-4 items-stretch">
+            <div className="sell-glass md:col-span-2 relative min-h-[140px] overflow-hidden">
+              <div
+                className="absolute inset-0 opacity-35 pointer-events-none"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.12'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                }}
+              />
+              <div className="relative h-full flex flex-col items-center justify-center p-4 text-center">
+                <MapPin
+                  className={cn("h-12 w-12 text-violet-400 mb-2 motion-safe:animate-sell-pin")}
+                  strokeWidth={1.5}
+                />
+                <p className="text-xs text-gray-500">{t("reviewLocationCard")}</p>
+              </div>
+            </div>
+            <div className="sell-glass md:col-span-3 px-5 py-4 flex flex-col justify-center">
+              <p className="text-lg font-semibold text-white leading-snug">
+                {location.city}
+                {location.neighborhood ? `, ${location.neighborhood}` : ""}
+              </p>
+              <p className="text-sm text-gray-400 mt-1">{t("reviewCountryLine")}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Contact card */}
+        <div className="sell-glass p-5 md:p-6 shadow-xl shadow-black/25">
+          <div className="flex flex-row items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-white">{t("reviewContactCard")}</h3>
+            <Button variant="outline" size="sm" asChild className="border-white/12 bg-white/[0.03] text-gray-200 hover:bg-white/10">
+              <Link href={`/${locale}/sell/step4`}>
+                <Edit className="h-4 w-4 mr-1.5" /> {t("edit")}
+              </Link>
+            </Button>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-black/25 backdrop-blur-md divide-y divide-white/10 overflow-hidden">
+            <div className="flex items-start gap-3 p-4">
+              <Phone className="h-5 w-5 text-violet-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t("phone")}</p>
+                <p className="text-white font-medium">{maskIraqiMobileDisplay(contact.phone)}</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3 p-4">
+              <MessageCircle className="h-5 w-5 text-violet-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t("whatsappLabel")}</p>
+                <p className="text-white font-medium">
+                  {contact.whatsappSameAsPhone
+                    ? maskIraqiMobileDisplay(contact.phone)
+                    : maskIraqiMobileDisplay(contact.whatsapp ?? contact.phone)}
+                </p>
+                {contact.whatsappSameAsPhone && (
+                  <p className="text-xs text-gray-500 mt-1">{t("whatsappSame")}</p>
+                )}
+              </div>
+            </div>
+            {contact.preferredContact ? (
+              <div className="flex items-start gap-3 p-4">
+                <Sparkles className="h-5 w-5 text-violet-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t("preferredContact")}</p>
+                  <p className="text-white font-medium">{contact.preferredContact}</p>
+                </div>
+              </div>
+            ) : null}
+            {bestTimeDisplay ? (
+              <div className="flex items-start gap-3 p-4">
+                <Clock className="h-5 w-5 text-violet-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t("bestTimeToCall")}</p>
+                  <p className="text-white font-medium">{bestTimeDisplay}</p>
+                </div>
+              </div>
+            ) : null}
+            {contact.description ? (
+              <div className="p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{t("descriptionLabel")}</p>
+                <p className="text-sm text-gray-300 leading-relaxed">
+                  {contact.description.length > 200 ? `${contact.description.slice(0, 200)}…` : contact.description}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Agreements */}
+        <div className="relative rounded-2xl p-[1px] bg-gradient-to-br from-violet-500/35 via-indigo-500/15 to-transparent">
+          <div className="sell-glass p-5 md:p-6">
+            <h3 className="text-lg font-semibold text-white mb-1">{t("reviewAgreementsTitle")}</h3>
+            <p className="text-xs text-gray-500 mb-5">{t("agreements")}</p>
+            <div className="space-y-5">
+              <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-white/10 bg-white/[0.03] p-4 hover:bg-white/[0.05] transition-colors">
+                <Checkbox checked={agreeTerms} onCheckedChange={(c) => setAgreeTerms(!!c)} className="mt-0.5" />
+                <span className="text-gray-300 text-sm leading-relaxed">
+                  {t("agreeTermsBefore")}
+                  <Link href={`/${locale}/privacy`} className="text-violet-400 hover:underline mx-0.5">
+                    {tFooter("privacy")}
+                  </Link>
+                  {t("agreeTermsMid")}
+                  <Link href={`/${locale}/terms`} className="text-violet-400 hover:underline mx-0.5">
+                    {tFooter("terms")}
+                  </Link>
+                  {t("agreeTermsAfter")}
+                </span>
+              </label>
+
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                <button
+                  type="button"
+                  onClick={() => setPrivacyOpen((o) => !o)}
+                  className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-200 w-full"
+                >
+                  {privacyOpen ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
+                  {t("privacySummary")}
+                </button>
+                {privacyOpen && (
+                  <ul className="mt-3 text-sm text-gray-500 space-y-2 pl-1">
+                    <li className="flex gap-2"><span className="text-violet-500">•</span>{t("privacy1")}</li>
+                    <li className="flex gap-2"><span className="text-violet-500">•</span>{t("privacy2")}</li>
+                    <li className="flex gap-2"><span className="text-violet-500">•</span>{t("privacy3")}</li>
+                    <li className="flex gap-2"><span className="text-violet-500">•</span>{t("privacy4")}</li>
+                  </ul>
+                )}
+              </div>
+
+              <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-white/10 bg-white/[0.03] p-4 hover:bg-white/[0.05] transition-colors">
+                <Checkbox checked={agreeSeller} onCheckedChange={(c) => setAgreeSeller(!!c)} className="mt-0.5" />
+                <span className="text-gray-300 text-sm leading-relaxed">{t("agreeSeller")}</span>
+              </label>
+            </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-4 justify-between pt-4">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-white/10">
           <Button
+            type="button"
             variant="outline"
             onClick={() => router.push(`/${locale}/sell/step4`)}
-            className="border-white/10 text-gray-300 hover:bg-white/5 h-12 px-6 text-base"
+            className="h-12 px-6 text-base border-white/15 bg-white/[0.03] text-gray-200 hover:bg-white/10 hover:text-white"
           >
             {t("backToEdit")}
           </Button>
           <Button
-            onClick={handlePublish}
+            type="button"
+            onClick={() => void handlePublish()}
             disabled={!canPublish || publishing}
-            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 h-12 px-8 text-base font-medium shadow-lg shadow-indigo-500/20"
+            aria-busy={publishing}
+            className={cn(
+              "h-14 px-10 text-base sm:text-lg font-semibold rounded-xl border-0 transition-all duration-300",
+              "bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500",
+              "text-white shadow-xl shadow-indigo-500/30 disabled:opacity-45 disabled:shadow-none",
+              canPublish && !publishing && "motion-safe:animate-publish-glow ring-2 ring-violet-400/35"
+            )}
           >
-            {publishing ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <CheckCircle className="h-5 w-5 mr-2" />}
+            {publishing ? (
+              <Loader2 className="h-6 w-6 animate-spin mr-2 inline" aria-hidden />
+            ) : (
+              <CheckCircle className="h-6 w-6 mr-2 inline" aria-hidden />
+            )}
             {publishing ? t("publishing") : t("publishListing")}
           </Button>
         </div>

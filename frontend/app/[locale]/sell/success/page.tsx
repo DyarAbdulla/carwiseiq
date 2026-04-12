@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useLocale } from "next-intl"
 import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
+import { CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CheckCircle2, Eye, Share2, Plus, List, MapPin } from "lucide-react"
 import { supabase } from "@/lib/supabase"
@@ -72,7 +72,7 @@ export default function SellSuccessPage() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center px-4 py-12 min-h-[70vh]">
+    <div className="relative z-10 flex flex-col items-center justify-center px-4 py-12 min-h-[70vh]">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="inline-flex p-4 rounded-full bg-emerald-500/20 mb-4">
@@ -84,8 +84,8 @@ export default function SellSuccessPage() {
 
         {/* Listing preview card */}
         {listing && (
-          <Card className="bg-gray-800 border-gray-700 overflow-hidden">
-            <div className="aspect-video bg-gray-700 relative">
+          <div className="sell-glass overflow-hidden shadow-xl shadow-black/30 text-white">
+            <div className="aspect-video bg-black/40 relative">
               {firstImage(listing.images) ? (
                 <img
                   src={firstImage(listing.images)!}
@@ -105,7 +105,7 @@ export default function SellSuccessPage() {
                 </p>
               )}
             </CardContent>
-          </Card>
+          </div>
         )}
 
         <div className="flex flex-col gap-3">

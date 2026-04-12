@@ -66,10 +66,20 @@ const config: Config = {
           "0%, 100%": { backgroundPosition: "0% 50%" },
           "50%": { backgroundPosition: "100% 50%" },
         },
+        "sell-pin": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        "publish-glow": {
+          "0%, 100%": { boxShadow: "0 0 0 0 rgba(139, 92, 246, 0.45)" },
+          "55%": { boxShadow: "0 0 28px 6px rgba(139, 92, 246, 0.22)" },
+        },
       },
       animation: {
         "spin-slow": "spin-slow 3s linear infinite",
         "gradient-shift": "gradient-shift 15s ease infinite",
+        "sell-pin": "sell-pin 2s ease-in-out infinite",
+        "publish-glow": "publish-glow 2.4s ease-in-out infinite",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

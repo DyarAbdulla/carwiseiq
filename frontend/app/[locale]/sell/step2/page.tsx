@@ -1,18 +1,16 @@
 "use client"
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useRef, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
-import { Button } from "@/components/ui/button"
-import { MediaUploadStep } from "@/components/sell/MediaUploadStep"
+import { MediaUploadStep, MEDIA_MAX, MEDIA_MIN } from "@/components/sell/MediaUploadStep"
+import { SellWizardFooter } from "@/components/sell/SellWizardFooter"
 import { useSellWizard } from "@/context/SellWizardContext"
 import { useAuthContext } from "@/context/AuthContext"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2 } from "lucide-react"
+import { ImagePlus } from "lucide-react"
 
 const BUCKET = "car-images"
-const MIN_IMAGES = 4
-const MAX_IMAGES = 10
 
 function getContentType(file: File): string {
   const t = (file.type || "").trim()
@@ -28,38 +26,46 @@ export default function SellStep2Page() {
   const { user } = useAuthContext()
   const { media, addMedia, removeMedia, setCover, reorderMedia, setUploadedMediaUrls, uploadedMediaUrls } = useSellWizard()
 
-  // Enable Continue when 4–10 images inclusive (minimum 4, maximum 10)
-  const canContinue = media.length >= MIN_IMAGES && media.length <= MAX_IMAGES
+  const imageCount = media.reduce((n, m) => n + (m.isVideo ? 0 : 1), 0)
+  const canContinue = imageCount >= MEDIA_MIN && media.length <= MEDIA_MAX
   const [uploading, setUploading] = useState(false)
   const uploadingRef = useRef(false)
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") router.push(`/${locale}/sell/step1`)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [router, locale])
+
   const handleContinue = useCallback(async () => {
-    if (!canContinue || !user?.id) {
+    const imgCount = media.reduce((n, m) => n + (m.isVideo ? 0 : 1), 0)
+    const mediaOk = imgCount >= MEDIA_MIN && media.length <= MEDIA_MAX
+    if (!mediaOk || !user?.id) {
       if (!user?.id) {
-        toast({ 
-          title: t("publishUploadError"), 
-          description: t("loginRequired"), 
-          variant: "destructive" 
+        toast({
+          title: t("publishUploadError"),
+          description: t("loginRequired"),
+          variant: "destructive",
         })
       }
       return
     }
     if (uploadingRef.current) return
 
-    // Skip re-upload when we already have matching uploaded URLs (e.g. back from step3)
-    if (uploadedMediaUrls.length === media.length && uploadedMediaUrls.length >= MIN_IMAGES) {
+    if (uploadedMediaUrls.length === media.length && imgCount >= MEDIA_MIN) {
       router.push(`/${locale}/sell/step3`)
       return
     }
 
-    // Verify Supabase session before upload (REQUIRED for storage access)
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     if (!session || sessionError) {
-      console.error("[Step2] ❌ No Supabase session:", sessionError?.message || "Session not found")
-      toast({ 
-        title: t("publishUploadError"), 
-        description: t("sessionExpired"), 
-        variant: "destructive" 
+      console.error("[Step2] No Supabase session:", sessionError?.message || "Session not found")
+      toast({
+        title: t("publishUploadError"),
+        description: t("sessionExpired"),
+        variant: "destructive",
       })
       router.push(`/${locale}/login?returnUrl=${encodeURIComponent(`/${locale}/sell/step2`)}`)
       return
@@ -72,9 +78,8 @@ export default function SellStep2Page() {
       const basePath = `${user.id}/${ts}`
       const ordered = [...media].sort((a, b) => (a.isCover ? -1 : b.isCover ? 1 : a.order - b.order))
 
-      // Log selected files count before upload (supports 4–10 inclusive)
       console.log("[Step2] Selected files count:", ordered.length)
-      console.log("[Step2] ✅ Supabase session valid")
+      console.log("[Step2] Supabase session valid")
       console.log("[Step2] User ID:", user.id)
       console.log("[Step2] Starting upload to bucket:", BUCKET)
 
@@ -86,11 +91,11 @@ export default function SellStep2Page() {
         console.log(`[Step2] Uploading file ${i + 1}/${ordered.length}: ${name} (${(m.file.size / 1024).toFixed(1)} KB)`)
         return supabase.storage.from(BUCKET).upload(path, m.file, { contentType, upsert: false }).then(({ data, error }) => {
           if (error) {
-            console.error(`[Step2] ❌ Upload error for ${name}:`, error)
+            console.error(`[Step2] Upload error for ${name}:`, error)
             return { error } as const
           }
           const publicUrl = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
-          console.log(`[Step2] ✅ Uploaded ${name}:`, publicUrl)
+          console.log(`[Step2] Uploaded ${name}:`, publicUrl)
           return { publicUrl } as const
         })
       })
@@ -98,28 +103,26 @@ export default function SellStep2Page() {
       const results = await Promise.all(uploads)
       const firstErr = results.find((r) => "error" in r && r.error)
       if (firstErr && "error" in firstErr && firstErr.error) {
-        console.error("[Step2] ❌ Upload failed:", firstErr.error)
-        toast({ 
-          title: t("publishUploadError"), 
-          description: firstErr.error.message || t("uploadFailedGeneric"), 
-          variant: "destructive" 
+        console.error("[Step2] Upload failed:", firstErr.error)
+        toast({
+          title: t("publishUploadError"),
+          description: firstErr.error.message || t("uploadFailedGeneric"),
+          variant: "destructive",
         })
         setUploading(false)
         uploadingRef.current = false
         return
       }
-      // Build URLs from all successful uploads (order preserved by Promise.all)
       const urls = results.map((r) => ("publicUrl" in r ? r.publicUrl : "")).filter((url): url is string => Boolean(url))
 
-      console.log("[Step2] ✅ Uploaded URLs count:", urls.length)
-      console.log("[Step2] Uploaded URLs:", urls)
+      console.log("[Step2] Uploaded URLs count:", urls.length)
 
       if (urls.length !== ordered.length) {
-        console.warn("[Step2] ⚠️ Some uploads may have failed. Expected:", ordered.length, "Got:", urls.length)
-        toast({ 
-          title: t("warningPartialUploadTitle"), 
-          description: t("warningPartialUpload", { uploaded: urls.length, total: ordered.length }), 
-          variant: "default" 
+        console.warn("[Step2] Some uploads may have failed. Expected:", ordered.length, "Got:", urls.length)
+        toast({
+          title: t("warningPartialUploadTitle"),
+          description: t("warningPartialUpload", { uploaded: urls.length, total: ordered.length }),
+          variant: "default",
         })
       }
 
@@ -128,12 +131,12 @@ export default function SellStep2Page() {
       uploadingRef.current = false
       router.push(`/${locale}/sell/step3`)
     } catch (e) {
-      console.error("[Step2] ❌ Upload exception:", e)
+      console.error("[Step2] Upload exception:", e)
       const msg = e instanceof Error ? e.message : String(e)
-      toast({ 
-        title: t("publishUploadError"), 
-        description: msg || t("uploadFailedGeneric"), 
-        variant: "destructive" 
+      toast({
+        title: t("publishUploadError"),
+        description: msg || t("uploadFailedGeneric"),
+        variant: "destructive",
       })
       setUploading(false)
       uploadingRef.current = false
@@ -141,51 +144,47 @@ export default function SellStep2Page() {
       setUploading(false)
       uploadingRef.current = false
     }
-  }, [canContinue, user?.id, media, uploadedMediaUrls.length, setUploadedMediaUrls, router, locale, toast, t])
+  }, [user?.id, media, uploadedMediaUrls, setUploadedMediaUrls, router, locale, toast, t])
 
   return (
-    <div className="relative px-4 py-12 md:py-16">
-      {/* Ambient gradient glow - Enhanced for active step */}
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-gradient-radial from-indigo-500/20 via-purple-500/10 to-transparent blur-3xl opacity-60" />
-      </div>
-      
-      <div className="max-w-4xl mx-auto relative">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-3">{t("step2Title")}</h1>
-          <p className="text-gray-400 text-lg">
-            {t("step2Description")}
-          </p>
-        </div>
-
-        <div className="space-y-6">
-            <MediaUploadStep
-              media={media}
-              onAdd={addMedia}
-              onRemove={removeMedia}
-              onSetCover={setCover}
-              onReorder={reorderMedia}
-            />
-            <div className="flex justify-between pt-4 gap-4">
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/${locale}/sell/step1`)}
-                disabled={uploading}
-                className="border-white/10 text-gray-300 hover:bg-white/5 h-12 px-6 text-base"
-              >
-                {t("back")}
-              </Button>
-              <Button
-                onClick={handleContinue}
-                disabled={!canContinue || uploading}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 h-12 px-8 text-base font-medium shadow-lg shadow-indigo-500/20"
-              >
-                {uploading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : null}
-                {uploading ? t("uploading") : t("continue")}
-              </Button>
+    <div className="relative px-4 py-8 md:py-14 animate-in fade-in duration-500 z-10">
+      <div className="max-w-4xl mx-auto relative space-y-8">
+        <header className="space-y-2">
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-indigo-500/25 to-violet-600/20 border border-white/10 shadow-lg shadow-indigo-500/10">
+              <ImagePlus className="h-7 w-7 text-violet-300" />
             </div>
-        </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{t("step2Title")}</h1>
+              <p className="text-gray-400 text-lg mt-1 max-w-2xl">{t("step2Description")}</p>
+            </div>
+          </div>
+        </header>
+
+        <form
+          className="space-y-6"
+          onSubmit={(e) => {
+            e.preventDefault()
+            void handleContinue()
+          }}
+        >
+          <MediaUploadStep
+            media={media}
+            onAdd={addMedia}
+            onRemove={removeMedia}
+            onSetCover={setCover}
+            onReorder={reorderMedia}
+          />
+          <SellWizardFooter
+            backLabel={t("back")}
+            onBack={() => router.push(`/${locale}/sell/step1`)}
+            continueLabel={t("continue")}
+            onContinue={() => void handleContinue()}
+            continueDisabled={!canContinue || uploading}
+            continueLoading={uploading}
+            continueType="submit"
+          />
+        </form>
       </div>
     </div>
   )

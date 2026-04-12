@@ -12,7 +12,7 @@ export default function SellPage() {
   }, [router, locale])
 
   return (
-    <div className="min-h-[40vh] flex items-center justify-center">
+    <div className="relative z-10 min-h-[40vh] flex items-center justify-center">
       <p className="text-gray-400">Redirecting…</p>
     </div>
   )
