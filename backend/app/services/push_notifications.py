@@ -174,12 +174,19 @@ def merge_push_prefs(raw: Any) -> Dict[str, Any]:
         return dict(defaults)
     o = raw
     out = dict(defaults)
+    # camelCase (stored prefs) and snake_case (API / legacy) both apply
     if isinstance(o.get("newListing"), bool):
         out["newListing"] = o["newListing"]
+    elif isinstance(o.get("new_listing"), bool):
+        out["newListing"] = o["new_listing"]
     if isinstance(o.get("priceDrop"), bool):
         out["priceDrop"] = o["priceDrop"]
+    elif isinstance(o.get("price_drop"), bool):
+        out["priceDrop"] = o["price_drop"]
     if isinstance(o.get("marketTrend"), bool):
         out["marketTrend"] = o["marketTrend"]
+    elif isinstance(o.get("market_trend"), bool):
+        out["marketTrend"] = o["market_trend"]
     if isinstance(o.get("watchMakes"), list):
         out["watchMakes"] = [x for x in o["watchMakes"] if isinstance(x, str)]
     if isinstance(o.get("watchModels"), list):
@@ -449,6 +456,13 @@ def trigger_new_listing(seller_uuid: str, listing_id: str) -> Dict[str, Any]:
     return out
 
 
+def _safe_int(v: Any) -> Optional[int]:
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def admin_send(body: Dict[str, Any], cron_secret: str) -> Dict[str, Any]:
     expected = os.getenv("NOTIFICATIONS_CRON_SECRET") or ""
     if not expected or cron_secret != expected:
@@ -460,11 +474,36 @@ def admin_send(body: Dict[str, Any], cron_secret: str) -> Dict[str, Any]:
     base = _supabase_url()
 
     if not is_iraq_sending_window():
-        return {"ok": True, "skipped": "outside_sending_window", "sent": 0}
+        logger.info(
+            "admin_send: skipped (outside Iraq sending window 09:00–21:00 Asia/Baghdad)"
+        )
+        return {"ok": True, "skipped": "outside_sending_window", "sent": 0, "found": 0}
 
     ntype = body.get("type")
     if ntype not in ("price_drop", "market_trend"):
         return {"ok": False, "error": "Invalid type", "status": 400}
+
+    # Required fields for each type (avoid silent sent:0 when body is incomplete)
+    if ntype == "price_drop":
+        if body.get("newPrice") is None:
+            return {
+                "ok": False,
+                "error": "newPrice is required for price_drop",
+                "status": 400,
+            }
+        try:
+            float(body.get("newPrice"))
+        except (TypeError, ValueError):
+            return {"ok": False, "error": "newPrice must be a number", "status": 400}
+    else:
+        if body.get("make") is None or body.get("count") is None or body.get("region") is None:
+            return {
+                "ok": False,
+                "error": "make, count, and region are required for market_trend",
+                "status": 400,
+            }
+        if _safe_int(body.get("count")) is None:
+            return {"ok": False, "error": "count must be an integer", "status": 400}
 
     origin = _app_origin()
     user_filter = body.get("userId")
@@ -473,70 +512,60 @@ def admin_send(body: Dict[str, Any], cron_secret: str) -> Dict[str, Any]:
         params["user_id"] = f"eq.{user_filter}"
 
     sent = 0
+    skipped_daily_cap = 0
+    skipped_webpush = 0
+    deleted_expired = 0
     day_start = baghdad_start_of_day_iso()
 
     with httpx.Client() as client:
         r = client.get(f"{base}/rest/v1/push_subscriptions", params=params, headers=_rest_headers(), timeout=60.0)
         r.raise_for_status()
         subs = r.json()
+        found = len(subs)
         if not subs:
-            return {"ok": True, "sent": 0}
+            logger.info("admin_send: found 0 subscriptions, sent 0")
+            return {"ok": True, "sent": 0, "found": 0}
 
         for row in subs:
             prefs = merge_push_prefs(row.get("prefs"))
-            payload: Optional[Dict[str, Any]] = None
-
+            loc = (prefs.get("locale") or "en").lower()
+            if loc not in ("en", "ar", "ku"):
+                loc = "en"
+            icon_url = f"{origin}/icons/icon-192x192.png"
             if ntype == "price_drop":
-                if prefs.get("priceDrop") is False:
-                    continue
                 listing = body.get("listing") or {}
                 make = listing.get("make", "")
                 model = listing.get("model", "")
-                new_price = body.get("newPrice")
-                if new_price is None:
-                    continue
-                try:
-                    new_price_f = float(new_price)
-                except (TypeError, ValueError):
-                    continue
-                title, body_t = price_drop_copy(prefs, make, model, new_price_f)
-                loc = (prefs.get("locale") or "en").lower()
-                if loc not in ("en", "ar", "ku"):
-                    loc = "en"
+                new_price_f = float(body.get("newPrice"))
+                t, b = price_drop_copy(prefs, make, model, new_price_f)
                 lid = body.get("listingId")
                 if lid:
                     url = f"{origin}/{loc}/buy-sell?id={quote(str(lid), safe='')}"
                 else:
                     url = f"{origin}/{loc}/buy-sell"
                 payload = {
-                    "title": title,
-                    "body": body_t,
-                    "icon": f"{origin}/icons/icon-192x192.png",
-                    "badge": f"{origin}/icons/icon-192x192.png",
-                    "image": body.get("imageUrl"),
+                    "title": t,
+                    "body": b,
+                    "icon": icon_url,
+                    "badge": icon_url,
                     "data": {
                         "url": url,
                         "type": "price_drop",
                         "tag": f"listing-{lid}" if lid else "price_drop",
                     },
                 }
+                if body.get("imageUrl") is not None:
+                    payload["image"] = body.get("imageUrl")
             else:
-                if prefs.get("marketTrend") is False:
-                    continue
-                make = body.get("make")
-                count = body.get("count")
-                region = body.get("region")
-                if make is None or count is None or region is None:
-                    continue
-                title, body_t = market_trend_copy(prefs, str(make), int(count), str(region))
-                loc = (prefs.get("locale") or "en").lower()
-                if loc not in ("en", "ar", "ku"):
-                    loc = "en"
+                mt_make = str(body.get("make"))
+                mt_count = _safe_int(body.get("count"))
+                mt_region = str(body.get("region"))
+                t, b = market_trend_copy(prefs, mt_make, int(mt_count), mt_region)
                 payload = {
-                    "title": title,
-                    "body": body_t,
-                    "icon": f"{origin}/icons/icon-192x192.png",
-                    "badge": f"{origin}/icons/icon-192x192.png",
+                    "title": t,
+                    "body": b,
+                    "icon": icon_url,
+                    "badge": icon_url,
                     "data": {
                         "url": f"{origin}/{loc}/buy-sell",
                         "type": "market_trend",
@@ -544,11 +573,15 @@ def admin_send(body: Dict[str, Any], cron_secret: str) -> Dict[str, Any]:
                     },
                 }
 
-            if not payload:
-                continue
-
             cnt = _count_sends_today(client, row["id"], day_start)
             if cnt >= MAX_PUSH_PER_DAY:
+                skipped_daily_cap += 1
+                logger.debug(
+                    "admin_send skip subscription_id=%s: daily_cap (%s/%s per day)",
+                    row["id"],
+                    cnt,
+                    MAX_PUSH_PER_DAY,
+                )
                 continue
 
             try:
@@ -559,10 +592,46 @@ def admin_send(body: Dict[str, Any], cron_secret: str) -> Dict[str, Any]:
                 _insert_log(client, row["id"], ntype, {})
                 sent += 1
             except WebPushException as ex:
+                skipped_webpush += 1
                 code = _webpush_status_code(ex)
+                logger.warning(
+                    "admin_send WebPushException subscription_id=%s status=%s: %s",
+                    row["id"],
+                    code,
+                    ex,
+                )
                 if code in (404, 410):
                     _delete_subscription(client, row["id"])
-            except Exception:
-                pass
+                    deleted_expired += 1
+            except Exception as ex:
+                skipped_webpush += 1
+                logger.warning(
+                    "admin_send failed subscription_id=%s: %s",
+                    row["id"],
+                    ex,
+                    exc_info=True,
+                )
 
-    return {"ok": True, "sent": sent}
+    skipped_total = skipped_daily_cap + skipped_webpush
+    logger.info(
+        "admin_send type=%s: found %s subscriptions, skipped %s (daily_cap=%s webpush_error=%s expired_removed=%s), sent %s",
+        ntype,
+        found,
+        skipped_total,
+        skipped_daily_cap,
+        skipped_webpush,
+        deleted_expired,
+        sent,
+    )
+    out: Dict[str, Any] = {
+        "ok": True,
+        "sent": sent,
+        "found": found,
+        "skipped": skipped_total,
+        "skipped_breakdown": {
+            "daily_cap": skipped_daily_cap,
+            "webpush_error": skipped_webpush,
+            "subscriptions_deleted_expired": deleted_expired,
+        },
+    }
+    return out
