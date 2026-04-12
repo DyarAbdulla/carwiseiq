@@ -78,6 +78,29 @@ function isNumericId(id: string): boolean {
   return /^\d+$/.test(String(id || '').trim())
 }
 
+/** Image URLs for edit form / display (JSONB array of strings or {url}). */
+function listingImagesToStrings(images: unknown): string[] {
+  if (!Array.isArray(images)) return []
+  return images
+    .map((x) => (typeof x === 'string' ? x : (x as { url?: string })?.url))
+    .filter((u): u is string => typeof u === 'string' && u.length > 0)
+}
+
+function transmissionToForm(v: string | null | undefined): Transmission | '' {
+  const t = String(v || '').toLowerCase()
+  return t === 'manual' || t === 'automatic' ? (t as Transmission) : ''
+}
+
+function fuelTypeToForm(v: string | null | undefined): FuelType | '' {
+  const f = String(v || '').toLowerCase()
+  return ['petrol', 'diesel', 'electric', 'hybrid'].includes(f) ? (f as FuelType) : ''
+}
+
+function conditionToForm(v: string | null | undefined): CarCondition | '' {
+  const c = String(v || '').toLowerCase()
+  return ['excellent', 'good', 'fair'].includes(c) ? (c as CarCondition) : ''
+}
+
 function normalizeSupabaseListing(row: Record<string, unknown>): Record<string, unknown> {
   const rawImages = (row.images as unknown[]) || []
   const images = rawImages.map((u: unknown) =>
@@ -190,7 +213,13 @@ function MyListingsContent() {
     }
 
     try {
-      const response = await apiClient.getMyListings()
+      // Listings are stored in Supabase (sell flow publishes to car_listings).
+      // Legacy FastAPI /api/marketplace/my-listings uses a different DB and returns empty.
+      const { data, error: sbError } = await supabase
+        .from('car_listings')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
 
       // Check if request was aborted
       if (abortController.signal.aborted) {
@@ -200,12 +229,19 @@ function MyListingsContent() {
         return
       }
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[MyListings] [FETCH_LISTINGS] Response received, count:', response?.listings?.length || 0)
+      if (sbError) {
+        throw new Error(sbError.message)
       }
 
-      const listingsData = Array.isArray(response?.listings) ? response.listings : []
-      setListings(listingsData as CarListing[])
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[MyListings] [FETCH_LISTINGS] Supabase rows:', data?.length ?? 0)
+      }
+
+      const listingsData = (data || []).map((row) => ({
+        ...(normalizeSupabaseListing(row as Record<string, unknown>) as unknown as CarListing),
+        fromSupabase: true,
+      }))
+      setListings(listingsData)
       setError(null)
     } catch (e: any) {
       // Ignore abort errors
@@ -217,10 +253,12 @@ function MyListingsContent() {
       }
 
       if (process.env.NODE_ENV === 'development') {
-        console.error('[MyListings] [FETCH_LISTINGS] Error:', e.response?.status, e.message)
+        console.error('[MyListings] [FETCH_LISTINGS] Error:', e.response?.status ?? e.code, e.message)
       }
 
-      const errorMsg = getUserFacingApiError(e, t)
+      const errorMsg = e.message && typeof e.message === 'string' && !e.response
+        ? e.message
+        : getUserFacingApiError(e, t)
       setError(errorMsg)
       setListings([])
 
@@ -329,8 +367,7 @@ function MyListingsContent() {
     }
 
     setEditing(listing)
-    const imgs = listing.images as string[] | null | undefined
-    const arr = Array.isArray(imgs) ? imgs : []
+    const arr = listingImagesToStrings(listing.images)
     setForm({
       title: listing.title,
       make: listing.make,
@@ -338,12 +375,12 @@ function MyListingsContent() {
       year: String(listing.year),
       price: String(listing.price),
       mileage: String(listing.mileage),
-      transmission: listing.transmission,
-      fuel_type: listing.fuel_type,
-      condition: listing.condition,
+      transmission: transmissionToForm(listing.transmission as string | undefined),
+      fuel_type: fuelTypeToForm(listing.fuel_type as string | undefined),
+      condition: conditionToForm(listing.condition as string | undefined),
       location: listing.location,
       description: listing.description ?? '',
-      imagesText: arr.filter((x) => typeof x === 'string').join('\n'),
+      imagesText: arr.join('\n'),
       is_sold: listing.is_sold,
     })
     setEditOpen(true)
@@ -600,7 +637,32 @@ function MyListingsContent() {
       }
 
       console.log('[MyListings] Updating listing:', editing.id, payload)
-      await apiClient.updateDraftListing(Number(editing.id), payload)
+      const idStr = String(editing.id)
+
+      if (isNumericId(idStr)) {
+        await apiClient.updateDraftListing(Number(editing.id), payload as Record<string, unknown>)
+      } else {
+        const { error: upErr } = await supabase
+          .from('car_listings')
+          .update({
+            title: payload.title,
+            make: payload.make,
+            model: payload.model,
+            year: payload.year,
+            price: payload.price,
+            mileage: payload.mileage,
+            transmission: payload.transmission,
+            fuel_type: payload.fuel_type,
+            condition: payload.condition,
+            location: payload.location ?? '',
+            description: payload.description,
+            images,
+            is_sold: payload.is_sold,
+          })
+          .eq('id', idStr)
+          .eq('user_id', currentUser.id)
+        if (upErr) throw new Error(upErr.message)
+      }
 
       // Log activity
       const title = payload.title || `${payload.make} ${payload.model} ${payload.year}`
@@ -609,6 +671,7 @@ function MyListingsContent() {
       toast({ title: 'Success', description: 'Listing updated!' })
       closeEdit()
       await fetchListings()
+      router.push(buySellListingHref(locale, idStr))
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Failed to update listing'
       toast({ title: 'Error', description: msg, variant: 'destructive' })
@@ -622,10 +685,21 @@ function MyListingsContent() {
       toast({ title: 'Error', description: 'You can only manage your own listings.', variant: 'destructive' })
       return
     }
-    setTogglingSoldId(listing.id)
+    setTogglingSoldId(String(listing.id))
     try {
       console.log('[MyListings] Toggling sold status for listing:', listing.id, 'New status:', !listing.is_sold)
-      await apiClient.updateDraftListing(Number(listing.id), { is_sold: !listing.is_sold })
+      const idStr = String(listing.id)
+      const nextSold = !listing.is_sold
+      if (isNumericId(idStr)) {
+        await apiClient.updateDraftListing(Number(listing.id), { is_sold: nextSold })
+      } else {
+        const { error: upErr } = await supabase
+          .from('car_listings')
+          .update({ is_sold: nextSold })
+          .eq('id', idStr)
+          .eq('user_id', currentUser.id)
+        if (upErr) throw new Error(upErr.message)
+      }
 
       // Log activity
       const title = listing.title || `${listing.year} ${listing.make} ${listing.model}`
@@ -709,7 +783,16 @@ function MyListingsContent() {
   const handleDelete = async (listingId: string) => {
     setDeletingId(listingId)
     try {
-      await apiClient.deleteListing(Number(listingId))
+      if (isNumericId(listingId)) {
+        await apiClient.deleteListing(Number(listingId))
+      } else {
+        const { error: delErr } = await supabase
+          .from('car_listings')
+          .delete()
+          .eq('id', listingId)
+          .eq('user_id', currentUser!.id)
+        if (delErr) throw new Error(delErr.message)
+      }
       toast({
         title: 'Success',
         description: 'Listing deleted successfully',
@@ -932,7 +1015,7 @@ function MyListingsContent() {
                           onClick={() => setConfirmToggleSold(listing)}
                           disabled={!!togglingSoldId}
                         >
-                          {togglingSoldId === listing.id ? (
+                          {String(togglingSoldId) === String(listing.id) ? (
                             <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
                           ) : listing.is_sold ? (
                             <XCircle className="h-4 w-4 mr-1.5" />

@@ -2,9 +2,9 @@
 
 import { Button } from '@/components/ui/button'
 import { Pencil, CheckCircle2, XCircle } from 'lucide-react'
-import Link from 'next/link'
 import { useLocale } from 'next-intl'
 import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
 
 interface ManageListingActionsProps {
   listingId: string | number
@@ -29,20 +29,26 @@ export function ManageListingActions({
 }: ManageListingActionsProps) {
   const locale = useLocale() || 'en'
   const t = useTranslations('listing')
+  const router = useRouter()
+
+  const goToEdit = () => {
+    const id = encodeURIComponent(String(listingId ?? "").trim())
+    if (!id) return
+    router.push(`/${locale}/my-listings?edit=${id}`)
+  }
 
   return (
     <div className={className}>
       <h3 className="text-lg font-semibold text-white mb-4">{t('manageListing') || 'Manage Listing'}</h3>
       <div className="space-y-3">
         <Button
+          type="button"
           variant="outline"
-          asChild
           className="w-full border-white/10 text-gray-300 hover:bg-white/5 backdrop-blur-sm min-h-[44px]"
+          onClick={goToEdit}
         >
-          <Link href={`/${locale}/my-listings?edit=${listingId}`}>
-            <Pencil className="h-4 w-4 mr-2" />
-            {t('editListing')}
-          </Link>
+          <Pencil className="h-4 w-4 mr-2" />
+          {t('editListing')}
         </Button>
         {!isSold ? (
           <Button
