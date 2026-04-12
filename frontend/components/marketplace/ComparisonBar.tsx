@@ -59,7 +59,7 @@ export function ComparisonBar({ selectedCars, onRemove, onClear }: ComparisonBar
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-gradient-to-r from-[#1a1d29] via-[#2a2d3a] to-[#1a1d29] border-t border-[#5B7FFF]/30 shadow-2xl"
+          className="fixed left-0 right-0 z-50 p-4 bg-gradient-to-r from-[#1a1d29] via-[#2a2d3a] to-[#1a1d29] border-t border-[#5B7FFF]/30 shadow-2xl bottom-0 max-md:bottom-[calc(3.75rem+env(safe-area-inset-bottom,0px))] md:bottom-0"
         >
           <div className="container mx-auto max-w-7xl">
             <div className="flex items-center gap-4 flex-wrap">

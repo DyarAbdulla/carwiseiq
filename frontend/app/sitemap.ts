@@ -13,6 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/register',
     '/my-listings',
     '/buy-sell',
+    '/ai-assistant',
   ]
 
   const sitemapEntries: MetadataRoute.Sitemap = []

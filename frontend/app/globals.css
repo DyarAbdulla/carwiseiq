@@ -785,7 +785,64 @@ h2 {
   }
 }
 
+/* Mobile bottom navigation micro-animations (transform/opacity only) */
+@keyframes bottom-nav-dot-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes bottom-nav-sparkle-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.6) rotate(0deg);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1) rotate(120deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8) rotate(240deg);
+  }
+}
+
+@keyframes bottom-nav-ai-breathe {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+.bottom-nav-dot-pulse {
+  animation: bottom-nav-dot-pulse 2s ease-in-out infinite;
+}
+
+.bottom-nav-sparkle {
+  animation: bottom-nav-sparkle-fade 2s ease-out forwards;
+}
+
+.bottom-nav-ai-wrap {
+  animation: bottom-nav-ai-breathe 3s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .bottom-nav-dot-pulse,
+  .bottom-nav-sparkle,
+  .bottom-nav-ai-wrap {
+    animation: none !important;
+  }
   .coming-soon-bg-animate,
   .coming-soon-blob {
     animation: none !important;

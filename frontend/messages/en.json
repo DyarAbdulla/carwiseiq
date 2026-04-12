@@ -162,6 +162,11 @@
     "myListings": "My Listings",
     "adminDashboard": "Admin Dashboard",
     "aiAssistant": "AI Assistant",
+    "aiChat": "AI Chat",
+    "market": "Market",
+    "bottomNavAria": "Main mobile navigation",
+    "aiAssistantPageHint": "The assistant opens in a panel above. Tap below if you need to open it again.",
+    "openAssistant": "Open assistant",
     "messages": "Messages",
     "carWiseIQ": "CarWiseIQ",
     "account": "Account"

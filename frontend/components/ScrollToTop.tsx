@@ -19,7 +19,7 @@ export function ScrollToTop() {
     <Button
       variant="ghost"
       size="icon"
-      className="fixed bottom-24 right-6 z-50 rounded-full opacity-80 hover:opacity-100"
+      className="fixed right-6 z-[95] rounded-full opacity-80 hover:opacity-100 max-md:bottom-[calc(6.5rem+env(safe-area-inset-bottom,0px))] md:bottom-24"
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       aria-label="Scroll to top"
     >

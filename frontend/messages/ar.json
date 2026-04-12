@@ -77,6 +77,11 @@
     "myListings": "إعلاناتي",
     "adminDashboard": "لوحة التحكم",
     "aiAssistant": "المساعد الذكي",
+    "aiChat": "مساعد AI",
+    "market": "السوق",
+    "bottomNavAria": "التنقل الرئيسي للجوال",
+    "aiAssistantPageHint": "يُفتح المساعد في لوحة أعلاه. اضغط أدناه لفتحه مرة أخرى.",
+    "openAssistant": "فتح المساعد",
     "messages": "الرسائل",
     "account": "حسابي"
   },

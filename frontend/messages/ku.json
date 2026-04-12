@@ -77,6 +77,11 @@
     "myListings": "ئۆتۆمبێلەکانی من",
     "adminDashboard": "داشبۆردی ئەدمین",
     "aiAssistant": "یاریدەدەری AI",
+    "aiChat": "چاتی AI",
+    "market": "بازاڕ",
+    "bottomNavAria": "گەشتنی سەرەکی مۆبایل",
+    "aiAssistantPageHint": "یاریدەدەر لە پانێڵێکدا دەکرێتەوە. ئەگەر پێویستت بوو دووبارە بیکەرەوە.",
+    "openAssistant": "کردنەوەی یاریدەدەر",
     "messages": "نامەکان",
     "account": "هەژمار"
   },

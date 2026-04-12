@@ -5,6 +5,7 @@ import { Suspense } from 'react';
 import { inter, vazirmatn } from '@/lib/fonts';
 import { locales } from '@/i18n';
 import { Header } from '@/components/layout/Header';
+import { BottomNav } from '@/components/layout/BottomNav';
 import { ToastProvider } from '@/hooks/use-toast';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { SkipToContent } from '@/components/common/SkipToContent';
@@ -107,7 +108,7 @@ export default async function LocaleLayout({
                     role="main"
                   >
                     {/* Single page canvas: body supplies mesh (globals.css); no extra full-page bg in route components */}
-                    <div className="relative z-10 w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-24 sm:pb-20 overflow-x-hidden overflow-y-visible bg-transparent">
+                    <div className="relative z-10 w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-20 overflow-x-hidden overflow-y-visible bg-transparent">
                       <ErrorBoundary homeHref={`/${locale}`}>
                         <PageTransition>
                           {children}
@@ -118,6 +119,7 @@ export default async function LocaleLayout({
                   <ErrorBoundary>
                     <Footer />
                   </ErrorBoundary>
+                  <BottomNav />
                 </div>
                 <CookieConsent />
                 <ChatBot />

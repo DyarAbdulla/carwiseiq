@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
-import { Car, Menu, X, User, LogOut, Sun, Moon, LayoutDashboard, List, ChevronDown, UserCircle, Sparkles, MessageCircle, Info } from 'lucide-react'
+import { Car, Menu, X, User, LogOut, Sun, Moon, LayoutDashboard, List, ChevronDown, UserCircle, Sparkles, Info } from 'lucide-react'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
@@ -408,36 +408,8 @@ export function Header() {
 
                     <div className="border-t border-slate-200/80 dark:border-white/10 my-1" role="separator" />
 
-                    {/* Mobile nav: Home → … → Batch → About (single list, shared styles) */}
+                    {/* Mobile nav: primary CTA + secondary links (Predict/Compare/Market/AI live in bottom bar) */}
                     <nav className="space-y-1" aria-label={tKey(t, 'nav.menu')}>
-                      <Link
-                        href={`/${locale}/`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={mobileNavItemClass(isActiveNav('/'))}
-                      >
-                        {tKey(t, 'nav.home')}
-                      </Link>
-                      <Link
-                        href={`/${locale}/predict`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={mobileNavItemClass(isActiveNav('/predict'))}
-                      >
-                        {tKey(t, 'nav.predict')}
-                      </Link>
-                      <Link
-                        href={`/${locale}/compare`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={mobileNavItemClass(isActiveNav('/compare'))}
-                      >
-                        {tKey(t, 'nav.compare')}
-                      </Link>
-                      <Link
-                        href={`/${locale}/buy-sell`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={mobileNavItemClass(isActiveNav('/buy-sell'))}
-                      >
-                        {tKey(t, 'nav.buySell')}
-                      </Link>
                       <SellCarCTA
                         as="button"
                         variant="ghost"
@@ -450,17 +422,6 @@ export function Header() {
                       >
                         {t('nav.sellCar')}
                       </SellCarCTA>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          window.dispatchEvent(new CustomEvent('open-chatbot'))
-                          setMobileMenuOpen(false)
-                        }}
-                        className={cn(mobileNavItemClass(false), 'text-start')}
-                      >
-                        <MessageCircle className="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400" aria-hidden />
-                        {tKey(t, 'nav.aiAssistant')}
-                      </button>
                       <Link
                         href={`/${locale}/favorites`}
                         onClick={() => setMobileMenuOpen(false)}

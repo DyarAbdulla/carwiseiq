@@ -58,7 +58,7 @@ export default function InstallPrompt() {
 
   return (
     <div
-      className="fixed bottom-24 sm:bottom-28 left-4 right-4 sm:left-6 sm:right-6 max-w-md mx-auto z-[998] p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-xl"
+      className="fixed bottom-24 sm:bottom-28 left-4 right-4 sm:left-6 sm:right-6 max-w-md mx-auto z-[998] p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 shadow-xl max-md:bottom-[calc(6.5rem+env(safe-area-inset-bottom,0px))]"
       role="dialog"
       aria-labelledby="pwa-prompt-title"
     >
