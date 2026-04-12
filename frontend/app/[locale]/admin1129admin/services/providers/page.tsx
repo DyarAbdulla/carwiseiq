@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast'
 import { apiClient } from '@/lib/api'
 import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import { Plus, Edit, Trash2, Search, Building2 } from 'lucide-react'
+import { LtrEmbed } from '@/components/ui/LtrEmbed'
 
 export default function ProvidersManagementPage() {
   const router = useRouter()
@@ -228,7 +229,11 @@ export default function ProvidersManagementPage() {
                       {getServiceName(provider)}
                     </TableCell>
                     <TableCell className="text-gray-300">
-                      {provider.provider_phone || '-'}
+                      {provider.provider_phone ? (
+                        <LtrEmbed className="tabular-nums">{provider.provider_phone}</LtrEmbed>
+                      ) : (
+                        '-'
+                      )}
                     </TableCell>
                     <TableCell className="text-gray-300">
                       {provider.provider_address || '-'}

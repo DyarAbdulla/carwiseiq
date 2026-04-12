@@ -49,6 +49,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { LtrEmbed, LtrA } from '@/components/ui/LtrEmbed'
 
 /** Tiny gray blur placeholder for lazy images */
 const BLUR_DATA_URL = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjZTZlNmU2Ii8+PC9zdmc+'
@@ -636,7 +637,9 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
             {isSamePhone ? (
               <div>
                 <p className="text-gray-400 dark:text-gray-500 text-xs mb-1 font-medium uppercase tracking-wide">{t('phone')} / WhatsApp</p>
-                <p className="text-slate-900 dark:text-white font-semibold text-base">{formatPhoneDisplay(contactPhone)}</p>
+                <p className="text-slate-900 dark:text-white font-semibold text-base">
+                  <LtrEmbed className="tabular-nums">{formatPhoneDisplay(contactPhone)}</LtrEmbed>
+                </p>
               </div>
             ) : (
               <>
@@ -644,21 +647,25 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                   <div>
                     <p className="text-gray-400 dark:text-gray-500 text-xs mb-1 font-medium uppercase tracking-wide">{t('phone')}</p>
                     {/* Desktop: clickable link. Mobile: text only (sticky bar has Call button) */}
-                    <a href={telLink} className="hidden lg:flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-base hover:text-indigo-400 focus:outline-none focus:underline transition-colors">
+                    <LtrA href={telLink} className="hidden lg:flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-base hover:text-indigo-400 focus:outline-none focus:underline transition-colors">
                       <Phone className="h-5 w-5 shrink-0 text-emerald-400" />
-                      {formatPhoneDisplay(contactPhone)}
-                    </a>
-                    <p className="lg:hidden text-slate-900 dark:text-white font-semibold text-base">{formatPhoneDisplay(contactPhone)}</p>
+                      <span className="tabular-nums">{formatPhoneDisplay(contactPhone)}</span>
+                    </LtrA>
+                    <p className="lg:hidden text-slate-900 dark:text-white font-semibold text-base">
+                      <LtrEmbed className="tabular-nums">{formatPhoneDisplay(contactPhone)}</LtrEmbed>
+                    </p>
                   </div>
                 )}
                 {contactWhatsApp && (
                   <div>
                     <p className="text-gray-400 dark:text-gray-500 text-xs mb-1 font-medium uppercase tracking-wide">WhatsApp</p>
-                    <a href={waLink} target="_blank" rel="noopener noreferrer" className="hidden lg:flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-base hover:text-emerald-600 dark:hover:text-emerald-400 focus:outline-none focus:underline transition-colors">
+                    <LtrA href={waLink} target="_blank" rel="noopener noreferrer" className="hidden lg:flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-base hover:text-emerald-600 dark:hover:text-emerald-400 focus:outline-none focus:underline transition-colors">
                       <MessageCircle className="h-5 w-5 shrink-0 text-emerald-400" />
-                      {formatPhoneDisplay(contactWhatsApp)}
-                    </a>
-                    <p className="lg:hidden text-slate-900 dark:text-white font-semibold text-base">{formatPhoneDisplay(contactWhatsApp)}</p>
+                      <span className="tabular-nums">{formatPhoneDisplay(contactWhatsApp)}</span>
+                    </LtrA>
+                    <p className="lg:hidden text-slate-900 dark:text-white font-semibold text-base">
+                      <LtrEmbed className="tabular-nums">{formatPhoneDisplay(contactWhatsApp)}</LtrEmbed>
+                    </p>
                   </div>
                 )}
               </>
@@ -685,7 +692,13 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
     <>
       <ListingStructuredData listing={listing} />
       <div className="relative min-h-0 text-slate-900 dark:text-gray-100">
-        <div className={`max-w-7xl mx-auto px-3 sm:px-6 md:px-8 pt-0 ${hasContact ? 'pb-36 md:pb-16' : 'pb-12 md:pb-16'} md:pt-0 scroll-smooth overflow-x-hidden bg-transparent`} style={hasContact ? { paddingBottom: 'max(9rem, 160px)' } : undefined}>
+        <div
+          className={`max-w-7xl mx-auto px-3 sm:px-6 md:px-8 pt-0 md:pt-0 scroll-smooth overflow-x-hidden bg-transparent ${
+            hasContact
+              ? 'max-md:pb-[calc(248px+env(safe-area-inset-bottom))] md:pb-16'
+              : 'pb-12 md:pb-16'
+          }`}
+        >
           {/* Owner Management Panel - Mobile Only - At Top */}
           {isOwner && (
             <div className="lg:hidden mb-6 mt-20 md:mt-0">
@@ -1109,7 +1122,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                 {listing.vin && (
                   <div className="backdrop-blur-sm bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-3 sm:p-5 md:p-6 shadow-sm">
                     <h3 className="text-slate-900 dark:text-white font-semibold text-lg mb-3">{t('vin')}</h3>
-                    <p className="text-slate-700 dark:text-gray-300 font-mono text-sm md:text-base backdrop-blur-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 inline-block break-all">{listing.vin}</p>
+                    <p dir="ltr" className="ltr-embed text-slate-700 dark:text-gray-300 font-mono text-sm md:text-base backdrop-blur-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 inline-block break-all">{listing.vin}</p>
                   </div>
                 )}
 
@@ -1132,6 +1145,9 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                   </div>
                 )}
               </div>
+
+              {/* Mobile: full contact card in document flow (above bottom nav + sticky CTAs) */}
+              {hasContact && <div className="lg:hidden">{contactSellerCard}</div>}
 
               {!listing.fromSupabase && isNumericId(listingId) && (
                 <SimilarCarsRecommendations listingId={parseInt(listingId, 10)} make={listing.make} model={listing.model} year={listing.year} price={listing.price} />
@@ -1161,16 +1177,25 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
 
         {/* Sticky Action Bar - Mobile Only - Call & WhatsApp same size, side by side */}
         {hasContact && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/15 bg-slate-950/95 px-3 py-3 backdrop-blur-xl lg:hidden pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_32px_rgba(0,0,0,0.45)]">
+          <div
+            className="fixed left-0 right-0 z-[92] border-t border-white/15 bg-slate-950/95 px-3 py-3 backdrop-blur-xl lg:hidden pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_32px_rgba(0,0,0,0.45)]"
+            style={{ bottom: 'calc(60px + env(safe-area-inset-bottom, 0px))' }}
+          >
             <div className="mx-auto flex max-w-7xl gap-3">
               {contactPhone && (
                 <Button asChild className="h-[52px] min-h-[52px] flex-1 min-w-0 touch-manipulation rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-base font-semibold shadow-lg shadow-emerald-900/30 hover:from-emerald-500 hover:to-teal-500">
-                  <a href={telLink} className="flex w-full items-center justify-center gap-2"><Phone className="h-5 w-5 shrink-0" />{t('callNow')}</a>
+                  <LtrA href={telLink} className="flex w-full items-center justify-center gap-2">
+                    <Phone className="h-5 w-5 shrink-0" />
+                    {t('callNow')}
+                  </LtrA>
                 </Button>
               )}
               {contactWhatsApp && (
                 <Button asChild className="h-[52px] min-h-[52px] flex-1 min-w-0 touch-manipulation rounded-xl border border-emerald-500/40 bg-gradient-to-r from-emerald-700 to-emerald-600 text-base font-semibold text-white shadow-lg hover:from-emerald-600 hover:to-emerald-500">
-                  <a href={waLink} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2"><MessageCircle className="h-5 w-5 shrink-0" />WhatsApp</a>
+                  <LtrA href={waLink} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2">
+                    <MessageCircle className="h-5 w-5 shrink-0" />
+                    WhatsApp
+                  </LtrA>
                 </Button>
               )}
             </div>

@@ -26,6 +26,7 @@ import type { Transmission, FuelType, CarCondition } from "@/lib/database.types"
 import { notifyNewListingPublished } from "@/lib/push/push-client"
 import { computeListingCompletenessScore } from "@/lib/sellListingScore"
 import { cn } from "@/lib/utils"
+import { LtrEmbed } from "@/components/ui/LtrEmbed"
 
 function mapTransmission(v: string): Transmission {
   if (v === "Manual") return "manual"
@@ -656,7 +657,9 @@ export default function SellStep5Page() {
               <Phone className="h-5 w-5 text-violet-400 shrink-0 mt-0.5" />
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t("phone")}</p>
-                <p className="text-white font-medium">{maskIraqiMobileDisplay(contact.phone)}</p>
+                <p className="text-white font-medium">
+                  <LtrEmbed className="tabular-nums">{maskIraqiMobileDisplay(contact.phone)}</LtrEmbed>
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3 p-4">
@@ -664,9 +667,11 @@ export default function SellStep5Page() {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t("whatsappLabel")}</p>
                 <p className="text-white font-medium">
-                  {contact.whatsappSameAsPhone
-                    ? maskIraqiMobileDisplay(contact.phone)
-                    : maskIraqiMobileDisplay(contact.whatsapp ?? contact.phone)}
+                  <LtrEmbed className="tabular-nums">
+                    {contact.whatsappSameAsPhone
+                      ? maskIraqiMobileDisplay(contact.phone)
+                      : maskIraqiMobileDisplay(contact.whatsapp ?? contact.phone)}
+                  </LtrEmbed>
                 </p>
                 {contact.whatsappSameAsPhone && (
                   <p className="text-xs text-gray-500 mt-1">{t("whatsappSame")}</p>

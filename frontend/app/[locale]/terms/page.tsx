@@ -494,7 +494,7 @@ export default function TermsPage() {
                     <a
                       href={LEGAL_CONTACT.phoneTelHref}
                       dir="ltr"
-                      className="block text-xl md:text-2xl font-bold tabular-nums tracking-normal text-slate-900 dark:text-white hover:text-[#8B5CF6] transition-colors text-left"
+                      className="ltr-embed block text-xl md:text-2xl font-bold tabular-nums tracking-normal text-slate-900 dark:text-white hover:text-[#8B5CF6] transition-colors text-left"
                     >
                       {LEGAL_CONTACT.phoneDisplay}
                     </a>
@@ -511,7 +511,7 @@ export default function TermsPage() {
                     <a
                       href={LEGAL_CONTACT.emailMailto}
                       dir="ltr"
-                      className="block text-left text-xl md:text-2xl font-bold text-slate-900 dark:text-white hover:text-[#8B5CF6] transition-colors break-all"
+                      className="ltr-embed block text-left text-xl md:text-2xl font-bold text-slate-900 dark:text-white hover:text-[#8B5CF6] transition-colors break-all"
                     >
                       {LEGAL_CONTACT.email}
                     </a>

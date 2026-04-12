@@ -482,7 +482,7 @@ export default function PrivacyPage() {
                     <a
                       href={LEGAL_CONTACT.phoneTelHref}
                       dir="ltr"
-                      className="block text-left text-xl md:text-2xl font-bold tabular-nums tracking-normal text-slate-900 dark:text-white hover:text-indigo-400 transition-colors"
+                      className="ltr-embed block text-left text-xl md:text-2xl font-bold tabular-nums tracking-normal text-slate-900 dark:text-white hover:text-indigo-400 transition-colors"
                     >
                       {LEGAL_CONTACT.phoneDisplay}
                     </a>
@@ -499,7 +499,7 @@ export default function PrivacyPage() {
                     <a
                       href={LEGAL_CONTACT.emailMailto}
                       dir="ltr"
-                      className="block text-left text-xl md:text-2xl font-bold text-slate-900 dark:text-white hover:text-purple-400 transition-colors break-all"
+                      className="ltr-embed block text-left text-xl md:text-2xl font-bold text-slate-900 dark:text-white hover:text-purple-400 transition-colors break-all"
                     >
                       {LEGAL_CONTACT.email}
                     </a>

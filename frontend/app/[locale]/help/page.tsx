@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion'
 import { HelpCircle, Book, MessageSquare, Shield, TrendingUp, Car, Search } from 'lucide-react'
+import { LtrEmbed } from '@/components/ui/LtrEmbed'
 
 export default function HelpPage() {
   return (
@@ -174,7 +175,8 @@ export default function HelpPage() {
             </p>
             <div className="space-y-2">
               <p className="text-white">
-                <strong>Email:</strong> support@carpricepredictor.com
+                <strong>Email:</strong>{' '}
+                <LtrEmbed className="inline">support@carpricepredictor.com</LtrEmbed>
               </p>
               <p className="text-white">
                 <strong>Response Time:</strong> Within 24 hours

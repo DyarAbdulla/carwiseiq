@@ -21,6 +21,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { apiClient } from '@/lib/api'
+import { LtrEmbed } from '@/components/ui/LtrEmbed'
 
 interface ServiceDetailModalProps {
   service: any | null
@@ -435,7 +436,9 @@ export function ServiceDetailModal({ service, open, onOpenChange, onView }: Serv
                   <div className="p-4 backdrop-blur-xl bg-white/80 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
                     <div className="flex items-center gap-3 mb-3">
                       <Phone className="h-5 w-5 text-indigo-400" />
-                      <span className="text-slate-700 dark:text-gray-300 font-medium">{provider.provider_phone}</span>
+                      <LtrEmbed className="text-slate-700 dark:text-gray-300 font-medium tabular-nums">
+                        {provider.provider_phone}
+                      </LtrEmbed>
                     </div>
                   </div>
                 )}
@@ -443,7 +446,11 @@ export function ServiceDetailModal({ service, open, onOpenChange, onView }: Serv
                   <div className="p-4 backdrop-blur-xl bg-white/80 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
                     <div className="flex items-center gap-3 mb-3">
                       <Mail className="h-5 w-5 text-indigo-400" />
-                      <a href={`mailto:${provider.provider_email}`} className="text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium">
+                      <a
+                        href={`mailto:${provider.provider_email}`}
+                        dir="ltr"
+                        className="ltr-embed text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium break-all"
+                      >
                         {provider.provider_email}
                       </a>
                     </div>
@@ -453,7 +460,9 @@ export function ServiceDetailModal({ service, open, onOpenChange, onView }: Serv
                   <div className="p-4 backdrop-blur-xl bg-white/80 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
                     <div className="flex items-center gap-3 mb-3">
                       <MessageCircle className="h-5 w-5 text-green-400" />
-                      <span className="text-gray-300 font-medium">{provider.provider_whatsapp || provider.provider_phone}</span>
+                      <LtrEmbed className="text-gray-300 font-medium tabular-nums">
+                        {provider.provider_whatsapp || provider.provider_phone}
+                      </LtrEmbed>
                     </div>
                   </div>
                 )}
@@ -461,7 +470,13 @@ export function ServiceDetailModal({ service, open, onOpenChange, onView }: Serv
                   <div className="p-4 backdrop-blur-xl bg-white/80 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
                     <div className="flex items-center gap-3 mb-3">
                       <Globe className="h-5 w-5 text-indigo-400" />
-                      <a href={provider.provider_website} target="_blank" rel="noopener noreferrer" className="text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium">
+                      <a
+                        href={provider.provider_website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        dir="ltr"
+                        className="ltr-embed text-slate-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium break-all"
+                      >
                         {provider.provider_website}
                       </a>
                     </div>

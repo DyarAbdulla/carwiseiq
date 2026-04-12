@@ -59,6 +59,12 @@ body {
   background-color: #0f172a;
 }
 
+/* Phone numbers, emails, URLs: always LTR inside RTL pages (Ku/Ar) */
+.ltr-embed {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
 /* Profile page: single background (animated gradient); hide body bg to avoid duplicate */
 body.profile-single-bg {
   background: transparent !important;

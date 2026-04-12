@@ -21,6 +21,7 @@ import {
   MapPin, Search, Phone, Building2, Star, ChevronRight, X,
   Rocket, Mail, Home, Sparkles
 } from 'lucide-react'
+import { LtrEmbed } from '@/components/ui/LtrEmbed'
 
 const ICON_MAP: Record<string, any> = {
   'fuel-pump': Fuel,
@@ -654,7 +655,7 @@ export default function ServicesPage() {
                               {provider.provider_phone && (
                                 <div className="flex items-center gap-2 text-sm text-gray-300">
                                   <Phone className="h-4 w-4 shrink-0 text-indigo-400" />
-                                  <span>{provider.provider_phone}</span>
+                                  <LtrEmbed className="tabular-nums">{provider.provider_phone}</LtrEmbed>
                                 </div>
                               )}
 

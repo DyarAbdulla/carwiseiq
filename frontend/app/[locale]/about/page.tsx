@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { LtrEmbed } from "@/components/ui/LtrEmbed"
 
 type BioLang = "en" | "ku" | "ar"
 
@@ -483,7 +484,11 @@ export default function AboutPage() {
                     {label}
                   </p>
                   <p className="truncate text-[10px] leading-snug text-gray-400 group-hover:text-gray-200 xs:text-xs sm:text-sm">
-                    {sub}
+                    {key === "phone" || key === "email" ? (
+                      <LtrEmbed className="inline tabular-nums">{sub}</LtrEmbed>
+                    ) : (
+                      sub
+                    )}
                   </p>
                 </div>
               </Link>

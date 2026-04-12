@@ -31,6 +31,7 @@ import type { Json } from '@/lib/database.types'
 import { LoadingButton } from '@/components/common/LoadingButton'
 import { PasswordStrength } from '@/components/common/PasswordStrength'
 import { ProfileAvatarUpload } from '@/components/profile/ProfileAvatarUpload'
+import { LtrEmbed } from '@/components/ui/LtrEmbed'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -424,7 +425,7 @@ export default function ProfilePage() {
                   {profile.full_name || tAuth('user')}
                 </h2>
                 <p className="mt-1 max-w-[240px] truncate text-xs text-slate-600 dark:text-slate-400 md:text-sm">
-                  {profile.email}
+                  <LtrEmbed className="block truncate">{profile.email}</LtrEmbed>
                 </p>
                 {profile.email_verified && (
                   <Badge className="mt-3 border border-emerald-500/35 bg-emerald-500/15 text-xs font-medium text-emerald-700 dark:text-emerald-300">
@@ -576,7 +577,7 @@ export default function ProfilePage() {
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <p className="min-w-0 break-all text-base font-medium text-slate-900 dark:text-white">
-                            {profile.email}
+                            <LtrEmbed className="break-all">{profile.email}</LtrEmbed>
                           </p>
                           {profile.email_verified ? (
                             <span className="rounded-md border border-emerald-500/30 bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:text-emerald-300">
@@ -595,7 +596,11 @@ export default function ProfilePage() {
                           {t('phone')}
                         </div>
                         <p className="mt-2 break-words text-base font-medium text-slate-900 dark:text-white">
-                          {profile.phone || t('notSet')}
+                          {profile.phone ? (
+                            <LtrEmbed className="tabular-nums">{profile.phone}</LtrEmbed>
+                          ) : (
+                            t('notSet')
+                          )}
                         </p>
                       </div>
                       <div className="rounded-xl border border-slate-200/90 bg-slate-50/60 p-4 transition-colors hover:border-violet-300/50 dark:border-white/[0.08] dark:bg-white/[0.04] dark:hover:border-violet-500/30">
@@ -629,10 +634,11 @@ export default function ProfilePage() {
                       </Label>
                       <Input
                         id="phone"
+                        dir="ltr"
                         value={profileData.phone}
                         onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                         placeholder={t('enterPhone')}
-                        className="mt-1.5 border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.05] dark:text-white dark:placeholder:text-slate-500 focus-visible:ring-violet-500"
+                        className="ltr-embed mt-1.5 border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.05] dark:text-white dark:placeholder:text-slate-500 focus-visible:ring-violet-500"
                       />
                     </div>
                     <div>

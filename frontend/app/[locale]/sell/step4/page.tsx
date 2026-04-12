@@ -163,10 +163,11 @@ export default function SellStep4Page() {
                 <h2 className="text-base font-semibold text-white">{t("phone")} *</h2>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
-                <span className="inline-flex items-center justify-center px-4 rounded-xl bg-white/[0.06] border border-white/12 text-gray-200 h-12 shrink-0 font-medium">
+                <span className="ltr-embed inline-flex items-center justify-center px-4 rounded-xl bg-white/[0.06] border border-white/12 text-gray-200 h-12 shrink-0 font-medium" dir="ltr">
                   +964
                 </span>
                 <Input
+                  dir="ltr"
                   value={phone ?? ""}
                   inputMode="numeric"
                   autoComplete="tel-national"
@@ -176,7 +177,7 @@ export default function SellStep4Page() {
                   }}
                   placeholder={t("phonePlaceholder")}
                   aria-describedby="sell-phone-hint"
-                  className={cn(inputCls, "flex-1", phoneError && "border-red-500/70 focus-visible:ring-red-500/30")}
+                  className={cn("ltr-embed flex-1", inputCls, phoneError && "border-red-500/70 focus-visible:ring-red-500/30")}
                 />
               </div>
               {phoneError && <p className="text-red-400 text-sm">{phoneError}</p>}
@@ -193,6 +194,7 @@ export default function SellStep4Page() {
                 {!whatsappSame && (
                   <div className="space-y-2">
                     <Input
+                      dir="ltr"
                       value={whatsapp ?? ""}
                       inputMode="numeric"
                       autoComplete="tel-national"
@@ -201,7 +203,7 @@ export default function SellStep4Page() {
                         setWhatsappError("")
                       }}
                       placeholder={t("phonePlaceholder")}
-                      className={cn(inputCls, whatsappError && "border-red-500/70")}
+                      className={cn("ltr-embed", inputCls, whatsappError && "border-red-500/70")}
                     />
                     {whatsappError && <p className="text-red-400 text-sm">{whatsappError}</p>}
                   </div>
