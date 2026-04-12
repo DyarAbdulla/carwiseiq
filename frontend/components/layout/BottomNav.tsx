@@ -10,7 +10,7 @@ import {
   ShoppingBag,
   MessageCircle,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -41,6 +41,13 @@ export function BottomNav() {
   const [showPredictHint, setShowPredictHint] = useState(false)
   /** Tooltip only when bottom nav is visible (md:hidden breakpoint) */
   const [isMobileNavViewport, setIsMobileNavViewport] = useState(false)
+  /** Horizontal center of Predict tab in viewport px — avoids % guesswork and motion/transform conflicts */
+  const predictTabRef = useRef<HTMLAnchorElement | null>(null)
+  const [predictTabCenterX, setPredictTabCenterX] = useState<number | null>(null)
+  const [portalReady, setPortalReady] = useState(false)
+  /** Keeps portal mounted until exit animation finishes */
+  const [hintPortalOpen, setHintPortalOpen] = useState(false)
+  const [hintVisible, setHintVisible] = useState(false)
 
   useEffect(() => {
     try {
@@ -63,6 +70,54 @@ export function BottomNav() {
     mq.addEventListener("change", apply)
     return () => mq.removeEventListener("change", apply)
   }, [])
+
+  useEffect(() => {
+    setPortalReady(true)
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!isMobileNavViewport) {
+      setPredictTabCenterX(null)
+      return
+    }
+    if (!showPredictHint) {
+      /* Keep last centerX while hint fades out (avoid unmounting portal before exit). */
+      return
+    }
+    const el = predictTabRef.current
+    if (!el) {
+      setPredictTabCenterX(null)
+      return
+    }
+    const update = () => {
+      const r = el.getBoundingClientRect()
+      setPredictTabCenterX(r.left + r.width / 2)
+    }
+    update()
+    const vv = window.visualViewport
+    vv?.addEventListener("resize", update)
+    vv?.addEventListener("scroll", update)
+    window.addEventListener("resize", update)
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => {
+      vv?.removeEventListener("resize", update)
+      vv?.removeEventListener("scroll", update)
+      window.removeEventListener("resize", update)
+      ro.disconnect()
+    }
+  }, [showPredictHint, isMobileNavViewport, pathname, isRTL])
+
+  useEffect(() => {
+    const shouldShow =
+      showPredictHint && isMobileNavViewport && predictTabCenterX != null
+    if (shouldShow) {
+      setHintPortalOpen(true)
+      setHintVisible(true)
+    } else {
+      setHintVisible(false)
+    }
+  }, [showPredictHint, isMobileNavViewport, predictTabCenterX])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -99,9 +154,6 @@ export function BottomNav() {
     setShowPredictHint(false)
   }
 
-  /** Predict is 2nd tab LTR; with flex-row-reverse (RTL) it is 2nd from the right → 70% from left. */
-  const predictTooltipLeftPct = isRTL ? 70 : 30
-
   if (pathname.includes("/admin1129admin")) {
     return null
   }
@@ -114,7 +166,50 @@ export function BottomNav() {
     return basePathname === href || basePathname.startsWith(`${href}/`)
   }
 
+  const tooltipPortal =
+    portalReady &&
+    typeof document !== "undefined" &&
+    hintPortalOpen &&
+    predictTabCenterX != null &&
+    createPortal(
+      <AnimatePresence
+        onExitComplete={() => {
+          setHintPortalOpen(false)
+          setPredictTabCenterX(null)
+        }}
+      >
+        {hintVisible && (
+          <motion.div
+            key="predict-nav-hint-anchor"
+            className="pointer-events-none fixed z-[95] -translate-x-1/2"
+            style={{
+              left: predictTabCenterX,
+              bottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))",
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <button
+              type="button"
+              className="pointer-events-auto relative max-w-[min(280px,calc(100vw-2rem))] cursor-pointer rounded-lg border border-white/12 bg-[rgba(20,20,40,0.95)] px-4 py-2 text-center text-[14px] font-medium leading-snug text-white shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C5CE7]/60"
+              onClick={dismissPredictHint}
+            >
+              <span
+                className="pointer-events-none absolute left-1/2 top-full -translate-x-1/2 h-0 w-0 border-x-[8px] border-x-transparent border-t-[8px] border-t-[rgba(20,20,40,0.95)]"
+                aria-hidden
+              />
+              {tOnboarding("predictTooltip")}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>,
+      document.body
+    )
+
   return (
+    <>
     <nav
       className="fixed inset-x-0 bottom-0 z-[90] md:hidden pointer-events-none"
       aria-label={t("bottomNavAria")}
@@ -137,6 +232,7 @@ export function BottomNav() {
           return (
             <Link
               key={key}
+              ref={key === "predict" ? predictTabRef : undefined}
               href={fullHref}
               data-onboarding-predict-tab={key === "predict" ? "" : undefined}
               className={cn(
@@ -194,33 +290,8 @@ export function BottomNav() {
           )
         })}
       </div>
-      {typeof document !== "undefined" &&
-        showPredictHint &&
-        isMobileNavViewport &&
-        createPortal(
-          <AnimatePresence>
-            <motion.button
-              type="button"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 6 }}
-              transition={{ duration: 0.2 }}
-              className="fixed z-[105] max-w-[min(280px,calc(100vw-2rem))] -translate-x-1/2 cursor-pointer rounded-lg border border-white/12 bg-[rgba(20,20,40,0.95)] px-4 py-2 text-center text-sm font-medium text-white shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6C5CE7]/60"
-              style={{
-                left: `${predictTooltipLeftPct}%`,
-                bottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))",
-              }}
-              onClick={dismissPredictHint}
-            >
-              <span
-                className="pointer-events-none absolute left-1/2 top-full -translate-x-1/2 border-[7px] border-transparent border-t-[rgba(20,20,40,0.95)]"
-                aria-hidden
-              />
-              {tOnboarding("predictTooltip")}
-            </motion.button>
-          </AnimatePresence>,
-          document.body
-        )}
     </nav>
+    {tooltipPortal}
+    </>
   )
 }
