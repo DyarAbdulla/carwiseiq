@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -12,10 +12,14 @@ import { apiClient } from '@/lib/api'
 import { useAuthContext } from '@/context/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
+import { Input } from '@/components/ui/input'
+import { subscribeWithApi } from '@/lib/push/push-client'
+import type { PushPrefs } from '@/lib/push/types'
 
 export default function NotificationSettingsPage() {
   const router = useRouter()
   const locale = useLocale()
+  const tPush = useTranslations('pushSettings')
   const { user, loading: authLoading } = useAuthContext()
   const isAuthenticated = !!user
   const { toast } = useToast()
@@ -30,6 +34,126 @@ export default function NotificationSettingsPage() {
   })
 
   const NOTIFICATION_SETTINGS_KEY = 'carwise_notification_settings'
+
+  const [pushPrefsForm, setPushPrefsForm] = useState({
+    newListing: true,
+    priceDrop: true,
+    marketTrend: true,
+    watchMakes: '',
+    watchModels: '',
+    priceMin: '',
+    priceMax: '',
+  })
+  const [pushPrefsLoading, setPushPrefsLoading] = useState(false)
+  const [pushSubscribeBusy, setPushSubscribeBusy] = useState(false)
+  const [pushSaving, setPushSaving] = useState(false)
+
+  const loadWebPushPrefs = async (accessToken: string) => {
+    setPushPrefsLoading(true)
+    try {
+      const r = await fetch('/api/notifications/preferences', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      if (!r.ok) return
+      const j = await r.json()
+      const p = j.prefs as PushPrefs
+      setPushPrefsForm({
+        newListing: p.newListing !== false,
+        priceDrop: p.priceDrop !== false,
+        marketTrend: p.marketTrend !== false,
+        watchMakes: (p.watchMakes || []).join(', '),
+        watchModels: (p.watchModels || []).join(', '),
+        priceMin: p.priceMin != null ? String(p.priceMin) : '',
+        priceMax: p.priceMax != null ? String(p.priceMax) : '',
+      })
+    } catch {
+      /* ignore */
+    } finally {
+      setPushPrefsLoading(false)
+    }
+  }
+
+  const handleSaveWebPushPrefs = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      toast({
+        title: tPush('noSubscription'),
+        variant: 'destructive',
+      })
+      return
+    }
+    setPushSaving(true)
+    try {
+      const body: PushPrefs = {
+        newListing: pushPrefsForm.newListing,
+        priceDrop: pushPrefsForm.priceDrop,
+        marketTrend: pushPrefsForm.marketTrend,
+        watchMakes: pushPrefsForm.watchMakes
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        watchModels: pushPrefsForm.watchModels
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        priceMin: pushPrefsForm.priceMin.trim() !== '' ? Number(pushPrefsForm.priceMin) : null,
+        priceMax: pushPrefsForm.priceMax.trim() !== '' ? Number(pushPrefsForm.priceMax) : null,
+        locale,
+      }
+      const r = await fetch('/api/notifications/preferences', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(body),
+      })
+      if (r.status === 404) {
+        toast({ title: tPush('noSubscription'), variant: 'destructive' })
+        return
+      }
+      if (!r.ok) throw new Error('save failed')
+      toast({ title: tPush('saved'), description: tPush('savedDesc') })
+    } catch {
+      toast({ title: tPush('subscribeFail'), variant: 'destructive' })
+    } finally {
+      setPushSaving(false)
+    }
+  }
+
+  const handleSubscribeDevice = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      toast({ title: tPush('noSubscription'), variant: 'destructive' })
+      return
+    }
+    setPushSubscribeBusy(true)
+    try {
+      const ok = await subscribeWithApi(session.access_token, locale, {
+        newListing: pushPrefsForm.newListing,
+        priceDrop: pushPrefsForm.priceDrop,
+        marketTrend: pushPrefsForm.marketTrend,
+        watchMakes: pushPrefsForm.watchMakes
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        watchModels: pushPrefsForm.watchModels
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        priceMin: pushPrefsForm.priceMin.trim() !== '' ? Number(pushPrefsForm.priceMin) : null,
+        priceMax: pushPrefsForm.priceMax.trim() !== '' ? Number(pushPrefsForm.priceMax) : null,
+      })
+      if (ok) {
+        toast({ title: tPush('subscribeSuccess') })
+        await loadWebPushPrefs(session.access_token)
+      } else {
+        toast({ title: tPush('subscribeFail'), variant: 'destructive' })
+      }
+    } finally {
+      setPushSubscribeBusy(false)
+    }
+  }
 
   useEffect(() => {
     if (authLoading) return
@@ -111,6 +235,10 @@ export default function NotificationSettingsPage() {
         })
       }
     } finally {
+      const { data: { session: s } } = await supabase.auth.getSession()
+      if (s?.access_token) {
+        await loadWebPushPrefs(s.access_token)
+      }
       setLoading(false)
     }
   }
@@ -288,38 +416,129 @@ export default function NotificationSettingsPage() {
               </CardContent>
             </Card>
 
-            {/* Push Notifications */}
+            {/* Web Push — marketplace alerts */}
             <Card className="bg-gray-800 border-gray-700">
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <Smartphone className="h-5 w-5 text-blue-400" />
                   <div>
-                    <CardTitle className="text-white">Push Notifications</CardTitle>
+                    <CardTitle className="text-white">{tPush('webPushTitle')}</CardTitle>
                     <CardDescription className="text-gray-400">
-                      Browser push notifications (coming soon)
+                      {tPush('webPushDesc')}
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-5">
+                {pushPrefsLoading ? (
+                  <p className="text-sm text-gray-400">{tPush('loadingPush')}</p>
+                ) : null}
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-gray-400">{tPush('noSubscription')}</p>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={pushSubscribeBusy}
+                    onClick={handleSubscribeDevice}
+                    className="bg-[#6C5CE7] text-white hover:bg-[#5b4cdb]"
+                  >
+                    {pushSubscribeBusy ? '…' : tPush('enableBrowser')}
+                  </Button>
+                </div>
                 <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-white">Enable Push Notifications</Label>
-                    <p className="text-sm text-gray-400">
-                      Receive browser notifications for new matches and price drops
-                    </p>
+                  <div className="space-y-0.5 pe-4">
+                    <Label className="text-white">{tPush('newListing')}</Label>
+                    <p className="text-sm text-gray-400">{tPush('newListingDesc')}</p>
                   </div>
                   <Switch
-                    checked={settings.push_notifications}
+                    checked={pushPrefsForm.newListing}
                     onCheckedChange={(checked) =>
-                      setSettings({ ...settings, push_notifications: checked })
+                      setPushPrefsForm((p) => ({ ...p, newListing: checked }))
                     }
-                    disabled={true}
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Push notifications will be available in a future update
-                </p>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5 pe-4">
+                    <Label className="text-white">{tPush('priceDrop')}</Label>
+                    <p className="text-sm text-gray-400">{tPush('priceDropDesc')}</p>
+                  </div>
+                  <Switch
+                    checked={pushPrefsForm.priceDrop}
+                    onCheckedChange={(checked) =>
+                      setPushPrefsForm((p) => ({ ...p, priceDrop: checked }))
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5 pe-4">
+                    <Label className="text-white">{tPush('marketTrend')}</Label>
+                    <p className="text-sm text-gray-400">{tPush('marketTrendDesc')}</p>
+                  </div>
+                  <Switch
+                    checked={pushPrefsForm.marketTrend}
+                    onCheckedChange={(checked) =>
+                      setPushPrefsForm((p) => ({ ...p, marketTrend: checked }))
+                    }
+                  />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-white">{tPush('watchMakes')}</Label>
+                    <Input
+                      className="bg-gray-700 border-gray-600 text-white"
+                      value={pushPrefsForm.watchMakes}
+                      onChange={(e) =>
+                        setPushPrefsForm((p) => ({ ...p, watchMakes: e.target.value }))
+                      }
+                      placeholder="Toyota, Kia"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white">{tPush('watchModels')}</Label>
+                    <Input
+                      className="bg-gray-700 border-gray-600 text-white"
+                      value={pushPrefsForm.watchModels}
+                      onChange={(e) =>
+                        setPushPrefsForm((p) => ({ ...p, watchModels: e.target.value }))
+                      }
+                      placeholder="Camry, Sportage"
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label className="text-white">{tPush('priceMin')}</Label>
+                    <Input
+                      type="number"
+                      className="bg-gray-700 border-gray-600 text-white"
+                      value={pushPrefsForm.priceMin}
+                      onChange={(e) =>
+                        setPushPrefsForm((p) => ({ ...p, priceMin: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white">{tPush('priceMax')}</Label>
+                    <Input
+                      type="number"
+                      className="bg-gray-700 border-gray-600 text-white"
+                      value={pushPrefsForm.priceMax}
+                      onChange={(e) =>
+                        setPushPrefsForm((p) => ({ ...p, priceMax: e.target.value }))
+                      }
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">{tPush('allMakesHint')}</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-gray-600 text-gray-200"
+                  onClick={handleSaveWebPushPrefs}
+                  disabled={pushSaving}
+                >
+                  {pushSaving ? '…' : tPush('savePushPrefs')}
+                </Button>
               </CardContent>
             </Card>
 

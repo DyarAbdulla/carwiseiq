@@ -18,6 +18,7 @@ import {
   ChevronUp,
 } from "lucide-react"
 import type { Transmission, FuelType, CarCondition } from "@/lib/database.types"
+import { notifyNewListingPublished } from "@/lib/push/push-client"
 
 function mapTransmission(v: string): Transmission {
   if (v === "Manual") return "manual"
@@ -260,6 +261,11 @@ export default function SellStep5Page() {
 
       const id = insertResult.data.id
       console.log("=== PUBLISH SUCCESS ===", id)
+
+      const token = sessionData.session.access_token
+      if (token) {
+        void notifyNewListingPublished(id, token)
+      }
 
       // Log create listing activity
       const { activityHelpers } = await import('@/lib/activityLogger')

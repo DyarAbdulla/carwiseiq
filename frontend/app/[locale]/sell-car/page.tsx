@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
+import { notifyNewListingPublished } from '@/lib/push/push-client'
 import { Loader2, Upload, X } from 'lucide-react'
 
 const BUCKET = 'car-images'
@@ -171,8 +172,19 @@ function SellCarForm() {
         status: 'active',
       }
 
-      const { error: insertErr } = await supabase.from('car_listings').insert(insert)
+      const { data: created, error: insertErr } = await supabase
+        .from('car_listings')
+        .insert(insert)
+        .select('id')
+        .single()
       if (insertErr) throw insertErr
+
+      if (created?.id) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.access_token) {
+          void notifyNewListingPublished(created.id, session.access_token)
+        }
+      }
 
       toast({ title: 'Success', description: 'Car listed successfully!' })
       router.push(`/${locale}/my-listings?success=listing-created`)

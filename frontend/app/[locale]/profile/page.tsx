@@ -624,6 +624,23 @@ export default function ProfilePage() {
                 {t('downloadMyData')}
               </Button>
             </div>
+
+            <div className="backdrop-blur-xl bg-white/90 dark:bg-white/[0.08] border border-slate-200/80 dark:border-white/10 dark:border-[#8B5CF6]/20 rounded-2xl p-6 shadow-lg shadow-black/5 dark:shadow-none ring-1 ring-slate-200/30 dark:ring-white/5">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('notificationSettingsCardTitle')}</h2>
+                <p className="text-slate-600 dark:text-slate-400 text-sm">
+                  {t('notificationSettingsCardDesc')}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="w-full md:w-auto border-[#6C5CE7]/40 text-[#6C5CE7] hover:bg-[#6C5CE7]/10"
+                onClick={() => router.push(`/${locale}/settings/notifications`)}
+              >
+                <Smartphone className="h-4 w-4 mr-2" />
+                {t('openNotificationSettings')}
+              </Button>
+            </div>
               </>
             )}
 

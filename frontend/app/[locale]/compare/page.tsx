@@ -27,6 +27,7 @@ import { CompareSaveAndHistory } from '@/components/compare/CompareSaveAndHistor
 import { saveCompareToHistory, type CompareHistoryEntry } from '@/lib/compareHistory'
 import { parseCompareUrl } from '@/lib/shareUtils'
 import { activityHelpers } from '@/lib/activityLogger'
+import { markCompareEngaged } from '@/lib/push/engagement'
 
 interface CarCard {
   id: string
@@ -559,6 +560,7 @@ function ComparePageContent() {
           description: `Car ${id}: Predicted ${formatCurrency(result.predicted_price)}`,
         })
       }
+      markCompareEngaged()
     } catch (error: any) {
       console.error('❌ [Compare] Prediction failed:', {
         id,
@@ -714,6 +716,7 @@ function ComparePageContent() {
         const failureCount = results.filter(r => !r.success).length
 
         if (successCount > 0) {
+          markCompareEngaged()
           if (toast?.toast) {
             toast.toast({
               title: tCommon?.('success') || 'Success',

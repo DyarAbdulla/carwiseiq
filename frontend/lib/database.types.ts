@@ -208,6 +208,63 @@ export interface Database {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          prefs: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          endpoint: string
+          p256dh: string
+          auth: string
+          prefs?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          endpoint?: string
+          p256dh?: string
+          auth?: string
+          prefs?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      push_notification_log: {
+        Row: {
+          id: string
+          subscription_id: string
+          notification_type: string
+          sent_at: string
+          meta: Json | null
+        }
+        Insert: {
+          id?: string
+          subscription_id: string
+          notification_type: string
+          sent_at?: string
+          meta?: Json | null
+        }
+        Update: {
+          id?: string
+          subscription_id?: string
+          notification_type?: string
+          sent_at?: string
+          meta?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -239,3 +296,6 @@ export type CarListingUpdate = Updatable<'car_listings'>
 export type Favorite = Tables<'favorites'>
 export type FavoriteInsert = Insertable<'favorites'>
 export type FavoriteUpdate = Updatable<'favorites'>
+
+export type PushSubscriptionRow = Tables<'push_subscriptions'>
+export type PushSubscriptionInsert = Insertable<'push_subscriptions'>

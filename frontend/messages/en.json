@@ -1816,7 +1816,42 @@
     "sessionEnded": "Session ended",
     "sessionEndedDesc": "That device has been signed out",
     "signedOutAll": "Signed out",
-    "signedOutAllDesc": "All other devices have been signed out"
+    "signedOutAllDesc": "All other devices have been signed out",
+    "notificationSettingsCardTitle": "Notifications",
+    "notificationSettingsCardDesc": "Manage browser push alerts for new listings, price drops, and market digests.",
+    "openNotificationSettings": "Open notification settings"
+  },
+  "pushPrompt": {
+    "title": "Get notified when new cars match your interests!",
+    "enable": "Enable Notifications",
+    "notNow": "Not now",
+    "loginRequired": "Please sign in to enable notifications.",
+    "enabled": "Notifications enabled!",
+    "failed": "Could not enable notifications. Try again later.",
+    "denied": "Notifications are blocked in your browser settings."
+  },
+  "pushSettings": {
+    "webPushTitle": "Browser push (Marketplace)",
+    "webPushDesc": "Get alerts for new listings, price drops, and weekly summaries. Requires HTTPS or localhost.",
+    "newListing": "New listings",
+    "newListingDesc": "When a car is listed that matches your filters",
+    "priceDrop": "Price drops",
+    "priceDropDesc": "When a car you viewed drops in price",
+    "marketTrend": "Weekly market digest",
+    "marketTrendDesc": "Summary of new listings for makes you follow",
+    "watchMakes": "Watch makes (comma-separated)",
+    "watchModels": "Watch models (optional, comma-separated)",
+    "priceMin": "Min price (USD)",
+    "priceMax": "Max price (USD)",
+    "saved": "Saved",
+    "savedDesc": "Push preferences updated.",
+    "noSubscription": "Subscribe on this device first (use the banner or button below).",
+    "enableBrowser": "Subscribe on this device",
+    "subscribeSuccess": "Subscribed to push on this device.",
+    "subscribeFail": "Could not subscribe. Use HTTPS and allow notifications.",
+    "savePushPrefs": "Save push filters",
+    "loadingPush": "Loading push settings…",
+    "allMakesHint": "Leave makes empty to receive all new listings (within price range)."
   },
   "blog": {
     "title": "Car Buying Tips",

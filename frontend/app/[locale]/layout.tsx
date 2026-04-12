@@ -41,6 +41,10 @@ const OnboardingModal = dynamic(
   () => import('@/components/onboarding/OnboardingModal').then((m) => ({ default: m.OnboardingModal })),
   { ssr: false, loading: () => null }
 );
+const PushClientKit = dynamic(
+  () => import('@/components/push/PushClientKit').then((m) => ({ default: m.PushClientKit })),
+  { ssr: false, loading: () => null }
+);
 export function generateStaticParams() {
   return [{ locale: 'en' }, { locale: 'ar' }, { locale: 'ku' }]
 }
@@ -126,6 +130,7 @@ export default async function LocaleLayout({
                   <BottomNav />
                 </div>
                 <CookieConsent />
+                <PushClientKit />
                 <ChatBot />
                 <OnboardingModal />
               </PredictLoadingProvider>

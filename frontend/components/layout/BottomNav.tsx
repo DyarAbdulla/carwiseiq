@@ -14,6 +14,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { readMarketUnseenCount } from "@/lib/push/market-badge"
 
 const STORAGE_ONBOARDED = "carwise-onboarded"
 const STORAGE_TOOLTIP = "carwise-tooltip-shown"
@@ -48,6 +49,7 @@ export function BottomNav() {
   /** Keeps portal mounted until exit animation finishes */
   const [hintPortalOpen, setHintPortalOpen] = useState(false)
   const [hintVisible, setHintVisible] = useState(false)
+  const [marketUnseenCount, setMarketUnseenCount] = useState(0)
 
   useEffect(() => {
     try {
@@ -73,6 +75,26 @@ export function BottomNav() {
 
   useEffect(() => {
     setPortalReady(true)
+  }, [])
+
+  useEffect(() => {
+    readMarketUnseenCount().then(setMarketUnseenCount).catch(() => {})
+    const onUnseen = (e: Event) => {
+      const d = (e as CustomEvent<{ count?: number }>).detail
+      if (typeof d?.count === "number") setMarketUnseenCount(d.count)
+    }
+    window.addEventListener("carwise-market-unseen", onUnseen)
+    const onSwMessage = (event: MessageEvent) => {
+      const d = event.data
+      if (d?.type === "CARWISE_MARKET_UNSEEN" && typeof d.count === "number") {
+        setMarketUnseenCount(d.count)
+      }
+    }
+    navigator.serviceWorker?.addEventListener("message", onSwMessage)
+    return () => {
+      window.removeEventListener("carwise-market-unseen", onUnseen)
+      navigator.serviceWorker?.removeEventListener("message", onSwMessage)
+    }
   }, [])
 
   useLayoutEffect(() => {
@@ -243,12 +265,20 @@ export function BottomNav() {
               aria-current={active ? "page" : undefined}
             >
               <span className="relative flex h-8 w-8 shrink-0 items-center justify-center">
-                {key === "market" && (
-                  <span
-                    className="bottom-nav-dot-pulse absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-rose-500 will-change-transform"
-                    aria-hidden
-                  />
-                )}
+                {key === "market" &&
+                  (marketUnseenCount > 0 ? (
+                    <span
+                      className="absolute -right-0.5 -top-0.5 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-white/25 bg-rose-600 px-1 text-[10px] font-bold text-white shadow-sm"
+                      aria-label={String(marketUnseenCount)}
+                    >
+                      {marketUnseenCount > 9 ? "9+" : marketUnseenCount}
+                    </span>
+                  ) : (
+                    <span
+                      className="bottom-nav-dot-pulse absolute right-0.5 top-0.5 h-2 w-2 rounded-full bg-rose-500 will-change-transform"
+                      aria-hidden
+                    />
+                  ))}
                 {key === "predict" && sparkleOnce && (
                   <Sparkles
                     className="bottom-nav-sparkle pointer-events-none absolute -right-1 -top-1 h-3.5 w-3.5 text-amber-300/90 will-change-transform"

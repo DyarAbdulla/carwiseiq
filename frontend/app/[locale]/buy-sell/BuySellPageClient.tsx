@@ -1,8 +1,10 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
+import { useEffect } from "react"
 import ListingDetailClient from "@/components/marketplace/ListingDetailClient"
 import { MarketplaceBrowse } from "@/components/marketplace/MarketplaceBrowse"
+import { clearMarketUnseenBadge } from "@/lib/push/market-badge"
 
 export type BuySellPageClientProps = {
   /** From server `searchParams` when available (often empty at static build time). */
@@ -36,6 +38,15 @@ export function BuySellPageClient({ serverListingId }: BuySellPageClientProps) {
   const searchParams = useSearchParams()
   const fromQuery = searchParams?.get("id")?.trim()
   const id = fromQuery || serverListingId?.trim()
+
+  useEffect(() => {
+    clearMarketUnseenBadge().catch(() => {})
+    try {
+      navigator.serviceWorker?.controller?.postMessage({ type: "CARWISE_CLEAR_MARKET_BADGE" })
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   return (
     <div className="relative min-h-[100dvh]">

@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { getCarPreviewImage } from '@/lib/carImageMap'
 import { resolveApiAssetUrl } from '@/lib/resolveApiAssetUrl'
+import { markPredictEngaged } from '@/lib/push/engagement'
 import { Badge } from '@/components/ui/badge'
 import { useImageCache } from '@/hooks/use-image-cache'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
@@ -747,6 +748,7 @@ function PredictPageContent() {
       }
 
       setPrediction(result)
+      markPredictEngaged()
 
       // Log prediction activity (for Activity History)
       activityHelpers.logPrediction({
