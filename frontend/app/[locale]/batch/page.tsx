@@ -29,6 +29,16 @@ import { ErrorDisplay, createError } from '@/components/batch/ErrorDisplay'
 import { useFavorites } from '@/hooks/useFavorites'
 import { Checkbox } from '@/components/ui/checkbox'
 
+function BatchPageBackground() {
+  return (
+    <div className="batch-page-bg-layers" aria-hidden>
+      <div className="batch-page-bg-image" />
+      <div className="batch-page-bg-overlay-dark" />
+      <div className="batch-page-bg-overlay-vignette" />
+    </div>
+  )
+}
+
 type SortField = 'make' | 'model' | 'year' | 'mileage' | 'condition' | 'predicted_price' | 'confidence' | 'deal_rating'
 type SortDirection = 'asc' | 'desc' | null
 
@@ -244,8 +254,11 @@ export default function BatchPage() {
   // Don't render until mounted
   if (!mounted) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-[#94a3b8]">Loading...</div>
+      <div className="batch-page-root">
+        <BatchPageBackground />
+        <div className="relative z-[1] flex items-center justify-center min-h-[400px]">
+          <div className="text-gray-300">Loading...</div>
+        </div>
       </div>
     )
   }
@@ -804,33 +817,37 @@ export default function BatchPage() {
   }
 
   return (
-    <div className="container py-8 md:py-12">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">{(t && typeof t === 'function' ? t('title') : null) || 'Batch Prediction'}</h1>
-          <p className="text-[#94a3b8]">{(t && typeof t === 'function' ? t('description') : null) || 'Upload a CSV file to predict prices for multiple cars'}</p>
+    <div className="batch-page-root">
+      <BatchPageBackground />
+      <div className="relative z-[1] min-h-screen">
+        <div className="container py-8 md:py-12">
+          <div className="mx-auto max-w-7xl">
+        <div className="mb-8 text-center px-2">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3 text-white tracking-tight [text-shadow:0_2px_28px_rgba(0,0,0,0.75)]">
+            {(t && typeof t === 'function' ? t('title') : null) || 'Batch Prediction'}
+          </h1>
+          <p className="text-gray-200/95 text-base md:text-lg max-w-2xl mx-auto leading-relaxed [text-shadow:0_1px_18px_rgba(0,0,0,0.65)]">
+            {(t && typeof t === 'function' ? t('description') : null) || 'Upload a CSV file to predict prices for multiple cars'}
+          </p>
         </div>
 
-        {/* Input Section with Ambient Glow */}
-        <div className="relative mb-8">
-          {/* Purple/Indigo Ambient Glow */}
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-purple-500/20 via-indigo-500/15 to-transparent rounded-3xl blur-3xl opacity-50" />
-
-          {/* Floating Tab Toggle - Standalone Pill */}
-          <div className="flex items-center gap-2 mb-6 p-1 bg-black/40 backdrop-blur-sm rounded-full border border-white/10 w-fit">
+        <div className="mb-8 space-y-6">
+          <div className="batch-tab-shell flex items-center gap-2 p-1 w-fit shadow-lg shadow-black/25">
             <button
+              type="button"
               onClick={() => setInputMode('bulk-url')}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${inputMode === 'bulk-url'
-                  ? 'bg-[#5B7FFF] text-white shadow-lg shadow-[#5B7FFF]/20'
+                  ? 'bg-gradient-to-r from-[#5B7FFF] to-[#6366f1] text-white shadow-lg shadow-[#5B7FFF]/35'
                   : 'text-[#94a3b8] hover:text-white'
                 }`}
             >
               Bulk URL
             </button>
             <button
+              type="button"
               onClick={() => setInputMode('csv')}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${inputMode === 'csv'
-                  ? 'bg-[#5B7FFF] text-white shadow-lg shadow-[#5B7FFF]/20'
+                  ? 'bg-gradient-to-r from-[#5B7FFF] to-[#6366f1] text-white shadow-lg shadow-[#5B7FFF]/35'
                   : 'text-[#94a3b8] hover:text-white'
                 }`}
             >
@@ -838,23 +855,23 @@ export default function BatchPage() {
             </button>
           </div>
 
-          {/* Bulk URL Mode */}
           {inputMode === 'bulk-url' && (
-            <BulkUrlProcessor
-              onResults={(bulkResults) => {
-                const newResults = bulkResults.map((r) => ({
-                  car: r.result.extracted_data,
-                  predicted_price: r.result.predicted_price,
-                  confidence_interval: r.result.confidence_interval,
-                }))
-                setResults([...results, ...newResults])
-              }}
-            />
+            <div className="batch-glass p-5 md:p-6 shadow-lg shadow-black/25">
+              <BulkUrlProcessor
+                onResults={(bulkResults) => {
+                  const newResults = bulkResults.map((r) => ({
+                    car: r.result.extracted_data,
+                    predicted_price: r.result.predicted_price,
+                    confidence_interval: r.result.confidence_interval,
+                  }))
+                  setResults([...results, ...newResults])
+                }}
+              />
+            </div>
           )}
 
-          {/* CSV Upload Mode */}
           {inputMode === 'csv' && (
-            <div className="space-y-6">
+            <div className="batch-glass p-5 md:p-6 space-y-6 shadow-lg shadow-black/25">
               <div>
                 <h3 className="text-lg font-semibold text-white mb-2">Upload CSV File</h3>
                 <p className="text-sm text-slate-400 mb-4">
@@ -973,7 +990,7 @@ export default function BatchPage() {
                 <Button
                   onClick={handleProcess}
                   disabled={!file || loading}
-                  className="flex-1 bg-[#5B7FFF] hover:bg-[#5B7FFF]/90 min-w-[120px]"
+                  className="flex-1 min-w-[120px] bg-gradient-to-r from-[#5B7FFF] to-[#6366f1] hover:from-[#6b8cff] hover:to-[#7c7cf0] text-white font-semibold shadow-lg shadow-[#5B7FFF]/45"
                 >
                   {loading ? 'Processing...' : ((t && typeof t === 'function' ? t('process') : null) || 'Process')}
                 </Button>
@@ -1005,8 +1022,7 @@ export default function BatchPage() {
           )}
         </div>
 
-        {/* URL Prediction Section */}
-        <div className="mb-6 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
+        <div className="mb-6 batch-glass p-6 shadow-lg shadow-black/25">
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-2">
               <LinkIcon className="h-5 w-5 text-[#5B7FFF]" />
@@ -1031,7 +1047,7 @@ export default function BatchPage() {
                       }
                     }}
                     disabled={urlLoading}
-                    className="pr-12"
+                    className="pr-12 bg-white/5 border-white/10 text-white placeholder:text-[#94a3b8]"
                   />
                   {detectedPlatform && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1042,7 +1058,7 @@ export default function BatchPage() {
                 <Button
                   onClick={handleUrlPredict}
                   disabled={!urlInput.trim() || urlLoading}
-                  className="bg-[#5B7FFF] hover:bg-[#5B7FFF]/90 min-w-[180px]"
+                  className="min-w-[180px] bg-gradient-to-r from-[#5B7FFF] to-[#6366f1] hover:from-[#6b8cff] hover:to-[#7c7cf0] text-white font-semibold shadow-lg shadow-[#5B7FFF]/45"
                 >
                   {urlLoading ? (
                     <>
@@ -1409,6 +1425,8 @@ export default function BatchPage() {
             }}
           />
         )}
+          </div>
+        </div>
       </div>
     </div>
   )

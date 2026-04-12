@@ -64,6 +64,16 @@ interface Provider {
   locations?: string[]
 }
 
+function ServicesPageBackground() {
+  return (
+    <div className="services-page-bg-layers" aria-hidden>
+      <div className="services-page-bg-image" />
+      <div className="services-page-bg-overlay-dark" />
+      <div className="services-page-bg-overlay-vignette" />
+    </div>
+  )
+}
+
 export default function ServicesPage() {
   const t = useTranslations('home')
   const tCommon = useTranslations('common')
@@ -233,9 +243,12 @@ export default function ServicesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black/50 backdrop-blur-sm py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center text-gray-400">{t('services.loadingServices')}</div>
+      <div className="services-page-root">
+        <ServicesPageBackground />
+        <div className="relative z-[1] min-h-screen py-20">
+          <div className="container mx-auto px-4">
+            <div className="text-center text-gray-300">{t('services.loadingServices')}</div>
+          </div>
         </div>
       </div>
     )
@@ -269,80 +282,24 @@ export default function ServicesPage() {
   // Show Coming Soon message by default
   if (showComingSoon) {
     return (
-      <div className="relative min-h-screen overflow-hidden py-8 md:py-12 flex items-center justify-center">
-        {/* Layer 1: Base dark gradient */}
-        <div
-          className="fixed inset-0 -z-20"
-          style={{
-            background: 'linear-gradient(160deg, #0f172a 0%, #1E293B 35%, #1E293B 70%, #0f172a 100%)',
-          }}
-        />
-        {/* Layer 2: Animated gradient blobs (purple/blue) */}
-        <div
-          className="coming-soon-bg-animate fixed -z-10 inset-0 opacity-70"
-          style={{
-            animation: 'coming-soon-gradient-shift 18s ease-in-out infinite',
-          }}
-          aria-hidden
-        >
-          <div
-            className="coming-soon-blob absolute w-[80vmax] h-[80vmax] rounded-full blur-[120px] -top-[30vmax] -left-[20vmax]"
-            style={{
-              background: 'radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, transparent 60%)',
-              animation: 'coming-soon-blob-float 12s ease-in-out infinite',
-            }}
-          />
-          <div
-            className="coming-soon-blob absolute w-[70vmax] h-[70vmax] rounded-full blur-[100px] -bottom-[25vmax] -right-[15vmax]"
-            style={{
-              background: 'radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 60%)',
-              animation: 'coming-soon-blob-float 14s ease-in-out infinite 1s',
-            }}
-          />
-          <div
-            className="coming-soon-blob absolute w-[50vmax] h-[50vmax] rounded-full blur-[80px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{
-              background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)',
-              animation: 'coming-soon-blob-float 16s ease-in-out infinite 0.5s',
-            }}
-          />
-        </div>
-        {/* Layer 3: Subtle dot pattern overlay */}
-        <div
-          className="fixed inset-0 -z-[5] opacity-40"
-          style={{
-            backgroundImage: 'radial-gradient(rgba(139, 92, 246, 0.2) 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
-          }}
-          aria-hidden
-        />
-        {/* Layer 4: Soft vignette for depth */}
-        <div
-          className="fixed inset-0 -z-[5] pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, rgba(15, 23, 42, 0.5) 100%)',
-          }}
-          aria-hidden
-        />
+      <div className="services-page-root">
+        <ServicesPageBackground />
+        <div className="relative z-[1] min-h-screen overflow-hidden py-8 md:py-12 flex items-center justify-center">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl flex items-center justify-center">
+            <div className="relative">
+              <div
+                className="absolute -inset-8 rounded-full opacity-60 blur-3xl -z-10"
+                style={{
+                  background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.25) 0%, transparent 70%)',
+                }}
+              />
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl flex items-center justify-center relative z-10">
-          {/* Glass Card Container with Glow */}
-          <div className="relative">
-            {/* Card glow - purple accent */}
-            <div
-              className="absolute -inset-8 rounded-full opacity-60 blur-3xl -z-10"
-              style={{
-                background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.25) 0%, transparent 70%)',
-              }}
-            />
-
-            {/* Glass Card - Premium Container */}
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-              className="backdrop-blur-2xl bg-slate-900/80 border border-white/10 rounded-3xl p-12 shadow-2xl relative overflow-hidden max-w-lg w-full"
-            >
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                className="services-coming-soon-glass p-12 relative overflow-hidden max-w-lg w-full"
+              >
               <div className="relative z-10 flex flex-col items-center text-center">
                 {/* Large Icon with Float Animation */}
                 <motion.div
@@ -434,6 +391,7 @@ export default function ServicesPage() {
                 </motion.div>
               </div>
             </motion.div>
+            </div>
           </div>
         </div>
       </div>
@@ -441,7 +399,9 @@ export default function ServicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-transparent py-8 md:py-12">
+    <div className="services-page-root">
+      <ServicesPageBackground />
+      <div className="relative z-[1] min-h-screen bg-transparent py-8 md:py-12 text-gray-100">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl bg-transparent">
         {/* Hero Section */}
         <motion.div
@@ -454,20 +414,20 @@ export default function ServicesPage() {
             <div className="w-full max-w-2xl h-32 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 blur-3xl rounded-full opacity-50" />
           </div>
           <div className="flex items-center justify-center gap-4 mb-4 relative z-10">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-white">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white">
               {t('services.title') || t('services.servicesDirectory')}
             </h1>
             <Button
               onClick={() => setShowComingSoon(true)}
               variant="ghost"
               size="icon"
-              className="h-10 w-10 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10"
+              className="h-10 w-10 rounded-lg text-gray-300 hover:text-white hover:bg-white/10"
               aria-label={tCommon('comingSoonTitle')}
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <p className="text-lg text-slate-600 dark:text-gray-300 max-w-2xl mx-auto relative z-10">
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto relative z-10">
             {t('services.subtitle') || t('services.findProviders')}
           </p>
         </motion.div>
@@ -600,7 +560,7 @@ export default function ServicesPage() {
             ) : filteredProviders.length === 0 ? (
               <div className="text-center py-12">
                 <Building2 className="h-16 w-16 text-slate-400 dark:text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                <h3 className="text-xl font-semibold text-white mb-2">
                   {(searchQuery || selectedLocation !== 'all') ? t('services.noCompaniesFound') : t('services.noCompaniesAvailable')}
                 </h3>
                 <p className="text-gray-400">
@@ -735,6 +695,7 @@ export default function ServicesPage() {
             )}
           </div>
         </div>
+      </div>
       </div>
     </div>
   )

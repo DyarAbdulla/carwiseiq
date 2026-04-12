@@ -17,6 +17,16 @@ import { FavoriteButton } from '@/components/marketplace/FavoriteButton'
 import { listingImageUrl } from '@/lib/utils'
 import { buySellListingHref } from '@/lib/marketplaceLinks'
 
+function FavoritesPageBackground() {
+  return (
+    <div className="favorites-page-bg-layers" aria-hidden>
+      <div className="favorites-page-bg-image" />
+      <div className="favorites-page-bg-overlay-dark" />
+      <div className="favorites-page-bg-overlay-vignette" />
+    </div>
+  )
+}
+
 export default function FavoritesPage() {
   const router = useRouter()
   const locale = useLocale()
@@ -255,11 +265,11 @@ export default function FavoritesPage() {
 
   if (authLoading) {
     return (
-      <div className="relative min-h-screen flex items-center justify-center">
-        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-radial from-indigo-500/15 via-purple-500/10 to-transparent blur-3xl" />
+      <div className="favorites-page-root">
+        <FavoritesPageBackground />
+        <div className="relative z-[1] min-h-screen flex items-center justify-center">
+          <div className="text-gray-300 text-lg">{tCommon('loading')}</div>
         </div>
-        <div className="text-gray-400 text-lg">{tCommon('loading')}</div>
       </div>
     )
   }
@@ -267,34 +277,31 @@ export default function FavoritesPage() {
   // Don't render anything if not authenticated - let redirect happen
   if (!isAuthenticated) {
     return (
-      <div className="relative min-h-screen flex items-center justify-center">
-        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-radial from-indigo-500/15 via-purple-500/10 to-transparent blur-3xl" />
+      <div className="favorites-page-root">
+        <FavoritesPageBackground />
+        <div className="relative z-[1] min-h-screen flex items-center justify-center">
+          <div className="text-gray-300 text-lg">Redirecting to login...</div>
         </div>
-        <div className="text-gray-400 text-lg">Redirecting to login...</div>
       </div>
     )
   }
 
   return (
-    <div className="relative min-h-screen text-gray-100">
-      {/* Ambient gradient glow */}
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-radial from-indigo-500/15 via-purple-500/10 to-transparent blur-3xl" />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 pt-8 pb-12 md:pt-12 md:pb-16">
+    <div className="favorites-page-root">
+      <FavoritesPageBackground />
+      <div className="relative z-[1] min-h-screen text-gray-100">
+        <div className="max-w-7xl mx-auto px-4 pt-8 pb-12 md:pt-12 md:pb-16">
         {/* Header */}
-        <div className="mb-8 md:mb-10">
+        <div className="favorites-glass p-4 md:p-6 mb-6 md:mb-8 shadow-lg shadow-black/20">
           <div className="flex items-center gap-3 mb-4">
-            <Heart className="h-8 w-8 text-red-500 fill-current" />
+            <Heart className="h-8 w-8 text-red-500 fill-current drop-shadow-[0_0_12px_rgba(239,68,68,0.45)]" />
             <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{t('title')}</h1>
           </div>
-          <p className="text-gray-400 text-lg">{t('subtitle')}</p>
+          <p className="text-gray-300 text-lg">{t('subtitle')}</p>
         </div>
 
         {/* Glass Filter & Sort Bar */}
-        <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 mb-6 shadow-2xl">
+        <div className="favorites-glass p-4 md:p-5 mb-6 shadow-lg shadow-black/20">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             {/* Sort & View Controls */}
             <div className="flex flex-wrap items-center gap-3 flex-1">
@@ -347,15 +354,18 @@ export default function FavoritesPage() {
         {loading ? (
           <div className="text-center py-20 text-gray-400 text-lg">{t('loadingFavorites')}</div>
         ) : listings.length === 0 ? (
-          <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-12 md:p-16 text-center shadow-xl">
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center">
-              <Heart className="h-12 w-12 text-gray-500" />
+          <div className="favorites-glass p-12 md:p-16 text-center shadow-xl shadow-black/25">
+            <div className="w-28 h-28 mx-auto mb-8 rounded-full bg-gradient-to-br from-rose-500/25 via-indigo-500/20 to-violet-600/25 flex items-center justify-center ring-2 ring-white/15 shadow-[0_0_40px_rgba(244,63,94,0.2)]">
+              <Heart className="h-14 w-14 text-rose-400 fill-rose-400/35 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]" strokeWidth={1.5} />
             </div>
             <h3 className="text-2xl font-bold text-white mb-3">{t('noFavorites')}</h3>
-            <p className="text-gray-400 mb-8 max-w-md mx-auto text-base">
+            <p className="text-gray-300 mb-8 max-w-md mx-auto text-base leading-relaxed">
               {t('noFavoritesDesc')}
             </p>
-            <Button onClick={() => router.push(`/${locale}/buy-sell`)} className="h-12 px-8 bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-lg shadow-indigo-500/20">
+            <Button
+              onClick={() => router.push(`/${locale}/buy-sell`)}
+              className="h-12 px-8 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold shadow-lg shadow-indigo-500/35 ring-1 ring-white/15"
+            >
               {t('browseListings')}
             </Button>
           </div>
@@ -465,6 +475,7 @@ export default function FavoritesPage() {
             )}
           </>
         )}
+        </div>
       </div>
     </div>
   )

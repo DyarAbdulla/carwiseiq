@@ -23,6 +23,7 @@ import { useApiCache } from '@/hooks/use-api-cache'
 import { RotateCcw, RefreshCw, ChevronRight, ChevronLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { FieldTooltip, FIELD_TOOLTIPS } from './FieldTooltip'
+import { cn } from '@/lib/utils'
 
 // Step validation schemas
 const step1Schema = z.object({
@@ -70,9 +71,11 @@ interface PredictionFormProps {
   formId?: string // Unique identifier for this form instance (e.g., car card ID) - REQUIRED for isolation
   /** Optional locations from parent (e.g. Compare page). When provided, used for the location dropdown. */
   locations?: string[]
+  /** Stronger step progress + Step 1 field surfaces for Compare page glass cards */
+  compareVisualTuning?: boolean
 }
 
-export function PredictionForm({ onSubmit, loading = false, prefillData = null, onFormChange, onStepChange, formId, locations: locationsProp }: PredictionFormProps) {
+export function PredictionForm({ onSubmit, loading = false, prefillData = null, onFormChange, onStepChange, formId, locations: locationsProp, compareVisualTuning = false }: PredictionFormProps) {
   // Debug logs only in development
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -1473,24 +1476,37 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
       {/* Progress Indicator */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-slate-400">Step {currentStep} of 3</span>
+          <span className={cn('text-sm font-medium', compareVisualTuning ? 'text-white/90 drop-shadow-sm' : 'text-slate-400')}>
+            Step {currentStep} of 3
+          </span>
           <div className="flex gap-2">
             {[1, 2, 3].map((step) => (
               <div
                 key={step}
-                className={`h-2 w-8 rounded-full transition-all duration-300 ${step === currentStep
-                  ? 'bg-indigo-500'
-                  : step < currentStep
-                    ? 'bg-green-500'
-                    : 'bg-white/10'
-                  }`}
+                className={cn(
+                  'h-2 w-8 rounded-full transition-all duration-300',
+                  compareVisualTuning
+                    ? step === currentStep
+                      ? 'bg-gradient-to-r from-indigo-400 to-purple-500 shadow-lg shadow-indigo-500/50 ring-1 ring-white/20'
+                      : step < currentStep
+                        ? 'bg-emerald-400 shadow-md shadow-emerald-500/35 ring-1 ring-emerald-400/30'
+                        : 'bg-white/15 ring-1 ring-white/10'
+                    : step === currentStep
+                      ? 'bg-indigo-500'
+                      : step < currentStep
+                        ? 'bg-green-500'
+                        : 'bg-white/10'
+                )}
               />
             ))}
           </div>
         </div>
-        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+        <div className={cn('h-1 rounded-full overflow-hidden', compareVisualTuning ? 'bg-white/15 ring-1 ring-white/10' : 'bg-white/10')}>
           <div
-            className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-300"
+            className={cn(
+              'h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-300',
+              compareVisualTuning && 'shadow-[0_0_14px_rgba(99,102,241,0.55)]'
+            )}
             style={{ width: `${(currentStep / 3) * 100}%` }}
           />
         </div>
@@ -1542,6 +1558,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
                 disabled={initialLoading}
                 emptyMessage="No makes available"
                 searchPlaceholder="Type to search..."
+                className={compareVisualTuning ? 'compare-field-surface' : undefined}
               />
             </motion.div>
 
@@ -1584,6 +1601,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
                 disabled={!makeValue || loadingModels}
                 emptyMessage={makeValue ? (loadingModels ? "Loading models..." : `No models found for ${makeValue}`) : "Select a make first"}
                 searchPlaceholder="Type to search..."
+                className={compareVisualTuning ? 'compare-field-surface' : undefined}
               />
             </motion.div>
 
@@ -1623,7 +1641,12 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
                 }}
                 disabled={!selectedMake || !selectedModel || loadingTrims}
               >
-                <SelectTrigger className={form.formState.errors.trim ? 'border-red-500' : ''}>
+                <SelectTrigger
+                  className={cn(
+                    compareVisualTuning && !form.formState.errors.trim && 'compare-field-surface',
+                    form.formState.errors.trim && 'border-red-500'
+                  )}
+                >
                   <SelectValue placeholder={loadingTrims ? "Loading trims..." : selectedMake && selectedModel ? (trims.length > 0 ? "Select trim level" : "No trims available") : "Select make and model first"} />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">

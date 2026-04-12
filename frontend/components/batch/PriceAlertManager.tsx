@@ -148,11 +148,11 @@ export function PriceAlertManager() {
   }
 
   return (
-    <Card className="border-[#2a2d3a] bg-[#1a1d29] mb-6">
+    <Card className="batch-glass mb-6 border-white/[0.08] bg-transparent shadow-lg shadow-black/25 text-white">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-white">
               <Bell className="h-5 w-5 text-[#5B7FFF]" />
               Price Alerts
             </CardTitle>
@@ -165,14 +165,14 @@ export function PriceAlertManager() {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-[#2a2d3a] hover:bg-[#2a2d3a]"
+                className="border-0 bg-gradient-to-r from-[#5B7FFF] to-[#6366f1] text-white shadow-md shadow-[#5B7FFF]/40 hover:from-[#6b8cff] hover:to-[#7c7cf0] hover:text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 New Alert
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <CardContent className="pt-4 space-y-4 border-t border-[#2a2d3a] mt-4">
+              <CardContent className="pt-4 space-y-4 border-t border-white/10 mt-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm text-[#94a3b8] mb-2 block">Make</label>
@@ -180,7 +180,7 @@ export function PriceAlertManager() {
                       value={newAlert.make}
                       onChange={(e) => setNewAlert({ ...newAlert, make: e.target.value })}
                       placeholder="Toyota"
-                      className="border-[#2a2d3a] bg-[#0f1117]"
+                      className="border-white/10 bg-white/5 text-white placeholder:text-[#94a3b8]"
                     />
                   </div>
                   <div>
@@ -189,7 +189,7 @@ export function PriceAlertManager() {
                       value={newAlert.model}
                       onChange={(e) => setNewAlert({ ...newAlert, model: e.target.value })}
                       placeholder="Camry"
-                      className="border-[#2a2d3a] bg-[#0f1117]"
+                      className="border-white/10 bg-white/5 text-white placeholder:text-[#94a3b8]"
                     />
                   </div>
                 </div>
@@ -200,7 +200,7 @@ export function PriceAlertManager() {
                     value={newAlert.maxPrice}
                     onChange={(e) => setNewAlert({ ...newAlert, maxPrice: e.target.value })}
                     placeholder="25000"
-                    className="border-[#2a2d3a] bg-[#0f1117]"
+                    className="border-white/10 bg-white/5 text-white placeholder:text-[#94a3b8]"
                   />
                 </div>
                 <div>
@@ -211,12 +211,12 @@ export function PriceAlertManager() {
                     value={newAlert.location}
                     onChange={(e) => setNewAlert({ ...newAlert, location: e.target.value })}
                     placeholder="California"
-                    className="border-[#2a2d3a] bg-[#0f1117]"
+                    className="border-white/10 bg-white/5 text-white placeholder:text-[#94a3b8]"
                   />
                 </div>
                 <Button
                   onClick={createAlert}
-                  className="w-full bg-[#5B7FFF] hover:bg-[#5B7FFF]/90"
+                  className="w-full bg-gradient-to-r from-[#5B7FFF] to-[#6366f1] hover:from-[#6b8cff] hover:to-[#7c7cf0] text-white font-semibold shadow-lg shadow-[#5B7FFF]/40"
                 >
                   Create Alert
                 </Button>
@@ -231,7 +231,7 @@ export function PriceAlertManager() {
             {alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-[#0f1117] border border-[#2a2d3a]"
+                className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2">

@@ -916,3 +916,350 @@ h2 {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
 }
+
+/* ===== Services page: full-bleed photo background (/services) ===== */
+.services-page-root {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  min-height: 100lvh;
+}
+
+.services-page-bg-layers {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.services-page-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/servicesbackground.avif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(1.5px);
+  -webkit-filter: blur(1.5px);
+  transform: scale(1.06);
+  transform-origin: center center;
+}
+
+.services-page-bg-overlay-dark {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.services-page-bg-overlay-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.5) 100%);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .services-page-bg-layers {
+    position: absolute;
+    inset: 0;
+    min-height: 100dvh;
+  }
+
+  .services-page-bg-image {
+    background-attachment: scroll;
+    min-height: 100%;
+  }
+}
+
+.services-coming-soon-glass {
+  background: rgba(15, 15, 25, 0.8);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+/* ===== Favorites page: full-bleed photo background (/favorites) ===== */
+.favorites-page-root {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  min-height: 100lvh;
+}
+
+.favorites-page-bg-layers {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.favorites-page-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/favoritebackgrounds.avif");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(1px);
+  -webkit-filter: blur(1px);
+  transform: scale(1.05);
+  transform-origin: center center;
+}
+
+.favorites-page-bg-overlay-dark {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.favorites-page-bg-overlay-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.45) 100%);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .favorites-page-bg-layers {
+    position: absolute;
+    inset: 0;
+    min-height: 100dvh;
+  }
+
+  .favorites-page-bg-image {
+    background-attachment: scroll;
+    min-height: 100%;
+  }
+}
+
+/* Heading, filter bar, empty state on Favorites */
+.favorites-glass {
+  background: rgba(15, 15, 25, 0.75);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+/* ===== Batch prediction page (/batch) ===== */
+.batch-page-root {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  min-height: 100lvh;
+}
+
+.batch-page-bg-layers {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.batch-page-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/batchbackground.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(2px);
+  -webkit-filter: blur(2px);
+  transform: scale(1.06);
+  transform-origin: center center;
+}
+
+.batch-page-bg-overlay-dark {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.batch-page-bg-overlay-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.5) 100%);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .batch-page-bg-layers {
+    position: absolute;
+    inset: 0;
+    min-height: 100dvh;
+  }
+
+  .batch-page-bg-image {
+    background-attachment: scroll;
+    min-height: 100%;
+  }
+}
+
+.batch-glass {
+  background: rgba(15, 15, 25, 0.75);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+/* Bulk URL / CSV tab strip */
+.batch-tab-shell {
+  background: rgba(15, 15, 25, 0.55);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 9999px;
+}
+
+/* ===== Compare Cars page (/compare) ===== */
+.compare-page-root {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  min-height: 100lvh;
+}
+
+.compare-page-bg-layers {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.compare-page-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/comparebackground.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(1.5px);
+  -webkit-filter: blur(1.5px);
+  transform: scale(1.06);
+  transform-origin: center center;
+}
+
+.compare-page-bg-overlay-dark {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.compare-page-bg-overlay-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.45) 100%);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .compare-page-bg-layers {
+    position: absolute;
+    inset: 0;
+    min-height: 100dvh;
+  }
+
+  .compare-page-bg-image {
+    background-attachment: scroll;
+    min-height: 100%;
+  }
+}
+
+.compare-glass {
+  background: rgba(15, 15, 25, 0.75);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}
+
+/* Make / Model / Trim fields on Compare — darker inset surface */
+.compare-field-surface {
+  background: rgba(10, 10, 20, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+.compare-field-surface:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  background: rgba(10, 10, 20, 0.72) !important;
+}
+
+/* ===== Activity History page (/history) ===== */
+.history-page-root {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  min-height: 100lvh;
+}
+
+.history-page-bg-layers {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.history-page-bg-image {
+  position: absolute;
+  inset: 0;
+  background-image: url("/images/historybackground.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(1.5px);
+  -webkit-filter: blur(1.5px);
+  transform: scale(1.06);
+  transform-origin: center center;
+}
+
+.history-page-bg-overlay-dark {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.history-page-bg-overlay-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.45) 100%);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .history-page-bg-layers {
+    position: absolute;
+    inset: 0;
+    min-height: 100dvh;
+  }
+
+  .history-page-bg-image {
+    background-attachment: scroll;
+    min-height: 100%;
+  }
+}
+
+.history-filter-bar {
+  background: rgba(15, 15, 25, 0.6);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.history-activity-card {
+  background: rgba(15, 15, 25, 0.75);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+}

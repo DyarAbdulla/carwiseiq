@@ -213,7 +213,7 @@ https://www.syarah.com/car/...`}
           <Button
             onClick={processUrls}
             disabled={isProcessing || parseUrls(urls).length === 0}
-            className="bg-[#5B7FFF] hover:bg-[#5B7FFF]/90"
+            className="bg-gradient-to-r from-[#5B7FFF] to-[#6366f1] hover:from-[#6b8cff] hover:to-[#7c7cf0] text-white font-semibold shadow-lg shadow-[#5B7FFF]/45"
           >
             {isProcessing ? (
               <>

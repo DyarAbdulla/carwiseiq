@@ -55,6 +55,16 @@ interface ListingCard {
   description?: string
 }
 
+function ComparePageBackground() {
+  return (
+    <div className="compare-page-bg-layers" aria-hidden>
+      <div className="compare-page-bg-image" />
+      <div className="compare-page-bg-overlay-dark" />
+      <div className="compare-page-bg-overlay-vignette" />
+    </div>
+  )
+}
+
 function ComparePageContent() {
   const searchParams = useSearchParams()
   const listingIds = searchParams?.get('ids')?.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id)) || []
@@ -905,36 +915,28 @@ function ComparePageContent() {
   }, [isMarketplaceComparison, marketplaceMetrics, listings, listingSpecRows, listingChartData, comparisonMetrics, specRows, cars, chartData])
 
   if (!mounted) {
-    return null
+    return (
+      <div className="compare-page-root">
+        <ComparePageBackground />
+        <div className="relative z-[1] flex min-h-[50vh] items-center justify-center text-gray-300">
+          Loading…
+        </div>
+      </div>
+    )
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="container px-4 sm:px-6 lg:px-8 py-6 md:py-10 relative"
-    >
-      <div className="mx-auto max-w-7xl relative">
-        {/* Enhanced Background Effects */}
+    <div className="compare-page-root">
+      <ComparePageBackground />
+      <div className="relative z-[1] min-h-screen">
         <motion.div
-          animate={{ opacity: [0.5, 0.7, 0.5] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 w-[1200px] h-[600px] bg-gradient-radial from-purple-500/25 via-indigo-500/20 to-transparent blur-3xl opacity-60 pointer-events-none"
-        />
-        <div className="absolute top-1/4 right-0 -z-10 w-[800px] h-[400px] bg-gradient-radial from-pink-500/15 via-purple-500/10 to-transparent blur-3xl opacity-40 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 -z-10 w-[600px] h-[300px] bg-gradient-radial from-blue-500/15 to-transparent blur-3xl opacity-30 pointer-events-none" />
-
-        {/* Animated Grid Pattern */}
-        <div className="absolute inset-0 -z-10 opacity-[0.02] pointer-events-none"
-          style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '50px 50px'
-          }}
-        />
-
-        {/* Header - Modern Design (block + horizontal padding avoids bg-clip-text clipping on mobile) */}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="container px-4 sm:px-6 lg:px-8 py-6 md:py-10"
+        >
+          <div className="mx-auto max-w-7xl relative">
+        {/* Header — readable on photo background */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -942,16 +944,16 @@ function ComparePageContent() {
           className="mb-8 md:mb-12 text-center relative w-full overflow-x-visible px-2 sm:px-4"
         >
           <div className="relative w-full max-w-4xl mx-auto">
-            <h1 className="block w-full px-1 sm:px-2 text-3xl md:text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-slate-900 via-indigo-600 to-purple-600 dark:from-white dark:via-indigo-200 dark:to-purple-200 bg-clip-text text-transparent [box-decoration-break:clone] break-words leading-tight">
+            <h1 className="block w-full px-1 sm:px-2 text-3xl md:text-4xl lg:text-5xl font-bold mb-3 text-white [text-shadow:0_2px_28px_rgba(0,0,0,0.75)] break-words leading-tight">
               {(t && typeof t === 'function' ? t('title') : null) || 'Compare Cars'}
             </h1>
-            <div className="mx-auto mt-1 h-1 w-24 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full blur-sm opacity-60" />
+            <div className="mx-auto mt-1 h-1 w-24 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 rounded-full opacity-90 shadow-lg shadow-indigo-500/30" />
           </div>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.6 }}
-            className="text-sm md:text-base text-[#94a3b8] mt-4 max-w-2xl mx-auto"
+            className="text-sm md:text-base text-gray-200/95 mt-4 max-w-2xl mx-auto leading-relaxed [text-shadow:0_1px_18px_rgba(0,0,0,0.65)]"
           >
             {isMarketplaceComparison
               ? 'Compare marketplace listings side by side'
@@ -1304,22 +1306,22 @@ function ComparePageContent() {
                       className="group"
                     >
                       <div
-                        className={`relative bg-gradient-to-br from-white/5 via-white/5 to-white/3 backdrop-blur-xl border-2 rounded-3xl p-6 transition-all duration-500 overflow-visible ${isBestDeal && allCarsHavePredictions
+                        className={`compare-glass relative border-2 rounded-2xl p-6 transition-all duration-500 overflow-visible shadow-lg shadow-black/25 ${isBestDeal && allCarsHavePredictions
                           ? 'border-green-500/60 shadow-2xl shadow-green-500/30'
                           : isMostExpensive && allCarsHavePredictions
                             ? 'border-red-500/50 shadow-xl shadow-red-500/20'
-                            : 'border-white/10 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/20'
+                            : 'border-white/15 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/25'
                           }`}
                       >
                         {/* Animated Gradient Border */}
-                        <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl" />
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl" />
 
                         {/* Green Glow for Best Deal */}
                         {isBestDeal && allCarsHavePredictions && (
                           <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="absolute inset-0 -z-10 bg-gradient-radial from-green-500/30 via-green-500/15 to-transparent blur-3xl rounded-3xl"
+                            className="absolute inset-0 -z-10 bg-gradient-radial from-green-500/30 via-green-500/15 to-transparent blur-3xl rounded-2xl"
                           />
                         )}
 
@@ -1336,20 +1338,21 @@ function ComparePageContent() {
                                   stroke="currentColor"
                                   strokeWidth="2.5"
                                   fill="none"
-                                  className="text-white/10"
+                                  className="text-white/20"
                                 />
                                 <motion.circle
                                   cx="20"
                                   cy="20"
                                   r="16"
                                   stroke={`url(#gradient-${car.id})`}
-                                  strokeWidth="2.5"
+                                  strokeWidth="3"
                                   fill="none"
                                   strokeLinecap="round"
                                   strokeDasharray={`${2 * Math.PI * 16}`}
                                   initial={{ strokeDashoffset: 2 * Math.PI * 16 }}
                                   animate={{ strokeDashoffset: 2 * Math.PI * 16 * (1 - stepProgressPercentage / 100) }}
                                   transition={{ duration: 0.3 }}
+                                  style={{ filter: 'drop-shadow(0 0 6px rgba(99, 102, 241, 0.65))' }}
                                 />
                                 <defs>
                                   <linearGradient id={`gradient-${car.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1358,7 +1361,7 @@ function ComparePageContent() {
                                   </linearGradient>
                                 </defs>
                               </svg>
-                              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]">
                                 {stepProgressPercentage}%
                               </span>
                             </div>
@@ -1482,6 +1485,7 @@ function ComparePageContent() {
                             } : null}
                             loading={car.loading || false}
                             locations={locations}
+                            compareVisualTuning
                           />
                           {car.prediction && car.features && (
                             <motion.div
@@ -1531,14 +1535,25 @@ function ComparePageContent() {
             </motion.div>
           </>
         )}
+          </div>
+        </motion.div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
 export default function ComparePage() {
   return (
-    <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center"><CompareSkeleton /></div>}>
+    <Suspense
+      fallback={
+        <div className="compare-page-root">
+          <ComparePageBackground />
+          <div className="relative z-[1] min-h-[60vh] flex items-center justify-center">
+            <CompareSkeleton />
+          </div>
+        </div>
+      }
+    >
       <ComparePageContent />
     </Suspense>
   )

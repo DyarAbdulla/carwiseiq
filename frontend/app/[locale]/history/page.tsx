@@ -51,6 +51,16 @@ interface PredictionHistoryItem {
   }
 }
 
+function HistoryPageBackground() {
+  return (
+    <div className="history-page-bg-layers" aria-hidden>
+      <div className="history-page-bg-image" />
+      <div className="history-page-bg-overlay-dark" />
+      <div className="history-page-bg-overlay-vignette" />
+    </div>
+  )
+}
+
 export default function ActivityHistoryPage() {
   const t = useTranslations('feedback.history')
   const tCommon = useTranslations('common')
@@ -223,7 +233,7 @@ export default function ActivityHistoryPage() {
       case 'compare':
         return 'text-purple-400 bg-purple-500/10 border-purple-500/30'
       case 'view_listing':
-        return 'text-blue-400 bg-blue-500/10 border-blue-500/30'
+        return 'text-emerald-400 bg-emerald-500/15 border-emerald-400/45 shadow-sm shadow-emerald-500/20'
       case 'favorite':
         return 'text-pink-400 bg-pink-500/10 border-pink-500/30'
       case 'create_listing':
@@ -250,11 +260,16 @@ export default function ActivityHistoryPage() {
 
   if (!sessionLoaded) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 w-full" />
-          ))}
+      <div className="history-page-root">
+        <HistoryPageBackground />
+        <div className="relative z-[1] min-h-screen">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-32 w-full bg-white/10" />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -262,12 +277,17 @@ export default function ActivityHistoryPage() {
 
   if (!user) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
-        <div className="backdrop-blur-xl bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-12 text-center shadow-sm">
-          <p className="text-slate-600 dark:text-slate-400 mb-4">{t('loginRequired')}</p>
-          <Button onClick={() => router.push(`/${locale}/login?returnUrl=/${locale}/history`)}>
-            {tAuth('login')}
-          </Button>
+      <div className="history-page-root">
+        <HistoryPageBackground />
+        <div className="relative z-[1] min-h-screen">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+            <div className="history-activity-card p-12 text-center shadow-lg shadow-black/20">
+              <p className="text-gray-300 mb-4">{t('loginRequired')}</p>
+              <Button onClick={() => router.push(`/${locale}/login?returnUrl=/${locale}/history`)}>
+                {tAuth('login')}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -275,11 +295,16 @@ export default function ActivityHistoryPage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 w-full" />
-          ))}
+      <div className="history-page-root">
+        <HistoryPageBackground />
+        <div className="relative z-[1] min-h-screen">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-32 w-full bg-white/10" />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     )
@@ -309,42 +334,43 @@ export default function ActivityHistoryPage() {
     })
 
   return (
-    <div className="relative min-h-screen text-slate-900 dark:text-gray-100">
-      {/* Ambient gradient glow */}
-      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-radial from-indigo-500/15 via-purple-500/10 to-transparent blur-3xl" />
-      </div>
+    <div className="history-page-root">
+      <HistoryPageBackground />
+      <div className="relative z-[1] min-h-screen text-gray-100">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10">
+          <div className="space-y-6">
+            {/* Header */}
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 [text-shadow:0_2px_28px_rgba(0,0,0,0.75)]">
+                Activity History
+              </h1>
+              <p className="text-gray-200/95 [text-shadow:0_1px_18px_rgba(0,0,0,0.65)]">
+                Track all your activities across the platform
+              </p>
+            </div>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-10">
-        <div className="space-y-6">
-          {/* Header */}
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-2">Activity History</h1>
-            <p className="text-slate-600 dark:text-slate-400">Track all your activities across the platform</p>
-          </div>
+            {/* Filter Bar — subtle glass; active tab pops */}
+            <div className="history-filter-bar p-2 flex flex-wrap gap-2 shadow-lg shadow-black/20">
+              {activityTypes.map((type) => (
+                <Button
+                  key={type.value}
+                  onClick={() => setFilterType(type.value)}
+                  variant="ghost"
+                  className={`min-h-[44px] touch-manipulation border-0 ${filterType === type.value
+                    ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/45 ring-1 ring-white/25'
+                    : 'bg-transparent text-gray-200 hover:bg-white/10 hover:text-white'
+                    }`}
+                  size="sm"
+                >
+                  <Filter className="h-4 w-4 mr-2 shrink-0 opacity-80" />
+                  <span className="text-sm font-medium">{type.label}</span>
+                </Button>
+              ))}
+            </div>
 
-          {/* Filter Bar - wraps on mobile, touch-friendly */}
-          <div className="flex flex-wrap gap-2">
-            {activityTypes.map((type) => (
-              <Button
-                key={type.value}
-                onClick={() => setFilterType(type.value)}
-                variant={filterType === type.value ? 'default' : 'outline'}
-                className={`min-h-[44px] touch-manipulation ${filterType === type.value
-                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white'
-                  : 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white'
-                  }`}
-                size="sm"
-              >
-                <Filter className="h-4 w-4 mr-2 shrink-0" />
-                <span className="text-sm">{type.label}</span>
-              </Button>
-            ))}
-          </div>
-
-          {/* Timeline Feed */}
-          {filteredItems.length === 0 ? (
-            <div className="backdrop-blur-xl bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-12 md:p-16 text-center shadow-sm">
+            {/* Timeline Feed */}
+            {filteredItems.length === 0 ? (
+              <div className="history-activity-card p-12 md:p-16 text-center shadow-lg shadow-black/25">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -352,11 +378,11 @@ export default function ActivityHistoryPage() {
                 className="flex flex-col items-center"
               >
                 <div className="relative mb-6">
-                  <Clock className="h-20 w-20 text-slate-400 dark:text-slate-400/50 mx-auto" />
-                  <Car className="h-12 w-12 text-indigo-400/50 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                  <Clock className="h-20 w-20 text-gray-500 mx-auto" />
+                  <Car className="h-12 w-12 text-indigo-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_0_12px_rgba(129,140,248,0.5)]" />
                 </div>
-                <h3 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-white mb-2">No Activity Yet</h3>
-                <p className="text-slate-600 dark:text-slate-400 mb-6 max-w-md">Start using the platform to see your activity history here</p>
+                <h3 className="text-xl md:text-2xl font-semibold text-white mb-2">No Activity Yet</h3>
+                <p className="text-gray-300 mb-6 max-w-md">Start using the platform to see your activity history here</p>
                 <Button
                   onClick={() => router.push(`/${locale}/predict`)}
                   className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/30 h-12 px-8"
@@ -365,10 +391,10 @@ export default function ActivityHistoryPage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </motion.div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredItems.map((item, index) => {
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredItems.map((item, index) => {
                 if (item.type === 'prediction') {
                   const prediction = item.data as PredictionHistoryItem
                   const car = prediction.car_features
@@ -378,20 +404,20 @@ export default function ActivityHistoryPage() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.05 }}
-                      className="backdrop-blur-xl bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all shadow-sm"
+                      className="history-activity-card p-6 transition-all shadow-lg shadow-black/20 hover:border-indigo-400/35 hover:shadow-indigo-500/10"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <Target className="h-5 w-5 text-indigo-400" />
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                            <Target className="h-5 w-5 text-indigo-400 drop-shadow-[0_0_8px_rgba(129,140,248,0.45)]" />
+                            <h3 className="text-xl font-bold text-white">
                               {car.make} {car.model} ({car.year})
                             </h3>
-                            <Badge className="bg-indigo-500/10 text-indigo-400 border-indigo-500/30">
+                            <Badge className="bg-indigo-500/15 text-indigo-300 border-indigo-400/40 shadow-sm shadow-indigo-500/15">
                               Prediction
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-slate-400 mb-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                             <Calendar className="h-4 w-4" />
                             <span>{formatDate(prediction.timestamp)}</span>
                           </div>
@@ -414,31 +440,33 @@ export default function ActivityHistoryPage() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.05 }}
-                      className="backdrop-blur-xl bg-white/80 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20 transition-all shadow-sm"
+                      className="history-activity-card p-6 transition-all shadow-lg shadow-black/20 hover:border-white/15"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <Icon className={`h-5 w-5 ${colorClass.split(' ')[0]}`} />
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                            <Icon
+                              className={`h-5 w-5 shrink-0 ${activity.type === 'view_listing' ? 'drop-shadow-[0_0_10px_rgba(52,211,153,0.6)]' : 'drop-shadow-[0_0_6px_rgba(0,0,0,0.4)]'} ${colorClass.split(' ')[0]}`}
+                            />
+                            <h3 className="text-xl font-bold text-white">
                               {getActivityLabel(activity.type, metadata as Record<string, unknown>)}
                             </h3>
-                            <Badge className={`${colorClass}`}>
+                            <Badge className={`${colorClass} font-medium`}>
                               {activity.type.replace(/_/g, ' ')}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-slate-400 mb-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                             <Clock className="h-4 w-4" />
                             <span>{formatTimeAgo(activity.created_at)}</span>
-                            <span className="text-slate-500">•</span>
+                            <span className="text-gray-500">•</span>
                             <span>{formatDate(activity.created_at)}</span>
                           </div>
                           {/* Display metadata */}
                           {typeof metadata.listing_title === 'string' && metadata.listing_title.trim() !== '' && (
-                            <p className="text-slate-900 dark:text-white mb-2">{metadata.listing_title}</p>
+                            <p className="text-white mb-2">{metadata.listing_title}</p>
                           )}
                           {typeof metadata.car_make === 'string' && typeof metadata.car_model === 'string' && (
-                            <p className="text-slate-900 dark:text-white mb-2">
+                            <p className="text-white mb-2">
                               {metadata.car_year != null ? String(metadata.car_year) : ''} {metadata.car_make}{' '}
                               {metadata.car_model}
                             </p>
@@ -463,9 +491,10 @@ export default function ActivityHistoryPage() {
                     </motion.div>
                   )
                 }
-              })}
-            </div>
-          )}
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
