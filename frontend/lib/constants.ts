@@ -37,6 +37,32 @@ export const CONDITIONS = [
   'Salvage'
 ]
 
+/**
+ * Relative price impact vs. "Good" (baseline). Used when the prediction API
+ * under-weights condition so What-If can still show realistic deltas.
+ * Midpoints of requested ranges: Excellent +5–10%, Fair −10–15%, Poor −20–30%, Salvage −40–60%.
+ */
+export const CONDITION_PRICE_MULTIPLIERS: Record<string, number> = {
+  New: 1.12,
+  'Like New': 1.1,
+  Excellent: 1.075,
+  Good: 1,
+  Fair: 0.875,
+  Poor: 0.75,
+  Salvage: 0.5,
+}
+
+export function getConditionPriceMultiplier(condition: string | null | undefined): number {
+  if (condition == null || String(condition).trim() === '') return CONDITION_PRICE_MULTIPLIERS.Good
+  const t = String(condition).trim()
+  if (CONDITION_PRICE_MULTIPLIERS[t] != null) return CONDITION_PRICE_MULTIPLIERS[t]
+  const lower = t.toLowerCase()
+  for (const [k, v] of Object.entries(CONDITION_PRICE_MULTIPLIERS)) {
+    if (k.toLowerCase() === lower) return v
+  }
+  return CONDITION_PRICE_MULTIPLIERS.Good
+}
+
 export const FUEL_TYPES = [
   'Gasoline',
   'Diesel',

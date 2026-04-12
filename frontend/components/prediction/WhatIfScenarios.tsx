@@ -12,7 +12,7 @@ import { apiClient } from '@/lib/api'
 import { AnimatedPriceReveal } from './AnimatedPriceReveal'
 import { formatCurrency } from '@/lib/utils'
 import { useDebounce } from '@/hooks/use-debounce'
-import { CONDITIONS } from '@/lib/constants'
+import { CONDITIONS, getConditionPriceMultiplier } from '@/lib/constants'
 
 interface WhatIfScenariosProps {
   initialFeatures: CarFeatures
@@ -75,8 +75,12 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
         }
         const result = await apiClient.predictPrice(updatedFeatures)
         if (cancelled) return
-        setWhatIfResult(result)
-        setPriceDiff(result.predicted_price - initialPrediction.predicted_price)
+        const multWhatIf = getConditionPriceMultiplier(debouncedCondition)
+        const multBaseline = getConditionPriceMultiplier(base.condition)
+        const ratio = multWhatIf / multBaseline
+        const adjustedPrice = result.predicted_price * ratio
+        setWhatIfResult({ ...result, predicted_price: adjustedPrice })
+        setPriceDiff(adjustedPrice - initialPrediction.predicted_price)
       } catch (error) {
         if (!cancelled) {
           console.error('Failed to update prediction:', error)
@@ -120,23 +124,6 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
             <Label className="text-white">
               Mileage: {mileage.toLocaleString()} km
             </Label>
-            {!loading && priceDiff !== 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className={`flex items-center gap-1 text-sm font-semibold shrink-0 ${
-                  priceDiff > 0 ? 'text-green-400' : 'text-red-400'
-                }`}
-              >
-                {priceDiff > 0 ? (
-                  <TrendingUp className="h-4 w-4" />
-                ) : (
-                  <TrendingDown className="h-4 w-4" />
-                )}
-                {priceDiff > 0 ? '+' : ''}
-                {formatCurrency(priceDiff)}
-              </motion.div>
-            )}
           </div>
           <Slider
             value={[mileage]}
@@ -182,7 +169,27 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <Label className="text-[#94a3b8] text-sm">Updated Predicted Price</Label>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <Label className="text-[#94a3b8] text-sm">Updated Predicted Price</Label>
+                {!loading && priceDiff !== 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className={`flex items-center gap-1 text-sm font-semibold shrink-0 ${
+                      priceDiff > 0 ? 'text-green-400' : 'text-red-400'
+                    }`}
+                    title="Change vs. your original prediction (mileage and condition)"
+                  >
+                    {priceDiff > 0 ? (
+                      <TrendingUp className="h-4 w-4" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4" />
+                    )}
+                    {priceDiff > 0 ? '+' : ''}
+                    {formatCurrency(priceDiff)}
+                  </motion.div>
+                )}
+              </div>
               <div className="mt-2">
                 <AnimatedPriceReveal key={`${displayPrice}-${debouncedMileage}-${debouncedCondition}`} price={displayPrice} />
               </div>
