@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     SUPABASE_URL: Optional[str] = None
     SUPABASE_JWT_SECRET: Optional[str] = None
     SUPABASE_ANON_KEY: Optional[str] = None  # For fetching listings via REST API
+    # PostgREST / push (server only; same name as typical Supabase dashboard export)
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
 
     # Anthropic Claude (optional; used only by 01_label_images --mode=claude_sample)
     ANTHROPIC_API_KEY: Optional[str] = None

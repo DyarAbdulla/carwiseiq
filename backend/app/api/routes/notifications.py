@@ -19,6 +19,22 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 
 
+def _raise_if_supabase_rest_missing(operation: str) -> None:
+    if push.supabase_rest_ready():
+        return
+    missing, flags = push.supabase_rest_missing_for_logging()
+    logger.error(
+        "notifications %s: Supabase REST not configured. missing_env=%s env_presence=%s",
+        operation,
+        missing,
+        flags,
+    )
+    raise HTTPException(
+        status_code=500,
+        detail={"error": "Server misconfigured", "missing_env": missing},
+    )
+
+
 def _require_user(user: Optional[UserResponse] = Depends(get_current_user)) -> UserResponse:
     if user is None:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -80,9 +96,8 @@ async def vapid_public_key():
 
 @router.post("/subscribe")
 async def subscribe(body: SubscribeBody, user_uuid: str = Depends(_require_supabase_uuid)):
-    base, key = push.get_supabase_rest_config()
-    if not base or not key:
-        raise HTTPException(status_code=500, detail="Server misconfigured")
+    _raise_if_supabase_rest_missing("subscribe")
+    base, _ = push.get_supabase_rest_config()
 
     sub = body.subscription
     prefs = _merged_prefs(body.prefs or {})
@@ -113,9 +128,8 @@ async def subscribe(body: SubscribeBody, user_uuid: str = Depends(_require_supab
 
 @router.delete("/unsubscribe")
 async def unsubscribe(body: UnsubscribeBody, user_uuid: str = Depends(_require_supabase_uuid)):
-    base, key = push.get_supabase_rest_config()
-    if not base or not key:
-        raise HTTPException(status_code=500, detail="Server misconfigured")
+    _raise_if_supabase_rest_missing("unsubscribe")
+    base, _ = push.get_supabase_rest_config()
     with httpx.Client() as client:
         r = client.delete(
             f"{base}/rest/v1/push_subscriptions",
@@ -131,9 +145,8 @@ async def unsubscribe(body: UnsubscribeBody, user_uuid: str = Depends(_require_s
 
 @router.get("/preferences")
 async def get_preferences(user_uuid: str = Depends(_require_supabase_uuid)):
-    base, key = push.get_supabase_rest_config()
-    if not base or not key:
-        raise HTTPException(status_code=500, detail="Server misconfigured")
+    _raise_if_supabase_rest_missing("get_preferences")
+    base, _ = push.get_supabase_rest_config()
     with httpx.Client() as client:
         r = client.get(
             f"{base}/rest/v1/push_subscriptions",
@@ -160,9 +173,8 @@ async def patch_preferences(
     patch: Dict[str, Any],
     user_uuid: str = Depends(_require_supabase_uuid),
 ):
-    base, key = push.get_supabase_rest_config()
-    if not base or not key:
-        raise HTTPException(status_code=500, detail="Server misconfigured")
+    _raise_if_supabase_rest_missing("patch_preferences")
+    base, _ = push.get_supabase_rest_config()
 
     with httpx.Client() as client:
         r = client.get(
@@ -207,7 +219,13 @@ async def trigger_new_listing(
     if status == 503:
         raise HTTPException(status_code=503, detail=result.get("error", "VAPID not configured"))
     if status == 500:
-        raise HTTPException(status_code=500, detail=result.get("error", "Server error"))
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": result.get("error", "Server error"),
+                "missing_env": result.get("missing_env", []),
+            },
+        )
     if status == 404:
         raise HTTPException(status_code=404, detail=result.get("error", "Not found"))
     if status == 403:
@@ -228,7 +246,13 @@ async def admin_send(
     if status == 503:
         raise HTTPException(status_code=503, detail=result.get("error"))
     if status == 500:
-        raise HTTPException(status_code=500, detail=result.get("error"))
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": result.get("error", "Server error"),
+                "missing_env": result.get("missing_env", []),
+            },
+        )
     if status == 400:
         raise HTTPException(status_code=400, detail=result.get("error"))
     return result

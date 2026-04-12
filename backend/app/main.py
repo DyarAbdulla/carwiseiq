@@ -3,6 +3,17 @@ FastAPI Backend for Car Price Prediction
 Main application entry point
 """
 
+import os
+from pathlib import Path
+
+# Load .env before app.* imports so pydantic Settings() matches local file + process env (Railway injects env before start).
+_backend_root = Path(__file__).resolve().parent.parent
+_env_file = _backend_root / ".env"
+if _env_file.exists():
+    from dotenv import load_dotenv
+
+    load_dotenv(_env_file)
+
 # Must be set before any TensorFlow import to suppress oneDNN warnings
 # and floating-point round-off messages
 import asyncio
@@ -19,14 +30,6 @@ from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from app.api.routes import health, predict, cars, budget, stats, auth, options, images, model_info, feedback, admin, marketplace, messaging, favorites, ai, chat, dataset, export, services, providers, notifications
 from app.config import settings
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-
-# Load environment variables from .env file before anything else
-env_path = Path(__file__).parent.parent / '.env'
-if env_path.exists():
-    load_dotenv(env_path)
 
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 # 0=all, 1=no INFO, 2=no WARNING, 3=ERROR only

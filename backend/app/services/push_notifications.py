@@ -23,11 +23,27 @@ MAX_PUSH_PER_DAY = 3
 
 
 def _supabase_url() -> str:
-    return (os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL") or settings.SUPABASE_URL or "").rstrip("/")
+    """Project URL for PostgREST (Railway: SUPABASE_URL; also accepts NEXT_PUBLIC_SUPABASE_URL)."""
+    for env_name in ("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL"):
+        raw = os.getenv(env_name)
+        if raw and str(raw).strip():
+            return str(raw).strip().rstrip("/")
+    cfg = settings.SUPABASE_URL
+    if cfg and str(cfg).strip():
+        return str(cfg).strip().rstrip("/")
+    return ""
 
 
 def _service_key() -> str:
-    return os.getenv("SUPABASE_SERVICE_ROLE_KEY") or ""
+    """Service role JWT for PostgREST (bypasses RLS). Railway: SUPABASE_SERVICE_ROLE_KEY."""
+    for env_name in ("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SERVICE_KEY"):
+        raw = os.getenv(env_name)
+        if raw and str(raw).strip():
+            return str(raw).strip()
+    cfg = settings.SUPABASE_SERVICE_ROLE_KEY
+    if cfg and str(cfg).strip():
+        return str(cfg).strip()
+    return ""
 
 
 def _vapid_public() -> str:
@@ -75,6 +91,49 @@ def get_supabase_rest_config() -> Tuple[str, str]:
 
 def get_vapid_public_key() -> str:
     return _vapid_public()
+
+
+def supabase_rest_ready() -> bool:
+    return bool(_supabase_url() and _service_key())
+
+
+def supabase_rest_missing_for_logging() -> Tuple[List[str], Dict[str, bool]]:
+    """
+    Human-readable missing pieces + safe booleans (which env names have non-empty values).
+    Never log secret values.
+    """
+    missing: List[str] = []
+    if not _supabase_url():
+        missing.append("SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL")
+    if not _service_key():
+        missing.append("SUPABASE_SERVICE_ROLE_KEY (alias: SUPABASE_SERVICE_KEY)")
+    flags = {
+        "SUPABASE_URL": bool(os.getenv("SUPABASE_URL", "").strip()),
+        "NEXT_PUBLIC_SUPABASE_URL": bool(os.getenv("NEXT_PUBLIC_SUPABASE_URL", "").strip()),
+        "settings.SUPABASE_URL": bool((settings.SUPABASE_URL or "").strip()),
+        "SUPABASE_SERVICE_ROLE_KEY": bool(os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()),
+        "SUPABASE_SERVICE_KEY": bool(os.getenv("SUPABASE_SERVICE_KEY", "").strip()),
+        "settings.SUPABASE_SERVICE_ROLE_KEY": bool(
+            (settings.SUPABASE_SERVICE_ROLE_KEY or "").strip()
+        ),
+    }
+    return missing, flags
+
+
+def _supabase_rest_error_response(context: str) -> Dict[str, Any]:
+    missing, flags = supabase_rest_missing_for_logging()
+    logger.error(
+        "Push %s: Supabase REST not configured. missing_env=%s env_presence=%s",
+        context,
+        missing,
+        flags,
+    )
+    return {
+        "ok": False,
+        "error": "Server misconfigured",
+        "missing_env": missing,
+        "status": 500,
+    }
 
 
 def _webpush_status_code(ex: WebPushException) -> Optional[int]:
@@ -297,10 +356,9 @@ def _insert_log(client: httpx.Client, subscription_id: str, ntype: str, meta: Op
 def trigger_new_listing(seller_uuid: str, listing_id: str) -> Dict[str, Any]:
     if not vapid_configured():
         return {"ok": False, "error": "VAPID not configured", "status": 503}
+    if not supabase_rest_ready():
+        return _supabase_rest_error_response("trigger_new_listing")
     base = _supabase_url()
-    key = _service_key()
-    if not base or not key:
-        return {"ok": False, "error": "Server misconfigured", "status": 500}
 
     if not is_iraq_sending_window():
         return {"ok": True, "skipped": "outside_sending_window", "sent": 0}
@@ -397,10 +455,9 @@ def admin_send(body: Dict[str, Any], cron_secret: str) -> Dict[str, Any]:
         return {"ok": False, "error": "Unauthorized", "status": 401}
     if not vapid_configured():
         return {"ok": False, "error": "VAPID not configured", "status": 503}
+    if not supabase_rest_ready():
+        return _supabase_rest_error_response("admin_send")
     base = _supabase_url()
-    key = _service_key()
-    if not base or not key:
-        return {"ok": False, "error": "Server misconfigured", "status": 500}
 
     if not is_iraq_sending_window():
         return {"ok": True, "skipped": "outside_sending_window", "sent": 0}
