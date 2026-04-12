@@ -17,7 +17,7 @@ import re
 from fastapi.responses import JSONResponse, Response
 from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.gzip import GZipMiddleware
-from app.api.routes import health, predict, cars, budget, stats, auth, options, images, model_info, feedback, admin, marketplace, messaging, favorites, ai, chat, dataset, export, services, providers
+from app.api.routes import health, predict, cars, budget, stats, auth, options, images, model_info, feedback, admin, marketplace, messaging, favorites, ai, chat, dataset, export, services, providers, notifications
 from app.config import settings
 import os
 from pathlib import Path
@@ -153,6 +153,7 @@ app.include_router(dataset.router, prefix="/api/dataset", tags=["Dataset"])
 app.include_router(export.router, prefix="/api", tags=["Export"])
 app.include_router(services.router, prefix="/api", tags=["Services"])
 app.include_router(providers.router, prefix="/api", tags=["Providers"])
+app.include_router(notifications.router, prefix="/api", tags=["Notifications"])
 
 # Mount /uploads for listing images (uploads/listings/{id}/*)
 UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")

@@ -1,0 +1,8 @@
+VAPID Keys
+
+
+Public Key:
+BFIYSGa5MzC_IsMDkNkrggOzkeUEhbP8Fj16qJ-5iEyr2SGMFoz-s1cN7m1mvnz_lSQWsAPani1XVagSsJ8FF_Q
+
+Private Key:
+G8ihDy3U2xqccY-RVgz5QxRn2RHvVfXwVIgeWLDedXc

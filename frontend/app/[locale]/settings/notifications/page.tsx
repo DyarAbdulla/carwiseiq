@@ -13,6 +13,7 @@ import { useAuthContext } from '@/context/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
 import { Input } from '@/components/ui/input'
+import { publicApiUrl } from '@/lib/publicApiBase'
 import { subscribeWithApi } from '@/lib/push/push-client'
 import type { PushPrefs } from '@/lib/push/types'
 
@@ -51,7 +52,7 @@ export default function NotificationSettingsPage() {
   const loadWebPushPrefs = async (accessToken: string) => {
     setPushPrefsLoading(true)
     try {
-      const r = await fetch('/api/notifications/preferences', {
+      const r = await fetch(publicApiUrl('/api/notifications/preferences'), {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       if (!r.ok) return
@@ -100,7 +101,7 @@ export default function NotificationSettingsPage() {
         priceMax: pushPrefsForm.priceMax.trim() !== '' ? Number(pushPrefsForm.priceMax) : null,
         locale,
       }
-      const r = await fetch('/api/notifications/preferences', {
+      const r = await fetch(publicApiUrl('/api/notifications/preferences'), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

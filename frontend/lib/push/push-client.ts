@@ -1,3 +1,4 @@
+import { publicApiUrl } from '@/lib/publicApiBase'
 import { registerCarWiseServiceWorker } from './sw-register'
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -20,7 +21,7 @@ export async function subscribeWithApi(
   const reg = await registerCarWiseServiceWorker()
   if (!reg) return false
 
-  const vapidRes = await fetch('/api/notifications/vapid-public-key')
+  const vapidRes = await fetch(publicApiUrl('/api/notifications/vapid-public-key'))
   const vapidJson = await vapidRes.json().catch(() => ({}))
   const publicKey = vapidJson.publicKey as string | null
   if (!publicKey) return false
@@ -40,7 +41,7 @@ export async function subscribeWithApi(
   const json = sub.toJSON()
   if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return false
 
-  const save = await fetch('/api/notifications/subscribe', {
+  const save = await fetch(publicApiUrl('/api/notifications/subscribe'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -60,7 +61,7 @@ export async function notifyNewListingPublished(
   accessToken: string
 ): Promise<void> {
   try {
-    await fetch('/api/notifications/trigger-new-listing', {
+    await fetch(publicApiUrl('/api/notifications/trigger-new-listing'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

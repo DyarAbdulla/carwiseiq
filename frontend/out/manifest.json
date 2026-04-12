@@ -1,7 +1,7 @@
 {
   "name": "CarWiseIQ",
   "short_name": "CarWiseIQ",
-  "description": "AI-powered car valuation for Iraq & Kurdistan",
+  "description": "AI-powered car valuation for Iraq & Kurdistan. Install for optional marketplace push alerts (HTTPS / supported browsers).",
   "theme_color": "#5B7FFF",
   "background_color": "#ffffff",
   "display": "standalone",
