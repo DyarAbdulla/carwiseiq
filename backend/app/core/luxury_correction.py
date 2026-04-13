@@ -123,6 +123,8 @@ LUXURY_BANDS: List[LuxuryBand] = [
     LuxuryBand(("chevrolet", "chevy"), ("camaro", "zl1"), 32000, 48000, 65000),
     # GMC
     LuxuryBand(("gmc",), ("hummer",), 65000, 95000, 130000),
+    # Cadillac Escalade — band only lifts when ML is below it (see apply_luxury_correction)
+    LuxuryBand(("cadillac",), ("escalade",), 55000, 82000, 115000),
     # Toyota
     LuxuryBand(("toyota",), ("land cruiser", "landcruiser"), 45000, 65000, 85000),
     LuxuryBand(("toyota",), ("supra",), 38000, 52000, 68000),
@@ -346,16 +348,40 @@ def apply_luxury_correction(raw_price: float, car_data: Dict[str, Any]) -> Luxur
 
     band = _find_matching_band(make, model, trim_s)
     if band is not None:
-        price = _blend_price(band, year, mileage, str(condition) if condition else None)
+        band_price = _blend_price(band, year, mileage, str(condition) if condition else None)
+        # Do not replace a strong ML price that already matches or exceeds the band
+        if rp >= band_price * 0.88:
+            return LuxuryCorrectionResult(
+                price=round(rp, 2),
+                luxury_adjusted=False,
+                used_brand_multiplier_only=False,
+                note=None,
+            )
+        if rp >= band.min_price * 0.82:
+            blended = 0.52 * rp + 0.48 * band_price
+            logger.info(
+                "Luxury band blend: %s %s -> %.0f (was %.0f, ref %.0f)",
+                make,
+                model,
+                blended,
+                rp,
+                band_price,
+            )
+            return LuxuryCorrectionResult(
+                price=round(blended, 2),
+                luxury_adjusted=True,
+                used_brand_multiplier_only=False,
+                note="Limited data for this model. Price estimated using market reference data.",
+            )
         logger.info(
             "Luxury band correction: %s %s -> %.0f (was %.0f)",
             make,
             model,
-            price,
+            band_price,
             rp,
         )
         return LuxuryCorrectionResult(
-            price=round(price, 2),
+            price=round(band_price, 2),
             luxury_adjusted=True,
             used_brand_multiplier_only=False,
             note="Limited data for this model. Price estimated using market reference data.",

@@ -216,6 +216,94 @@ def _build_feature_row(car_data: dict, meta: dict) -> pd.DataFrame:
     return pd.DataFrame([row])
 
 
+def _reference_median_price(car_data: dict) -> Optional[float]:
+    """
+    Median listing price for same make+model (and similar year when enough rows).
+    Used to lift ML predictions that sit far below the local market for that model.
+    """
+    try:
+        from app.services.dataset_loader import DatasetLoader
+
+        loader = DatasetLoader.get_instance()
+        df = loader.dataset
+        if df is None or len(df) < 30:
+            return None
+        price_col = loader.get_price_column() or "price"
+        if price_col not in df.columns or "year" not in df.columns:
+            return None
+        make = str(car_data.get("make", "")).strip().lower()
+        model_name = str(car_data.get("model", "")).strip().lower()
+        if not make or not model_name:
+            return None
+        year = int(car_data.get("year") or 2020)
+        m = (df["make"].astype(str).str.strip().str.lower() == make) & (
+            df["model"].astype(str).str.strip().str.lower() == model_name
+        )
+        sub = df.loc[m]
+        if len(sub) < 5:
+            return None
+        ysub = sub[(sub["year"].astype(int) >= year - 3) & (sub["year"].astype(int) <= year + 2)]
+        if len(ysub) >= 5:
+            sub = ysub
+        prices = pd.to_numeric(sub[price_col], errors="coerce").dropna()
+        prices = prices[prices > 400]
+        if len(prices) < 4:
+            return None
+        return float(prices.median())
+    except Exception as e:
+        logger.debug("reference median unavailable: %s", e)
+        return None
+
+
+def _lift_if_ml_below_market(ml_price: float, car_data: dict) -> float:
+    """
+    If the model predicts far below typical listings for this make/model/year,
+    blend upward toward the dataset median (fixes systematic undervaluation).
+    """
+    ref = _reference_median_price(car_data)
+    if ref is None or ref < 2500:
+        return ml_price
+    ratio = ml_price / ref if ref > 0 else 1.0
+    if ratio >= 0.92:
+        return ml_price
+    if ratio >= 0.55:
+        target = 0.48 * ml_price + 0.52 * (ref * 0.97)
+        lifted = float(min(max(target, ml_price), ref * 1.2))
+        if lifted > ml_price + 30:
+            logger.info(
+                "Dataset soft lift: make=%s model=%s ml=%.0f ref=%.0f -> %.0f",
+                car_data.get("make"),
+                car_data.get("model"),
+                ml_price,
+                ref,
+                lifted,
+            )
+        return lifted
+    if ratio >= 0.38:
+        target = 0.42 * ml_price + 0.58 * (ref * 0.58)
+        lifted = float(min(max(target, ml_price), ref * 1.22))
+        logger.info(
+            "Dataset floor lift: make=%s model=%s ml=%.0f ref_median=%.0f -> %.0f",
+            car_data.get("make"),
+            car_data.get("model"),
+            ml_price,
+            ref,
+            lifted,
+        )
+        return lifted
+    lifted = float(max(ml_price, ref * 0.54))
+    lifted = min(lifted, ref * 1.28)
+    logger.info(
+        "Dataset floor lift (strong): make=%s model=%s ml=%.0f ref_median=%.0f -> %.0f",
+        car_data.get("make"),
+        car_data.get("model"),
+        ml_price,
+        ref,
+        lifted,
+    )
+    return lifted
+
+
 def _predict_from_dataset(car_data: dict) -> float:
     """Estimate price from dataset when the ML pipeline is unavailable."""
     try:
@@ -294,6 +382,8 @@ def predict_price(car_data: dict, return_confidence: bool = False) -> float:
             return _predict_from_dataset(car_data)
         if price > 2_000_000:
             price = min(price, 2_000_000.0)
+
+        price = _lift_if_ml_below_market(price, car_data)
 
         return price
     except Exception as e:
