@@ -1,5 +1,5 @@
 {
-  "median_scraped_ordinal": 1764124288.0,
+  "median_scraped_ordinal": 1764124248.0,
   "lookups": {
     "condition_to_condition_encoded": {
       "Good": 1.0,
@@ -47,6 +47,7 @@
       "Al Mutassim": 22.0,
       "Al Muwaffaqiyah": 23.0,
       "Al Nashwa": 24.0,
+      "Al Nasr Wal Salam": 25.0,
       "Al Neser": 26.0,
       "Al Qasim": 27.0,
       "Al Qurnah": 28.0,

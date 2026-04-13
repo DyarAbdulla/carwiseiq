@@ -113,15 +113,14 @@ def preprocess_frame(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
     df = df[df["price"].notna() & (df["price"] > 0)]
     print(f"Dropped rows with missing/non-positive price: {before - len(df)}")
 
-    # IQR outlier removal on price
-    q1 = df["price"].quantile(0.25)
-    q3 = df["price"].quantile(0.75)
-    iqr = q3 - q1
-    low = q1 - 1.5 * iqr
-    high = q3 + 1.5 * iqr
+    # Domain-only price bounds. IQR-based removal was incorrectly chopping the entire
+    # luxury tail (upper fence ~48k on this market), so SUVs / imports never appeared
+    # in training and the model capped around mid-range economy prices.
     before = len(df)
-    df = df[(df["price"] >= low) & (df["price"] <= high)]
-    print(f"IQR price filter [{low:.0f}, {high:.0f}]: removed {before - len(df)} rows, kept {len(df)}")
+    df = df[(df["price"] >= 300) & (df["price"] <= 3_000_000)]
+    print(
+        f"Price domain filter [300, 3_000_000]: removed {before - len(df)} rows, kept {len(df)}"
+    )
 
     # Median/mode imputation per column
     for col in df.columns:

@@ -1,16 +1,16 @@
 {
   "metrics": {
     "test": {
-      "r2": 0.9588936443186479,
-      "mae": 873.5438457464243,
-      "rmse": 1876.9113699161721
+      "r2": 0.9711193207719727,
+      "mae": 1162.1784075403418,
+      "rmse": 2529.3222749596844
     },
     "best_model": "xgb",
     "tuned_params": {
-      "model__subsample": 0.8,
-      "model__n_estimators": 400,
-      "model__max_depth": 14,
-      "model__learning_rate": 0.05,
+      "model__subsample": 0.9,
+      "model__n_estimators": 600,
+      "model__max_depth": 10,
+      "model__learning_rate": 0.08,
       "model__colsample_bytree": 0.8
     },
     "target_r2_note": "Real market listings often land below 0.95 R2; tune features/data for gains."
@@ -42,6 +42,6 @@
   ],
   "current_year": 2026,
   "data_path": "C:\\Car price prection program Local E\\cleaned_car_data.csv",
-  "n_train": 39421,
-  "n_test": 9856
+  "n_train": 42136,
+  "n_test": 10535
 }

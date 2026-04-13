@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 import joblib
 import numpy as np
@@ -20,8 +20,22 @@ CURRENT_YEAR = 2026
 
 _cached_pipeline = None
 _cached_meta: dict = {}
+_cached_feature_columns: Optional[list[str]] = None
 _using_fallback = False
 _model_load_failed = False
+
+
+def clear_prediction_model_cache() -> None:
+    """
+    Drop in-memory pipeline/meta so the next load_model() reads backend/models/* from disk.
+    Called at startup before preload; use after swapping artifacts without restarting the interpreter.
+    """
+    global _cached_pipeline, _cached_meta, _cached_feature_columns, _using_fallback, _model_load_failed
+    _cached_pipeline = None
+    _cached_meta = {}
+    _cached_feature_columns = None
+    _using_fallback = False
+    _model_load_failed = False
 
 
 def _backend_dir() -> Path:
@@ -61,7 +75,7 @@ def _find_first_existing(paths: list[Path]) -> Optional[Path]:
 
 def load_model():
     """Load sklearn pipeline and inference metadata (cached)."""
-    global _cached_pipeline, _cached_meta, _using_fallback, _model_load_failed
+    global _cached_pipeline, _cached_meta, _cached_feature_columns, _using_fallback, _model_load_failed
 
     if _cached_pipeline is not None:
         return _cached_pipeline, _cached_meta
@@ -77,6 +91,7 @@ def load_model():
         _model_load_failed = True
         _cached_pipeline = None
         _cached_meta = {}
+        _cached_feature_columns = None
         return None, {}
 
     try:
@@ -88,6 +103,7 @@ def load_model():
         _model_load_failed = True
         _cached_pipeline = None
         _cached_meta = {}
+        _cached_feature_columns = None
         return None, {}
 
     if meta_path and meta_path.exists():
@@ -101,7 +117,27 @@ def load_model():
         logger.warning("inference_meta.json not found; using defaults for encoded lookups")
         _cached_meta = {}
 
+    fc_path = pipe_path.parent / "feature_columns.json"
+    _cached_feature_columns = None
+    if fc_path.exists():
+        try:
+            with open(fc_path, "r", encoding="utf-8") as f:
+                _cached_feature_columns = json.load(f).get("feature_columns")
+        except Exception as e:
+            logger.warning("Could not load feature_columns.json: %s", e)
+
     return _cached_pipeline, _cached_meta
+
+
+def _align_feature_frame(X: pd.DataFrame, column_order: Optional[Sequence[str]]) -> pd.DataFrame:
+    """Match training column order (sklearn usually aligns by name; this avoids edge cases)."""
+    if not column_order:
+        return X
+    missing = [c for c in column_order if c not in X.columns]
+    if missing:
+        logger.warning("feature_columns.json lists columns not in inference row: %s", missing)
+        return X
+    return X[list(column_order)]
 
 
 def _lookup_encoded(meta: dict, raw_key: str, enc_key: str, raw_val: str) -> float:
@@ -249,7 +285,7 @@ def predict_price(car_data: dict, return_confidence: bool = False) -> float:
         if pipeline is None:
             return _predict_from_dataset(car_data)
 
-        X = _build_feature_row(car_data, meta)
+        X = _align_feature_frame(_build_feature_row(car_data, meta), _cached_feature_columns)
         pred = pipeline.predict(X)
         price = float(pred[0]) if hasattr(pred, "__len__") else float(pred)
 
@@ -269,8 +305,9 @@ def predict_price(car_data: dict, return_confidence: bool = False) -> float:
 
 
 def preload_model() -> None:
-    """Load pipeline once at app startup."""
+    """Load pipeline at app startup (always clears cache first so new deploys pick up fresh artifacts)."""
     try:
+        clear_prediction_model_cache()
         load_model()
     except Exception as e:
         logger.warning("preload_model failed: %s", e)
