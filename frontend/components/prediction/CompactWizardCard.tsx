@@ -20,6 +20,7 @@ import { useApiCache } from '@/hooks/use-api-cache'
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FieldTooltip, FIELD_TOOLTIPS } from './FieldTooltip'
+import { cn } from '@/lib/utils'
 
 function buildEngineOptions(sizes: readonly number[]): Array<{ size: number; display: string }> {
   return sizes.map((size) => ({
@@ -583,6 +584,9 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
     return false
   }
 
+  const stepLabels = [t('carBasicsStep'), t('specsStep'), t('detailsStep')] as const
+  const trackFillPercent = ((currentStep - 1) / 2) * 100
+
   return (
     <div className="p-0 h-full flex flex-col">
       {/* Title */}
@@ -592,54 +596,88 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
         </h2>
       </div>
 
-      {/* Horizontal Progress Bar Stepper */}
-      <div className="mb-6">
-        <div className="mb-3 text-center">
-          <span className="text-sm font-semibold text-white drop-shadow-sm">
-            {t('stepOf', { step: currentStep })}
-          </span>
-        </div>
-        {/* Progress Bar */}
-        <div className="relative h-2 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
-          <motion.div
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500 via-blue-500 to-purple-600 rounded-full"
-            initial={{ width: `${((currentStep - 1) / 3) * 100}%` }}
-            animate={{ width: `${((currentStep - 1) / 3) * 100}%` }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
+      {/* Stepper: thin track + dots; labels hidden on xs, full row from sm (RTL-safe) */}
+      <div className="mb-6 w-full min-w-0 px-0.5 sm:px-0">
+        <p className="mb-3 w-full text-center text-sm font-semibold leading-snug text-white drop-shadow-sm">
+          {t('stepOf', { step: currentStep })}
+        </p>
+
+        <div className="relative py-2 sm:py-2.5">
+          <div
+            className="pointer-events-none absolute start-2 end-2 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-white/10 sm:start-3 sm:end-3 sm:h-1"
+            aria-hidden
           />
-          {/* Step Indicators */}
-          <div className="absolute inset-0 flex items-center justify-between px-1">
-            {[1, 2, 3].map((step) => (
-              <button
-                key={step}
-                type="button"
-                onClick={() => setCurrentStep(step)}
-                className={`relative z-10 w-6 h-6 rounded-full border-2 transition-all duration-300 ${step <= currentStep
-                  ? 'bg-gradient-to-br from-indigo-500 to-purple-600 border-indigo-400 shadow-lg shadow-indigo-500/50 scale-110'
-                  : 'bg-white/10 border-white/20 scale-100'
-                  } hover:scale-125 cursor-pointer`}
-              >
-                {step < currentStep && (
-                  <Check className="w-3 h-3 text-white absolute inset-0 m-auto" />
-                )}
-                {step === currentStep && (
-                  <span className="text-xs font-bold text-white absolute inset-0 flex items-center justify-center">{step}</span>
-                )}
-              </button>
-            ))}
+          <div
+            className="pointer-events-none absolute start-2 end-2 top-1/2 h-0.5 -translate-y-1/2 overflow-hidden rounded-full sm:start-3 sm:end-3 sm:h-1"
+            aria-hidden
+          >
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-blue-500 to-purple-600 shadow-[0_0_10px_rgba(99,102,241,0.35)] rtl:bg-gradient-to-l"
+              initial={false}
+              animate={{ width: `${trackFillPercent}%` }}
+              transition={{ duration: 0.45, ease: 'easeInOut' }}
+            />
+          </div>
+
+          <div className="relative flex items-center justify-between gap-0.5 sm:gap-2">
+            {([1, 2, 3] as const).map((step) => {
+              const isDone = step < currentStep
+              const isActive = step === currentStep
+              return (
+                <button
+                  key={step}
+                  type="button"
+                  onClick={() => setCurrentStep(step)}
+                  aria-current={isActive ? 'step' : undefined}
+                  aria-label={stepLabels[step - 1]}
+                  className={cn(
+                    'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11',
+                    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex items-center justify-center rounded-full border-2 transition-all duration-300',
+                      'h-2.5 w-2.5 sm:h-3.5 sm:w-3.5',
+                      isDone &&
+                        'border-emerald-400/90 bg-emerald-500/25 shadow-[0_0_8px_rgba(52,211,153,0.35)]',
+                      isActive &&
+                        'border-indigo-300 bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-500/40 ring-2 ring-white/20 sm:ring-[3px]',
+                      !isDone &&
+                        !isActive &&
+                        'border-white/35 bg-transparent hover:border-white/50 hover:bg-white/[0.06]'
+                    )}
+                  >
+                    {isDone && (
+                      <Check className="h-[7px] w-[7px] text-emerald-100 sm:h-2.5 sm:w-2.5" strokeWidth={3} aria-hidden />
+                    )}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
-        {/* Step Labels */}
-        <div className="flex justify-between mt-3 px-1">
-          <span className={`text-xs font-semibold transition-all duration-300 drop-shadow-sm ${currentStep >= 1 ? 'text-white' : 'text-white/60'}`}>
-            {t('carBasicsStep')}
-          </span>
-          <span className={`text-xs font-semibold transition-all duration-300 drop-shadow-sm ${currentStep >= 2 ? 'text-white' : 'text-white/60'}`}>
-            {t('specsStep')}
-          </span>
-          <span className={`text-xs font-semibold transition-all duration-300 drop-shadow-sm ${currentStep >= 3 ? 'text-white' : 'text-white/60'}`}>
-            {t('detailsStep')}
-          </span>
+
+        <p
+          className="mt-2.5 px-2 text-center text-xs font-medium leading-snug text-white/90 sm:hidden"
+          dir="auto"
+        >
+          {stepLabels[currentStep - 1]}
+        </p>
+
+        <div className="mt-3 hidden min-w-0 sm:flex sm:justify-between sm:gap-2 sm:px-1 md:gap-4">
+          {stepLabels.map((label, i) => (
+            <span
+              key={i}
+              dir="auto"
+              className={cn(
+                'min-w-0 flex-1 basis-0 text-center text-xs font-medium leading-snug transition-colors duration-300',
+                currentStep >= i + 1 ? 'text-white' : 'text-white/55'
+              )}
+            >
+              {label}
+            </span>
+          ))}
         </div>
       </div>
 
