@@ -21,6 +21,7 @@ import {
   Mail,
   Phone,
   MapPin,
+  Ticket,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -32,6 +33,7 @@ import { LoadingButton } from '@/components/common/LoadingButton'
 import { PasswordStrength } from '@/components/common/PasswordStrength'
 import { ProfileAvatarUpload } from '@/components/profile/ProfileAvatarUpload'
 import { LtrEmbed } from '@/components/ui/LtrEmbed'
+import { apiClient, type VoucherMeResponse } from '@/lib/api'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -96,6 +98,18 @@ export default function ProfilePage() {
 
   const [prefsHydrated, setPrefsHydrated] = useState(false)
 
+  const [voucherCode, setVoucherCode] = useState('')
+  const [voucherApplying, setVoucherApplying] = useState(false)
+  const [voucherInfo, setVoucherInfo] = useState<VoucherMeResponse | null>(null)
+
+  const loadVoucherInfo = useCallback(async () => {
+    try {
+      setVoucherInfo(await apiClient.getMyVouchers())
+    } catch {
+      setVoucherInfo(null)
+    }
+  }, [])
+
   // Security & Privacy preferences (persisted to public.users.profile_settings)
   const [securityPrefs, setSecurityPrefs] = useState({
     twoFactorEnabled: false,
@@ -131,6 +145,11 @@ export default function ProfilePage() {
     }
     loadProfile()
   }, [user, authLoading, router, locale])
+
+  useEffect(() => {
+    if (!user || authLoading) return
+    void loadVoucherInfo()
+  }, [user, authLoading, loadVoucherInfo])
 
   // Single background: hide body bg on profile so only the animated gradient shows
   useEffect(() => {
@@ -244,6 +263,31 @@ export default function ProfilePage() {
       toast({ title: tCommon('error'), description: msg, variant: 'destructive' })
     } finally {
       setSavingProfile(false)
+    }
+  }
+
+  const handleApplyVoucher = async () => {
+    const c = voucherCode.trim()
+    if (!c) {
+      toast({ title: tCommon('error'), description: t('voucherEnterCode'), variant: 'destructive' })
+      return
+    }
+    setVoucherApplying(true)
+    try {
+      const res = await apiClient.applyVoucherCode(c)
+      const b = (res.benefits || {}) as { daily_comparisons?: number }
+      const n = typeof b.daily_comparisons === 'number' ? b.daily_comparisons : 10
+      toast({
+        title: t('voucherAppliedTitle'),
+        description: t('voucherAppliedDesc', { compare: n }),
+      })
+      setVoucherCode('')
+      await loadVoucherInfo()
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : t('voucherApplyFailed')
+      toast({ title: tCommon('error'), description: msg, variant: 'destructive' })
+    } finally {
+      setVoucherApplying(false)
     }
   }
 
@@ -679,6 +723,49 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              <div className="mt-8 rounded-xl border border-slate-200/80 bg-slate-50/40 p-5 dark:border-white/[0.07] dark:bg-white/[0.03]">
+                <div className="mb-4 flex gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-200">
+                    <Ticket className="h-5 w-5" aria-hidden />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('voucherSectionTitle')}</h3>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{t('voucherSectionDesc')}</p>
+                  </div>
+                </div>
+                {voucherInfo && voucherInfo.redemptions.length > 0 ? (
+                  <p className="mb-4 text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                    {t('voucherActiveSummary', { compare: voucherInfo.merged_benefits.daily_comparisons })}
+                  </p>
+                ) : null}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="min-w-0 flex-1">
+                    <Label htmlFor="profile_voucher_code" className="text-slate-800 dark:text-slate-200">
+                      {t('voucherPlaceholder')}
+                    </Label>
+                    <Input
+                      id="profile_voucher_code"
+                      value={voucherCode}
+                      onChange={(e) => setVoucherCode(e.target.value)}
+                      placeholder={t('voucherPlaceholder')}
+                      autoComplete="off"
+                      className="mt-1.5 border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.05] dark:text-white"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void handleApplyVoucher()
+                      }}
+                    />
+                  </div>
+                  <LoadingButton
+                    type="button"
+                    onClick={() => void handleApplyVoucher()}
+                    loading={voucherApplying}
+                    className="h-11 shrink-0 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 font-semibold text-white shadow-md hover:from-emerald-500 hover:to-teal-500 sm:min-w-[120px]"
+                  >
+                    {t('voucherApply')}
+                  </LoadingButton>
+                </div>
               </div>
 
               <div

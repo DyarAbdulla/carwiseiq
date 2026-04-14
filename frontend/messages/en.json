@@ -1877,6 +1877,21 @@
     "showActivityStatus": "Show my activity status",
     "confirmPassword": "Confirm your password",
     "understandPermanent": "I understand this is permanent and all my data will be deleted.",
+    "voucherSectionTitle": "Voucher code",
+    "voucherSectionDesc": "Redeem a promo code to unlock higher limits on your account permanently.",
+    "voucherPlaceholder": "Enter code",
+    "voucherApply": "Apply",
+    "voucherEnterCode": "Please enter a voucher code.",
+    "voucherApplyFailed": "Could not apply voucher.",
+    "voucherAppliedTitle": "\uD83C\uDF89 Voucher applied!",
+    "voucherAppliedDesc": "You now have unlimited predictions and {compare} daily comparisons.",
+    "voucherActiveSummary": "Active: unlimited predictions, {compare} comparisons per day",
+    "voucherRedeemedCodes": "Your redemptions",
+    "voucherModalTitle": "Apply voucher",
+    "voucherModalDesc": "Enter your code below. Benefits apply to your signed-in account.",
+    "voucherSignInPrompt": "Sign in to apply a voucher code to your account.",
+    "voucherSignIn": "Sign in",
+    "haveVoucherLink": "Have a voucher?",
     "profileUpdated": "Profile updated",
     "profileUpdatedDesc": "Your profile has been updated successfully",
     "failedLoadProfile": "Failed to load profile",
@@ -1955,5 +1970,34 @@
     "install": "Install",
     "notNow": "Not now",
     "dismiss": "Dismiss"
+  },
+  "usageLimits": {
+    "unlimitedPredictionsToday": "Unlimited predictions today.",
+    "predictExhausted": "You've used all {limit} free predictions today. Try again tomorrow or use a voucher code for unlimited access.",
+    "predictRemaining": "{remaining}/{limit} predictions remaining today",
+    "compareExhausted": "You've used your {limit} free comparisons today. Try again tomorrow or use a voucher code for more.",
+    "compareRemaining": "{remaining}/{limit} comparisons remaining today"
+  },
+  "chat": {
+    "title": "CarWiseIQ Assistant",
+    "subtitle": "Ask me anything!",
+    "welcome": "Hi! \uD83D\uDC4B I'm here to help with car valuations and buying/selling. What can I help you with?",
+    "hint": "Tap a suggestion below or type your question",
+    "placeholder": "Type your message...",
+    "error": "Sorry, something went wrong. Please try again.",
+    "thinking": "Thinking...",
+    "connectError": "Sorry, could not connect. Please try again.",
+    "limitFallback": "You've reached the message limit. Please try again later.",
+    "resetIn": "Resets in: {time}",
+    "openChat": "Open chat",
+    "closeChat": "Close chat",
+    "send": "Send",
+    "quickReplies": [
+      "💰 How much is my car worth?",
+      "🚗 How to sell my car?",
+      "🔍 Find cars under $15,000",
+      "📊 Compare two cars",
+      "❓ How does CarWiseIQ work?"
+    ]
   }
 }

@@ -15,6 +15,7 @@ import { PageTransition } from '@/components/PageTransition';
 import { PredictLoadingProvider } from '@/components/PredictLoadingProvider';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
+import { IpBanGuard } from '@/components/security/IpBanGuard';
 import React from 'react';
 
 const ScrollToTop = dynamic(
@@ -95,48 +96,50 @@ export default async function LocaleLayout({
       {/* Load Vazirmatn so it’s available when BodyFontSwitcher applies it for RTL */}
       <span className={vazirmatn.className} aria-hidden style={{ position: 'absolute', left: -9999, pointerEvents: 'none' }} />
       <NextIntlClientProvider locale={locale} messages={messages || {}}>
-        <AuthProvider>
-          <ThemeProvider>
-            <SetDirection />
-            <BodyFontSwitcher interClass={inter.className} vazirmatnClass={vazirmatn.className} />
-            <ToastProvider>
-              <PredictLoadingProvider>
-                <ScrollToTop />
-                <SkipToContent />
-                <APIStatusBanner />
-                <div className="flex flex-col min-h-screen">
-                  <ErrorBoundary>
-                    <Suspense fallback={<div className="h-16" aria-hidden />}>
-                      <Header />
-                    </Suspense>
-                  </ErrorBoundary>
-                  <main
-                    id="main-content"
-                    className="relative flex-1 min-h-[calc(100vh-8rem)] bg-transparent"
-                    role="main"
-                  >
-                    {/* Single page canvas: body supplies mesh (globals.css); no extra full-page bg in route components */}
-                    <div className="relative z-10 w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-20 overflow-x-hidden overflow-y-visible bg-transparent">
-                      <ErrorBoundary homeHref={`/${locale}`}>
-                        <PageTransition>
-                          {children}
-                        </PageTransition>
-                      </ErrorBoundary>
-                    </div>
-                  </main>
-                  <ErrorBoundary>
-                    <Footer />
-                  </ErrorBoundary>
-                  <BottomNav />
-                </div>
-                <CookieConsent />
-                <PushClientKit />
-                <ChatBot />
-                <OnboardingModal />
-              </PredictLoadingProvider>
-            </ToastProvider>
-          </ThemeProvider>
-        </AuthProvider>
+        <IpBanGuard>
+          <AuthProvider>
+            <ThemeProvider>
+              <SetDirection />
+              <BodyFontSwitcher interClass={inter.className} vazirmatnClass={vazirmatn.className} />
+              <ToastProvider>
+                <PredictLoadingProvider>
+                  <ScrollToTop />
+                  <SkipToContent />
+                  <APIStatusBanner />
+                  <div className="flex flex-col min-h-screen">
+                    <ErrorBoundary>
+                      <Suspense fallback={<div className="h-16" aria-hidden />}>
+                        <Header />
+                      </Suspense>
+                    </ErrorBoundary>
+                    <main
+                      id="main-content"
+                      className="relative flex-1 min-h-[calc(100vh-8rem)] bg-transparent"
+                      role="main"
+                    >
+                      {/* Single page canvas: body supplies mesh (globals.css); no extra full-page bg in route components */}
+                      <div className="relative z-10 w-full max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 pt-16 sm:pt-20 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-20 overflow-x-hidden overflow-y-visible bg-transparent">
+                        <ErrorBoundary homeHref={`/${locale}`}>
+                          <PageTransition>
+                            {children}
+                          </PageTransition>
+                        </ErrorBoundary>
+                      </div>
+                    </main>
+                    <ErrorBoundary>
+                      <Footer />
+                    </ErrorBoundary>
+                    <BottomNav />
+                  </div>
+                  <CookieConsent />
+                  <PushClientKit />
+                  <ChatBot />
+                  <OnboardingModal />
+                </PredictLoadingProvider>
+              </ToastProvider>
+            </ThemeProvider>
+          </AuthProvider>
+        </IpBanGuard>
       </NextIntlClientProvider>
     </ErrorBoundary>
   );

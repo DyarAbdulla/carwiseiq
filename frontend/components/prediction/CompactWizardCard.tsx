@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef, useMemo, useId } from 'react'
+import { useEffect, useState, useRef, useMemo, useId, type ReactNode } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -86,9 +86,20 @@ interface CompactWizardCardProps {
   loading?: boolean
   prefillData?: CarFeatures | null
   onFormChange?: (data: Partial<CarFeatures>) => void
+  /** Shown on the final step above the Predict Price / Back row */
+  usageNearPredict?: ReactNode
+  /** When true, the final submit stays disabled even if the form is valid */
+  predictSubmitExtraDisabled?: boolean
 }
 
-export function CompactWizardCard({ onSubmit, loading = false, prefillData = null, onFormChange }: CompactWizardCardProps) {
+export function CompactWizardCard({
+  onSubmit,
+  loading = false,
+  prefillData = null,
+  onFormChange,
+  usageNearPredict,
+  predictSubmitExtraDisabled = false,
+}: CompactWizardCardProps) {
   const t = useTranslations('predict.form')
   const { toast } = useToast()
   const [currentStep, setCurrentStep] = useState(1)
@@ -1062,24 +1073,31 @@ export function CompactWizardCard({ onSubmit, loading = false, prefillData = nul
               </Button>
             </div>
           ) : (
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleBack}
-                className="border-white/20 bg-white/5 hover:bg-white/10 text-white"
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                {t('back')}
-              </Button>
-              <Button
-                type="button"
-                onClick={handleFinalSubmit}
-                disabled={loading || !isStepValid()}
-                className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? t('analyzingMarketData') : t('predictButton')}
-              </Button>
+            <div className="space-y-2">
+              {usageNearPredict ? (
+                <div className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-center text-xs leading-snug text-white/90">
+                  {usageNearPredict}
+                </div>
+              ) : null}
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBack}
+                  className="border-white/20 bg-white/5 hover:bg-white/10 text-white"
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  {t('back')}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleFinalSubmit}
+                  disabled={loading || !isStepValid() || predictSubmitExtraDisabled}
+                  className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? t('analyzingMarketData') : t('predictButton')}
+                </Button>
+              </div>
             </div>
           )}
         </div>

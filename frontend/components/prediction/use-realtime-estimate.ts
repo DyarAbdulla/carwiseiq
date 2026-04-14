@@ -46,7 +46,9 @@ export function useRealtimeEstimate({
           location: features.location || 'California',
         }
 
-        const result = await apiClient.predictPrice(completeFeatures)
+        const result = await apiClient.predictPrice(completeFeatures, undefined, {
+          usageSource: 'estimate',
+        })
         if (onEstimate) {
           onEstimate(result)
         }

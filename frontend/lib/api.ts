@@ -222,7 +222,8 @@ api.interceptors.request.use(async (config) => {
   const isProtectedEndpoint = config.url?.includes('/api/favorites') ||
     config.url?.includes('/api/marketplace') ||
     config.url?.includes('/api/auth/me') ||
-    config.url?.includes('/api/messaging')
+    config.url?.includes('/api/messaging') ||
+    config.url?.includes('/api/vouchers')
 
   if (isProtectedEndpoint) {
     // CRITICAL FIX: Use getSupabaseToken() which handles refresh automatically
@@ -562,8 +563,12 @@ const handleError = (error: unknown): string => {
       }
     }
 
-    // Handle other errors with detail field
-    const errorDetail = axiosError.response?.data?.detail
+    // Handle other errors with detail field (FastAPI may return an object for429 usage limits)
+    const errorDetail = axiosError.response?.data?.detail as unknown
+    if (typeof errorDetail === 'object' && errorDetail !== null && 'message' in (errorDetail as object)) {
+      const m = (errorDetail as { message?: string }).message
+      if (typeof m === 'string' && m) return m
+    }
     if (typeof errorDetail === 'string') {
       return errorDetail
     }
@@ -617,9 +622,67 @@ export function getApiErrorTranslationKey(error: unknown): string | null {
   return 'errors.generic'
 }
 
+/** IANA timezone for daily usage (browser local calendar day). */
+export function getClientIanaTimezone(): string {
+  if (typeof window === 'undefined') return 'Asia/Baghdad'
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Baghdad'
+  } catch {
+    return 'Asia/Baghdad'
+  }
+}
+
+/** UI locale from URL path (/en, /ku, /ar) for localized API error messages. */
+export function getClientUiLocale(): string {
+  if (typeof window === 'undefined') return 'en'
+  const seg = window.location.pathname.split('/').filter(Boolean)[0]?.toLowerCase() ?? ''
+  if (seg === 'ar' || seg === 'ku') return seg
+  return 'en'
+}
+
+function usagePredictHeaders(usageSource: 'predict' | 'estimate' = 'predict'): Record<string, string> {
+  return {
+    'X-Client-Timezone': getClientIanaTimezone(),
+    'X-Usage-Source': usageSource,
+    'X-Client-Locale': getClientUiLocale(),
+  }
+}
+
+export type DailyUsageStatus = {
+  /** Account voucher: no daily cap on single predictions */
+  unlimited_predictions: boolean
+  /** @deprecated use unlimited_predictions */
+  unlimited?: boolean
+  usage_date: string
+  predict_used: number
+  predict_limit: number
+  predict_remaining: number
+  compare_used: number
+  compare_limit: number
+  compare_remaining: number
+}
+
+export type VoucherApplyResponse = {
+  ok: boolean
+  benefits?: Record<string, unknown>
+}
+
+export type VoucherMeResponse = {
+  redemptions: Array<{
+    code: string | null
+    redeemed_at: string | null
+    benefits: unknown
+  }>
+  merged_benefits: {
+    unlimited_predictions: boolean
+    daily_comparisons: number
+  }
+}
+
 /** POST /api/predict with retries: immediate, then +1s, then +2s (skips retry on 4xx except 408/429). */
 async function postPredictWithBackoff(
-  requestBody: Record<string, unknown>
+  requestBody: Record<string, unknown>,
+  extraHeaders?: Record<string, string>
 ): Promise<import('axios').AxiosResponse<PredictionResponse>> {
   const waitMs = [1000, 2000]
   let lastErr: unknown
@@ -628,7 +691,9 @@ async function postPredictWithBackoff(
       await new Promise((r) => setTimeout(r, waitMs[attempt - 1]))
     }
     try {
-      return await api.post<PredictionResponse>('/api/predict', requestBody)
+      return await api.post<PredictionResponse>('/api/predict', requestBody, {
+        headers: extraHeaders,
+      })
     } catch (e) {
       lastErr = e
       if (axios.isAxiosError(e)) {
@@ -656,8 +721,12 @@ export const apiClient = {
     }
   },
 
-  // Single prediction
-  async predictPrice(features: CarFeatures | null | undefined, imageFeatures?: number[]): Promise<PredictionResponse> {
+  // Single prediction (usageSource estimate = live preview, does not count toward daily cap)
+  async predictPrice(
+    features: CarFeatures | null | undefined,
+    imageFeatures?: number[],
+    options?: { usageSource?: 'predict' | 'estimate' }
+  ): Promise<PredictionResponse> {
     try {
       console.log('📡 [API] predictPrice called', { features, hasImageFeatures: !!imageFeatures })
 
@@ -704,7 +773,8 @@ export const apiClient = {
         hasAuth: !!api.defaults.headers.common['Authorization']
       })
 
-      const response = await postPredictWithBackoff(requestBody)
+      const usageSource = options?.usageSource ?? 'predict'
+      const response = await postPredictWithBackoff(requestBody, usagePredictHeaders(usageSource))
 
       console.log('📥 [API] Response received', {
         status: response.status,
@@ -738,6 +808,56 @@ export const apiClient = {
     }
   },
 
+  async getDailyUsageStatus(): Promise<DailyUsageStatus> {
+    const tz = getClientIanaTimezone()
+    const response = await api.get<DailyUsageStatus>('/api/usage/daily-status', {
+      params: { tz },
+      headers: { 'X-Client-Locale': getClientUiLocale() },
+    })
+    return response.data
+  },
+
+  async applyVoucherCode(code: string): Promise<VoucherApplyResponse> {
+    try {
+      const response = await api.post<VoucherApplyResponse>('/api/vouchers/apply', { code })
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  async getMyVouchers(): Promise<VoucherMeResponse> {
+    try {
+      const response = await api.get<VoucherMeResponse>('/api/vouchers/me')
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
+  },
+
+  /** Compare page: full predictions in one request; consumes one "comparison" credit (not per-car predict credits). */
+  async predictCompareBatch(cars: CarFeatures[]): Promise<{
+    results: Array<{ ok: boolean; prediction?: PredictionResponse; error?: string }>
+    successful: number
+    failed: number
+  }> {
+    const response = await api.post<{
+      results: Array<{ ok: boolean; prediction?: PredictionResponse; error?: string }>
+      successful: number
+      failed: number
+    }>(
+      '/api/predict/compare-batch',
+      { cars },
+      {
+        headers: {
+          'X-Client-Timezone': getClientIanaTimezone(),
+          'X-Client-Locale': getClientUiLocale(),
+        },
+      }
+    )
+    return response.data
+  },
+
   // Batch prediction
   async predictBatch(cars: CarFeatures[]): Promise<BatchPredictionResult[]> {
     try {
@@ -746,9 +866,11 @@ export const apiClient = {
       // Try to use batch endpoint if available, otherwise fall back to individual calls
       try {
         console.log('🚀 [API] Attempting batch endpoint /api/predict/batch')
-        const response = await api.post<{ predictions: BatchPredictionResult[] }>('/api/predict/batch', {
-          cars,
-        })
+        const response = await api.post<{ predictions: BatchPredictionResult[] }>(
+          '/api/predict/batch',
+          { cars },
+          { headers: usagePredictHeaders('predict') }
+        )
         console.log('✅ [API] Batch endpoint successful:', response.data.predictions.length, 'predictions')
         return response.data.predictions
       } catch (batchError) {
@@ -763,7 +885,7 @@ export const apiClient = {
           console.log(`🚗 [API] Predicting ${i + 1}/${cars.length}: ${car.make} ${car.model}`)
 
           try {
-            const result = await this.predictPrice(car)
+            const result = await this.predictPrice(car, undefined, { usageSource: 'predict' })
             predictions.push({
               car,
               predicted_price: result.predicted_price,
@@ -1532,7 +1654,7 @@ export const apiClient = {
       if (imageFeatures && imageFeatures.length > 0) {
         requestBody.image_features = imageFeatures
       }
-      const response = await postPredictWithBackoff(requestBody)
+      const response = await postPredictWithBackoff(requestBody, usagePredictHeaders('predict'))
       return normalizePredictionResponse(response.data)
     } catch (error) {
       throw new Error(handleError(error))

@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef, useMemo, Suspense } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
@@ -17,7 +17,7 @@ const PredictionResult = dynamic(
   () => import('@/components/prediction/PredictionResult').then((m) => ({ default: m.PredictionResult })),
   { loading: () => <PredictionResultSkeleton />, ssr: false }
 )
-import { apiClient } from '@/lib/api'
+import { apiClient, type DailyUsageStatus } from '@/lib/api'
 import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import type { CarFeatures, PredictionResponse } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
@@ -36,6 +36,7 @@ import { removeCarBackgroundLazy } from '@/lib/backgroundRemovalLazy'
 import { usePredictLoading } from '@/components/PredictLoadingProvider'
 import { activityHelpers } from '@/lib/activityLogger'
 import { safeText, sanitizeCarFeaturesFromUnknown } from '@/lib/safeDisplay'
+import { VoucherApplyModal } from '@/components/vouchers/VoucherApplyModal'
 
 // Image upload constants (kept for image analysis functionality)
 const MAX_IMAGES = 10
@@ -481,6 +482,17 @@ function PredictPageContent() {
   const [images, setImages] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
+  const [dailyUsage, setDailyUsage] = useState<DailyUsageStatus | null>(null)
+  const [voucherOpen, setVoucherOpen] = useState(false)
+
+  const refreshDailyUsage = useCallback(async () => {
+    try {
+      setDailyUsage(await apiClient.getDailyUsageStatus())
+    } catch {
+      setDailyUsage(null)
+    }
+  }, [])
+
   const [imageAnalysis, setImageAnalysis] = useState<{
     summary: string
     bullets: string[]
@@ -496,6 +508,8 @@ function PredictPageContent() {
   // Hooks must be called unconditionally
   const t = useTranslations('predict')
   const tCommon = useTranslations('common')
+  const tProfile = useTranslations('profile')
+  const tUsage = useTranslations('usageLimits')
   const tRoot = useTranslations()
   const toastHook = useToast()
   const toast = toastHook || { toast: () => { } }
@@ -504,6 +518,11 @@ function PredictPageContent() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    void refreshDailyUsage()
+  }, [mounted, refreshDailyUsage])
 
   const searchParams = useSearchParams()
 
@@ -835,6 +854,7 @@ function PredictPageContent() {
       }
     } finally {
       setLoading(false)
+      void refreshDailyUsage()
     }
   }
 
@@ -942,7 +962,41 @@ function PredictPageContent() {
                   loading={loading}
                   prefillData={prefillData}
                   onFormChange={setFormFeatures}
+                  usageNearPredict={
+                    !dailyUsage
+                      ? null
+                      : dailyUsage.unlimited_predictions || dailyUsage.unlimited
+                        ? (
+                            <>{tUsage('unlimitedPredictionsToday')}</>
+                          )
+                        : dailyUsage.predict_remaining <= 0
+                          ? (
+                              <>{tUsage('predictExhausted', { limit: dailyUsage.predict_limit })}</>
+                            )
+                          : (
+                              <>
+                                {tUsage('predictRemaining', {
+                                  remaining: dailyUsage.predict_remaining,
+                                  limit: dailyUsage.predict_limit,
+                                })}
+                              </>
+                            )
+                  }
+                  predictSubmitExtraDisabled={
+                    !!dailyUsage &&
+                    !(dailyUsage.unlimited_predictions || dailyUsage.unlimited) &&
+                    dailyUsage.predict_remaining <= 0
+                  }
                 />
+                <div className="mt-3 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setVoucherOpen(true)}
+                    className="text-xs text-white/75 underline underline-offset-2 hover:text-white"
+                  >
+                    {tProfile('haveVoucherLink')}
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -1164,6 +1218,11 @@ function PredictPageContent() {
           </div>
         </div>
       </div>
+      <VoucherApplyModal
+        open={voucherOpen}
+        onOpenChange={setVoucherOpen}
+        onApplied={() => void refreshDailyUsage()}
+      />
     </main>
   )
 }

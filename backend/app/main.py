@@ -28,7 +28,7 @@ import re
 from fastapi.responses import JSONResponse, Response
 from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.gzip import GZipMiddleware
-from app.api.routes import health, predict, cars, budget, stats, auth, options, images, model_info, feedback, admin, marketplace, messaging, favorites, ai, chat, dataset, export, services, providers, notifications
+from app.api.routes import health, predict, cars, budget, stats, auth, options, images, model_info, feedback, admin, marketplace, messaging, favorites, ai, chat, dataset, export, services, providers, notifications, security, usage, vouchers
 from app.config import settings
 
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
@@ -146,6 +146,9 @@ app.include_router(marketplace.router,
                    prefix="/api/marketplace", tags=["Marketplace"])
 app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 app.include_router(chat.router, prefix="/api", tags=["Chat"])
+app.include_router(security.router, prefix="/api", tags=["Security"])
+app.include_router(usage.router, prefix="/api", tags=["Usage"])
+app.include_router(vouchers.router, prefix="/api", tags=["Vouchers"])
 app.include_router(
     messaging.router, prefix="/api/messaging", tags=["Messaging"])
 app.include_router(

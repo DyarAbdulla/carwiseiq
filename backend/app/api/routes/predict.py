@@ -2,7 +2,8 @@
 Prediction endpoint
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+import contextvars
+from fastapi import APIRouter, HTTPException, Depends, Request, Header
 from app.models.schemas import (
     PredictionRequest, PredictionResponse, ConfidenceInterval,
     MarketComparison, SimilarCar, MarketTrend, PriceFactor,
@@ -24,6 +25,10 @@ import asyncio
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+_predict_quota_skip: contextvars.ContextVar[bool] = contextvars.ContextVar(
+    "predict_quota_skip", default=False
+)
 
 _predictor_singleton: Optional[Predictor] = None
 
@@ -57,10 +62,23 @@ class BatchPredictionResponse(BaseModel):
     failed: int
 
 
-@router.post("/predict", response_model=PredictionResponse)
-async def predict_price(
+class CompareBatchResultItem(BaseModel):
+    """One slot per requested car (same order as request body)."""
+    ok: bool
+    prediction: Optional[PredictionResponse] = None
+    error: Optional[str] = None
+
+
+class CompareBatchResponse(BaseModel):
+    """Compare page Predict All — order matches request cars."""
+    results: List[CompareBatchResultItem]
+    successful: int
+    failed: int
+
+
+async def _predict_price_implementation(
     request: PredictionRequest,
-    current_user: Optional[UserResponse] = Depends(get_current_user)
+    current_user: Optional[UserResponse] = None,
 ):
     """
     Predict car price from features with market analysis
@@ -1198,8 +1216,127 @@ async def predict_price(
                 status_code=500, detail=f"Error making prediction: {error_msg}")
 
 
+@router.post("/predict", response_model=PredictionResponse)
+async def predict_price(
+    request: PredictionRequest,
+    http_request: Request,
+    current_user: Optional[UserResponse] = Depends(get_current_user),
+    x_usage_source: str = Header(default="predict", alias="X-Usage-Source"),
+    x_client_timezone: str = Header(default="Asia/Baghdad", alias="X-Client-Timezone"),
+    x_client_locale: str = Header(default="en", alias="X-Client-Locale"),
+):
+    """Single prediction with daily usage limits (unless estimate/internal or account voucher)."""
+    from app.services.chat_security_service import client_ip_from_request, rate_limit_identity_key
+    from app.services.usage_limits_service import (
+        ensure_predict_room,
+        increment_predict,
+        usage_local_date,
+    )
+
+    usage_source = (x_usage_source or "predict").strip().lower()
+    skip_usage = _predict_quota_skip.get() or usage_source in ("estimate", "internal")
+
+    ip = client_ip_from_request(
+        http_request.client.host if http_request.client else None,
+        http_request.headers.get("x-forwarded-for"),
+    )
+    supabase_uid = getattr(current_user, "supabase_user_id", None) if current_user else None
+    legacy_id = current_user.id if current_user else None
+    ident = rate_limit_identity_key(ip, supabase_uid, legacy_id)
+    usage_date = usage_local_date(x_client_timezone)
+
+    ui_locale = (x_client_locale or "en").strip() or "en"
+    if not skip_usage and usage_source == "predict":
+        ok, err_detail = await ensure_predict_room(ident, usage_date, 1, supabase_uid, ui_locale)
+        if not ok:
+            raise HTTPException(status_code=429, detail=err_detail)
+
+    out = await _predict_price_implementation(request, current_user)
+
+    if not skip_usage and usage_source == "predict":
+        await increment_predict(ident, usage_date, 1, supabase_uid)
+
+    return out
+
+
+@router.post("/predict/compare-batch", response_model=CompareBatchResponse)
+async def predict_compare_batch(
+    body: BatchPredictionRequest,
+    http_request: Request,
+    current_user: Optional[UserResponse] = Depends(get_current_user),
+    x_client_timezone: str = Header(default="Asia/Baghdad", alias="X-Client-Timezone"),
+    x_client_locale: str = Header(default="en", alias="X-Client-Locale"),
+):
+    """Compare page: run up to 4 full predictions; consumes 1 compare credit if any succeed."""
+    from app.services.chat_security_service import client_ip_from_request, rate_limit_identity_key
+    from app.services.usage_limits_service import (
+        ensure_compare_room,
+        increment_compare,
+        usage_local_date,
+    )
+
+    if len(body.cars) < 1:
+        raise HTTPException(status_code=400, detail="At least 1 car required")
+    if len(body.cars) > 4:
+        raise HTTPException(status_code=400, detail="Maximum 4 cars for compare batch")
+
+    ip = client_ip_from_request(
+        http_request.client.host if http_request.client else None,
+        http_request.headers.get("x-forwarded-for"),
+    )
+    supabase_uid = getattr(current_user, "supabase_user_id", None) if current_user else None
+    legacy_id = current_user.id if current_user else None
+    ident = rate_limit_identity_key(ip, supabase_uid, legacy_id)
+    usage_date = usage_local_date(x_client_timezone)
+
+    ui_locale = (x_client_locale or "en").strip() or "en"
+    ok, err_detail = await ensure_compare_room(ident, usage_date, supabase_uid, ui_locale)
+    if not ok:
+        raise HTTPException(status_code=429, detail=err_detail)
+
+    results: List[CompareBatchResultItem] = []
+    successful = 0
+    failed = 0
+    token = _predict_quota_skip.set(True)
+    try:
+        for car in body.cars:
+            try:
+                pr = await _predict_price_implementation(
+                    PredictionRequest(features=car),
+                    current_user,
+                )
+                results.append(CompareBatchResultItem(ok=True, prediction=pr))
+                successful += 1
+            except HTTPException as he:
+                failed += 1
+                detail = he.detail
+                msg = detail if isinstance(detail, str) else str(detail)
+                results.append(CompareBatchResultItem(ok=False, error=msg))
+            except Exception as e:
+                logger.error("compare-batch item failed: %s", e, exc_info=True)
+                failed += 1
+                results.append(CompareBatchResultItem(ok=False, error=str(e)))
+    finally:
+        _predict_quota_skip.reset(token)
+
+    if successful > 0:
+        await increment_compare(ident, usage_date, 1)
+
+    return CompareBatchResponse(
+        results=results,
+        successful=successful,
+        failed=failed,
+    )
+
+
 @router.post("/predict/batch", response_model=BatchPredictionResponse)
-async def predict_batch(request: BatchPredictionRequest):
+async def predict_batch(
+    request: BatchPredictionRequest,
+    http_request: Request,
+    current_user: Optional[UserResponse] = Depends(get_current_user),
+    x_client_timezone: str = Header(default="Asia/Baghdad", alias="X-Client-Timezone"),
+    x_client_locale: str = Header(default="en", alias="X-Client-Locale"),
+):
     """
     Batch predict prices for multiple cars
 
@@ -1239,6 +1376,30 @@ async def predict_batch(request: BatchPredictionRequest):
                 status_code=400,
                 detail="At least 1 car required"
             )
+
+        from app.services.chat_security_service import client_ip_from_request, rate_limit_identity_key
+        from app.services.usage_limits_service import (
+            ensure_predict_room,
+            increment_predict,
+            usage_local_date,
+        )
+
+        usage_ident: Optional[str] = None
+        usage_date_str: Optional[str] = None
+        supabase_uid_bt = getattr(current_user, "supabase_user_id", None) if current_user else None
+        legacy_id_bt = current_user.id if current_user else None
+        ip = client_ip_from_request(
+            http_request.client.host if http_request.client else None,
+            http_request.headers.get("x-forwarded-for"),
+        )
+        usage_ident = rate_limit_identity_key(ip, supabase_uid_bt, legacy_id_bt)
+        usage_date_str = usage_local_date(x_client_timezone)
+        ui_locale_bt = (x_client_locale or "en").strip() or "en"
+        ok_batch, err_batch = await ensure_predict_room(
+            usage_ident, usage_date_str, len(request.cars), supabase_uid_bt, ui_locale_bt
+        )
+        if not ok_batch:
+            raise HTTPException(status_code=429, detail=err_batch)
 
         # Initialize predictor and market analyzer (singleton predictor)
         predictor = get_predictor()
@@ -1303,6 +1464,9 @@ async def predict_batch(request: BatchPredictionRequest):
 
         logger.info(
             f"✅ Batch prediction completed: {successful} successful, {failed} failed")
+
+        if usage_ident and usage_date_str and successful > 0:
+            await increment_predict(usage_ident, usage_date_str, successful, supabase_uid_bt)
 
         return BatchPredictionResponse(
             predictions=predictions,

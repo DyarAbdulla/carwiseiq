@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PredictionForm } from '@/components/prediction/PredictionForm'
-import { apiClient } from '@/lib/api'
+import { apiClient, type DailyUsageStatus } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { X, Plus, Download, Share2, Save, Trophy, TrendingDown, TrendingUp, Sparkles, Check, X as XIcon, Gauge, Fuel, Cog, Calendar, Shield, Loader2, Car } from 'lucide-react'
 import type { CarFeatures, PredictionResponse } from '@/lib/types'
@@ -28,6 +28,7 @@ import { saveCompareToHistory, type CompareHistoryEntry } from '@/lib/compareHis
 import { parseCompareUrl } from '@/lib/shareUtils'
 import { activityHelpers } from '@/lib/activityLogger'
 import { markCompareEngaged } from '@/lib/push/engagement'
+import { VoucherApplyModal } from '@/components/vouchers/VoucherApplyModal'
 
 interface CarCard {
   id: string
@@ -79,12 +80,24 @@ function ComparePageContent() {
   const [predictingAll, setPredictingAll] = useState(false)
   const [highlightDifferencesOnly, setHighlightDifferencesOnly] = useState(false)
   const [locations, setLocations] = useState<string[]>([])
+  const [dailyUsage, setDailyUsage] = useState<DailyUsageStatus | null>(null)
+  const [voucherOpen, setVoucherOpen] = useState(false)
 
   const MAX_CARS = 4
+
+  const refreshDailyUsage = useCallback(async () => {
+    try {
+      setDailyUsage(await apiClient.getDailyUsageStatus())
+    } catch {
+      setDailyUsage(null)
+    }
+  }, [])
 
   // ALL hooks must be called unconditionally BEFORE any conditional returns
   const t = useTranslations('compare')
   const tCommon = useTranslations('common')
+  const tProfile = useTranslations('profile')
+  const tUsage = useTranslations('usageLimits')
   const toastHook = useToast()
   const toast = toastHook || { toast: () => { } }
   const router = useRouter()
@@ -93,6 +106,11 @@ function ComparePageContent() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    void refreshDailyUsage()
+  }, [mounted, refreshDailyUsage])
 
   // Load locations for the Compare page prediction form dropdown (ensures location options are available)
   useEffect(() => {
@@ -571,7 +589,9 @@ function ComparePageContent() {
         })
       }
       markCompareEngaged()
+      void refreshDailyUsage()
     } catch (error: any) {
+      void refreshDailyUsage()
       console.error('❌ [Compare] Prediction failed:', {
         id,
         error,
@@ -633,9 +653,10 @@ function ComparePageContent() {
 
   // Predict All - predict all cars at once with one click
   const predictAll = async () => {
+    let carsToPredict: CarCard[] = []
     try {
       // Filter cars that have complete features but no prediction yet
-      const carsToPredict = cars.filter(c => {
+      carsToPredict = cars.filter(c => {
         const hasCompleteFeatures = isValidCarFeatures(c.features)
         const hasNoPrediction = !c.prediction
         const isNotLoading = !c.loading
@@ -683,47 +704,32 @@ function ComparePageContent() {
       ))
 
       try {
-        // Predict all cars in parallel for better performance
-        const predictionPromises = carsToPredict.map(async (car) => {
-          if (!car.features) {
-            return { id: car.id, success: false, error: 'No features' }
-          }
+        const feats = carsToPredict.map((c) => c.features) as CarFeatures[]
+        const batch = await apiClient.predictCompareBatch(feats)
 
-          try {
-            const result = await apiClient.predictPrice(car.features)
-
-            // Validate result
-            if (result && typeof result === 'object' && typeof result.predicted_price === 'number') {
-              return { id: car.id, success: true, result, features: car.features }
+        setCars((prevCars) => {
+          const next = [...prevCars]
+          batch.results.forEach((r, i) => {
+            const src = carsToPredict[i]
+            if (!src) return
+            const idx = next.findIndex((x) => x.id === src.id)
+            if (idx === -1) return
+            if (r.ok && r.prediction) {
+              next[idx] = {
+                ...next[idx],
+                features: { ...feats[i] },
+                prediction: r.prediction,
+                loading: false,
+              }
             } else {
-              throw new Error('Invalid prediction result: missing predicted_price')
+              next[idx] = { ...next[idx], loading: false }
             }
-          } catch (error: any) {
-            console.error(`❌ [Compare] Prediction failed for car ${car.id}:`, error)
-            return {
-              id: car.id,
-              success: false,
-              error: error?.message || 'Prediction failed',
-              features: car.features
-            }
-          }
+          })
+          return next
         })
 
-        const results = await Promise.all(predictionPromises)
-
-        // Update state with all results at once
-        setCars(prevCars => prevCars.map(c => {
-          const result = results.find(r => r.id === c.id)
-          if (result && result.success && result.result && result.features) {
-            return { ...c, prediction: result.result, features: result.features, loading: false }
-          } else if (result && !result.success) {
-            return { ...c, loading: false }
-          }
-          return c
-        }))
-
-        const successCount = results.filter(r => r.success).length
-        const failureCount = results.filter(r => !r.success).length
+        const successCount = batch.successful
+        const failureCount = batch.failed
 
         if (successCount > 0) {
           markCompareEngaged()
@@ -736,8 +742,6 @@ function ComparePageContent() {
         }
 
         if (failureCount > 0) {
-          const failedCars = results.filter(r => !r.success)
-          console.error('❌ [Compare] Failed predictions:', failedCars)
           if (toast?.toast) {
             toast.toast({
               title: 'Some Predictions Failed',
@@ -748,6 +752,11 @@ function ComparePageContent() {
         }
       } catch (error: any) {
         console.error('❌ [Compare] Predict All failed:', error)
+        setCars((prevCars) =>
+          prevCars.map((c) =>
+            carsToPredict.some((ctp) => ctp.id === c.id) ? { ...c, loading: false } : c
+          )
+        )
         if (toast?.toast) {
           toast.toast({
             title: tCommon?.('error') || 'Error',
@@ -757,13 +766,20 @@ function ComparePageContent() {
         }
       } finally {
         setPredictingAll(false)
-        // Ensure all loading states are cleared
-        setCars(prevCars => prevCars.map(c => ({ ...c, loading: false })))
+        void refreshDailyUsage()
       }
     } catch (error: any) {
       console.error('❌ [Compare] Predict All outer error:', error)
       setPredictingAll(false)
-      setCars(prevCars => prevCars.map(c => ({ ...c, loading: false })))
+      if (carsToPredict.length > 0) {
+        setCars((prevCars) =>
+          prevCars.map((c) =>
+            carsToPredict.some((ctp) => ctp.id === c.id) ? { ...c, loading: false } : c
+          )
+        )
+      } else {
+        setCars((prevCars) => prevCars.map((c) => ({ ...c, loading: false })))
+      }
       if (toast?.toast) {
         toast.toast({
           title: tCommon?.('error') || 'Error',
@@ -1094,22 +1110,45 @@ function ComparePageContent() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="mb-8 flex flex-wrap gap-3 justify-between items-center bg-gradient-to-r from-white/5 via-white/5 to-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-xl shadow-indigo-500/10"
             >
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  onClick={() => {
-                    try {
-                      addCar()
-                    } catch (error) {
-                      console.error('Error adding car:', error)
-                    }
-                  }}
-                  className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300"
+              <div className="flex flex-col items-start gap-2">
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    onClick={() => {
+                      try {
+                        addCar()
+                      } catch (error) {
+                        console.error('Error adding car:', error)
+                      }
+                    }}
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    {(t && typeof t === 'function' ? t('addCar') : null) || 'Add Car'}
+                  </Button>
+                </motion.div>
+                <button
+                  type="button"
+                  onClick={() => setVoucherOpen(true)}
+                  className="text-xs text-white/75 underline underline-offset-2 hover:text-white"
                 >
-                  <Plus className="mr-2 h-4 w-4" />
-                  {(t && typeof t === 'function' ? t('addCar') : null) || 'Add Car'}
-                </Button>
-              </motion.div>
-              <div className="flex gap-3 flex-wrap">
+                  {tProfile('haveVoucherLink')}
+                </button>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 flex-wrap">
+                {dailyUsage ? (
+                  dailyUsage.compare_remaining <= 0 ? (
+                    <p className="text-xs text-amber-200/95 max-w-md order-last sm:order-none">
+                      {tUsage('compareExhausted', { limit: dailyUsage.compare_limit })}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-white/80 whitespace-nowrap order-last sm:order-none">
+                      {tUsage('compareRemaining', {
+                        remaining: dailyUsage.compare_remaining,
+                        limit: dailyUsage.compare_limit,
+                      })}
+                    </p>
+                  )
+                ) : null}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -1127,7 +1166,8 @@ function ComparePageContent() {
                     disabled={
                       predictingAll ||
                       cars.length === 0 ||
-                      cars.every(c => !isValidCarFeatures(c.features) || c.prediction)
+                      cars.every(c => !isValidCarFeatures(c.features) || c.prediction) ||
+                      !!(dailyUsage && dailyUsage.compare_remaining <= 0)
                     }
                     type="button"
                   >
@@ -1538,6 +1578,11 @@ function ComparePageContent() {
           </div>
         </motion.div>
       </div>
+      <VoucherApplyModal
+        open={voucherOpen}
+        onOpenChange={setVoucherOpen}
+        onApplied={() => void refreshDailyUsage()}
+      />
     </div>
   )
 }

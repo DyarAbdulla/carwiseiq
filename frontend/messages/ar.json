@@ -1871,6 +1871,21 @@
     "showActivityStatus": "إظهار حالة نشاطي",
     "confirmPassword": "تأكيد كلمة المرور",
     "understandPermanent": "أفهم أن هذا دائم وستُحذف جميع بياناتي.",
+    "voucherSectionTitle": "رمز القسيمة",
+    "voucherSectionDesc": "أدخل رمز العرض لرفع حدود التنبؤ والمقارنة على حسابك بشكل دائم.",
+    "voucherPlaceholder": "أدخل الرمز",
+    "voucherApply": "تطبيق",
+    "voucherEnterCode": "يرجى إدخال رمز القسيمة.",
+    "voucherApplyFailed": "تعذر تطبيق القسيمة.",
+    "voucherAppliedTitle": "🎉 تم تطبيق القسيمة!",
+    "voucherAppliedDesc": "لديك الآن تنبؤات غير محدودة و{compare} مقارنات يومية.",
+    "voucherActiveSummary": "نشط: تنبؤات غير محدودة، {compare} مقارنات يومياً",
+    "voucherRedeemedCodes": "عمليات الاسترداد",
+    "voucherModalTitle": "تطبيق قسيمة",
+    "voucherModalDesc": "أدخل الرمز أدناه. تُطبق المزايا على حسابك المسجّل.",
+    "voucherSignInPrompt": "سجّل الدخول لتطبيق رمز قسيمة على حسابك.",
+    "voucherSignIn": "تسجيل الدخول",
+    "haveVoucherLink": "هل لديك قسيمة؟",
     "profileUpdated": "تم تحديث الملف الشخصي",
     "profileUpdatedDesc": "تم تحديث ملفك الشخصي بنجاح",
     "failedLoadProfile": "فشل تحميل الملف الشخصي",
@@ -1949,5 +1964,34 @@
     "install": "تثبيت",
     "notNow": "ليس الآن",
     "dismiss": "إغلاق"
+  },
+  "usageLimits": {
+    "unlimitedPredictionsToday": "تنبؤات غير محدودة اليوم.",
+    "predictExhausted": "لقد استخدمت جميع التنبؤات المجانية ({limit}) لهذا اليوم. حاول غداً أو استخدم رمز قسيمة للوصول غير المحدود.",
+    "predictRemaining": "{remaining}/{limit} تنبؤات متبقية اليوم",
+    "compareExhausted": "لقد استخدمت مقارناتك المجانية ({limit}) لهذا اليوم. حاول غداً أو استخدم رمز قسيمة للمزيد.",
+    "compareRemaining": "{remaining}/{limit} مقارنات متبقية اليوم"
+  },
+  "chat": {
+    "title": "مساعد CarWiseIQ",
+    "subtitle": "اسألني وسأجيبك!",
+    "welcome": "مرحباً! 👋 أنا هنا لمساعدتك في تقييم وشراء وبيع السيارات. كيف يمكنني مساعدتك؟",
+    "hint": "اختر اقتراحاً أدناه أو اكتب سؤالك",
+    "placeholder": "اكتب رسالتك...",
+    "error": "عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.",
+    "thinking": "جاري التفكير...",
+    "connectError": "عذراً، تعذر الاتصال. يرجى المحاولة مرة أخرى.",
+    "limitFallback": "لقد وصلت إلى حد الرسائل. يرجى المحاولة لاحقاً.",
+    "resetIn": "يُعاد التفعيل خلال: {time}",
+    "openChat": "فتح المحادثة",
+    "closeChat": "إغلاق المحادثة",
+    "send": "إرسال",
+    "quickReplies": [
+      "💰 كم تساوي سيارتي؟",
+      "🚗 كيف أبيع سيارتي؟",
+      "🔍 سيارات أقل من ١٥٠٠٠$",
+      "📊 قارن سيارتين",
+      "❓ كيف يعمل CarWiseIQ؟"
+    ]
   }
 }
