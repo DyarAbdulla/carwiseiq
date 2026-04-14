@@ -26,7 +26,12 @@ class VoucherApplyBody(BaseModel):
 
 
 def _parse_rpc_result(data: Any) -> Dict[str, Any]:
-    """PostgREST rpc may return [{ "redeem_voucher_code": <object or string> }]."""
+    """Normalize PostgREST /rpc/redeem_voucher_code JSON body to a dict with ok, error, benefits."""
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except json.JSONDecodeError:
+            return {}
     raw: Any = None
     if isinstance(data, list) and data:
         first = data[0]
@@ -64,8 +69,18 @@ async def apply_voucher(
         raise HTTPException(status_code=502, detail="Could not reach database") from e
 
     if r.status_code != 200:
-        logger.warning("redeem_voucher_code HTTP %s: %s", r.status_code, r.text[:400])
-        raise HTTPException(status_code=502, detail="Voucher service error")
+        logger.warning("redeem_voucher_code HTTP %s: %s", r.status_code, r.text[:800])
+        msg = "Voucher service error"
+        try:
+            err_j = r.json()
+            if isinstance(err_j, dict):
+                msg = str(err_j.get("message") or err_j.get("hint") or msg)
+        except Exception:
+            pass
+        raise HTTPException(
+            status_code=502 if r.status_code >= 500 else 400,
+            detail=msg,
+        )
 
     try:
         data = r.json()

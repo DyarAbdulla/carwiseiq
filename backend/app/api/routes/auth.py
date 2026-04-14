@@ -6,6 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 import logging
+import re
 
 from datetime import timedelta
 from app.services.auth_service import (
@@ -38,6 +39,16 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 security = HTTPBearer(auto_error=False)
+
+# Supabase JWT `sub` is a UUID string (36 chars with hyphens).
+_SUB_UUID = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z",
+    re.IGNORECASE,
+)
+
+
+def _is_supabase_jwt_sub(user_id: object) -> bool:
+    return isinstance(user_id, str) and bool(_SUB_UUID.match(user_id.strip()))
 
 
 # Request/Response models
@@ -162,10 +173,7 @@ def get_current_user(
     try:
         # For Supabase tokens, user_id is a UUID string (e.g., '9fc731d7-8f73-4ec7-b312-f67abbcaU43d')
         # For REST API tokens, user_id is an integer
-        # Check if it's a UUID format (contains hyphens) or numeric string
-        is_uuid_format = isinstance(user_id, str) and '-' in user_id and len(user_id) > 30
-        
-        if is_uuid_format:
+        if _is_supabase_jwt_sub(user_id):
             # This is a Supabase token (UUID string)
             # For Supabase tokens, we can't look up in REST API database
             # Instead, create a UserResponse from the token payload
@@ -206,18 +214,18 @@ def get_current_user(
                 logger.info(f"REST API authentication successful for user: {user.get('email')} (ID: {user_id_int})")
                 return UserResponse(**user)
             except (ValueError, TypeError) as e:
-                # Failed to convert to int - treat as Supabase UUID anyway
+                # Failed to convert to int - treat as Supabase UUID when `sub` looks like a UUID
                 logger.warning(f"Could not convert user_id '{user_id}' to int, treating as Supabase UUID: {e}")
-                # Fall back to Supabase token handling
                 email = payload.get('email') or payload.get('user_email') or payload.get('email_address') or f"supabase_user_{user_id[:8]}"
                 full_name = payload.get('full_name') or payload.get('name') or payload.get('user_metadata', {}).get('full_name')
                 email_verified = payload.get('email_verified', False) or (payload.get('email_confirmed_at') is not None)
-                
+                uid_str = str(user_id).strip()
                 return UserResponse(
                     id=0,
                     email=email,
                     full_name=full_name,
-                    email_verified=email_verified
+                    email_verified=email_verified,
+                    supabase_user_id=uid_str if _is_supabase_jwt_sub(uid_str) else None,
                 )
     except Exception as e:
         logger.error(f"Error processing user from token: {e}", exc_info=True)
