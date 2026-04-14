@@ -79,8 +79,8 @@ def chat_rate_limit_message(locale: str | None, remaining_phrase: str) -> str:
             "یارمەتی: carwise15@gmail.com یان 07774472106"
         )
     return (
-        f"You've reached the message limit. Please try again in {remaining_phrase}. "
-        "If you need help, contact our support at carwise15@gmail.com or call 07774472106"
+        f"You've reached the message limit. Try again in {remaining_phrase}. "
+        "Contact support at carwise15@gmail.com or 07774472106."
     )
 
 

@@ -248,6 +248,11 @@ async def chat(
     profane, lang = profanity_match_details(last_user)
     if profane and chat_security_ready():
         strikes = await get_profanity_strikes(ip)
+        logger.info(
+            "chat profanity ip=%s strikes=%s (ai_chat_profanity_strikes.strike_count)",
+            ip[:24] + ("…" if len(ip) > 24 else ""),
+            strikes,
+        )
         # First profane message: strike_count 0 -> 1 (warning only). Second+: ban + 5h IP block.
         if strikes == 0:
             await set_profanity_strikes(ip, 1)

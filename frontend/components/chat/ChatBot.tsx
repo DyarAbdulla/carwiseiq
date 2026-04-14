@@ -7,14 +7,6 @@ import { vazirmatn, inter } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/context/AuthContext';
 
-function apiBaseUrl(): string {
-  const raw =
-    process.env.NEXT_PUBLIC_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    '';
-  return raw.replace(/\/$/, '').replace('http://localhost', 'http://127.0.0.1');
-}
-
 interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -105,8 +97,8 @@ export default function ChatBot() {
     const maxRetries = 3;
     let lastError: unknown = null;
 
-    const base = apiBaseUrl();
-    const chatUrl = base ? `${base}/api/chat` : '/api/chat';
+    // Same-origin proxy forwards X-Forwarded-For so rate limits / profanity / bans use one IP key.
+    const chatUrl = '/api/chat';
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {

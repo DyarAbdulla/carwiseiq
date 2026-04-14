@@ -22,6 +22,14 @@ CHAT_MAX_MESSAGES = 10
 BAN_DURATION = timedelta(hours=5)
 
 
+def normalize_client_ip(ip: str) -> str:
+    """Collapse IPv4-mapped IPv6 so strikes/bans/rate limits match one key per client."""
+    ip = (ip or "").strip()
+    if len(ip) > 7 and ip.lower().startswith("::ffff:"):
+        return ip[7:]
+    return ip or "unknown"
+
+
 def chat_security_ready() -> bool:
     return supabase_rest_ready()
 
@@ -41,66 +49,89 @@ def _iso(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-async def get_active_ban_ends_at(ip: str) -> Optional[datetime]:
-    """Returns ban end time if IP is currently banned."""
-    if not ip or not chat_security_ready():
-        return None
+async def _latest_active_ban_end(table: str, ip: str, now: datetime) -> Optional[datetime]:
     base = _supabase_url()
-    now = datetime.now(timezone.utc)
     url = (
-        f"{base}/rest/v1/ip_bans"
+        f"{base}/rest/v1/{table}"
         f"?ip_address=eq.{quote(ip, safe='')}"
         f"&ends_at=gt.{quote(_iso(now), safe='')}"
         f"&select=ends_at"
         f"&order=ends_at.desc"
         f"&limit=1"
     )
+    async with httpx.AsyncClient(timeout=12.0) as client:
+        r = await client.get(url, headers=_headers())
+    if r.status_code != 200:
+        logger.warning("%s select failed: %s %s", table, r.status_code, r.text[:200])
+        return None
+    rows = r.json()
+    if not rows:
+        return None
+    raw = rows[0].get("ends_at")
+    if not raw:
+        return None
+    return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+
+
+async def get_active_ban_ends_at(ip: str) -> Optional[datetime]:
+    """Returns latest ban end time if IP is currently banned (ip_bans + user_bans)."""
+    ip = normalize_client_ip(ip)
+    if not ip or ip == "unknown" or not chat_security_ready():
+        return None
+    now = datetime.now(timezone.utc)
     try:
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            r = await client.get(url, headers=_headers())
-        if r.status_code != 200:
-            logger.warning("ip_bans select failed: %s %s", r.status_code, r.text[:200])
-            return None
-        rows = r.json()
-        if not rows:
-            return None
-        raw = rows[0].get("ends_at")
-        if not raw:
-            return None
-        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        ends: list[datetime] = []
+        for table in ("ip_bans", "user_bans"):
+            e = await _latest_active_ban_end(table, ip, now)
+            if e is not None:
+                ends.append(e)
+        return max(ends) if ends else None
     except Exception as e:
         logger.error("get_active_ban_ends_at error: %s", e, exc_info=True)
         return None
 
 
 async def insert_ip_ban(ip: str, reason: str) -> datetime:
+    ip = normalize_client_ip(ip)
     ends = datetime.now(timezone.utc) + BAN_DURATION
     if not chat_security_ready():
         return ends
     base = _supabase_url()
-    url = f"{base}/rest/v1/ip_bans"
-    body = {
+    started = _iso(datetime.now(timezone.utc))
+    ends_s = _iso(ends)
+    ip_body = {
         "ip_address": ip,
         "reason": reason,
-        "starts_at": _iso(datetime.now(timezone.utc)),
-        "ends_at": _iso(ends),
+        "starts_at": started,
+        "ends_at": ends_s,
+    }
+    ub_body = {
+        "ip_address": ip,
+        "reason": reason,
+        "started_at": started,
+        "ends_at": ends_s,
     }
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
-            r = await client.post(
-                url,
-                headers={**_headers(), "Prefer": "return=minimal"},
-                json=body,
-            )
-        if r.status_code not in (200, 201, 204):
-            logger.error("insert_ip_ban failed: %s %s", r.status_code, r.text[:300])
+            for path, body in (
+                ("ip_bans", ip_body),
+                ("user_bans", ub_body),
+            ):
+                r = await client.post(
+                    f"{base}/rest/v1/{path}",
+                    headers={**_headers(), "Prefer": "return=minimal"},
+                    json=body,
+                )
+                if r.status_code not in (200, 201, 204):
+                    logger.error("insert %s failed: %s %s", path, r.status_code, r.text[:300])
     except Exception as e:
         logger.error("insert_ip_ban error: %s", e, exc_info=True)
     return ends
 
 
 async def get_profanity_strikes(ip: str) -> int:
-    if not ip or not chat_security_ready():
+    ip = normalize_client_ip(ip)
+    if not ip or ip == "unknown" or not chat_security_ready():
         return 0
     base = _supabase_url()
     url = f"{base}/rest/v1/ai_chat_profanity_strikes?ip_address=eq.{quote(ip, safe='')}&select=strike_count"
@@ -120,6 +151,7 @@ async def get_profanity_strikes(ip: str) -> int:
 
 async def set_profanity_strikes(ip: str, count: int) -> None:
     """Persist strike_count for this IP. Uses PATCH-then-INSERT so we do not rely on PostgREST upsert quirks."""
+    ip = normalize_client_ip(ip)
     if not ip or ip == "unknown" or not chat_security_ready():
         return
     base = _supabase_url()
@@ -156,6 +188,77 @@ async def set_profanity_strikes(ip: str, count: int) -> None:
         logger.error("set_profanity_strikes error: %s", e, exc_info=True)
 
 
+async def _persist_chat_rate_limit(
+    identity_key: str,
+    window_start: datetime,
+    message_count: int,
+) -> bool:
+    """PATCH row if it exists, else INSERT. PostgREST merge-duplicates is unreliable in some deployments."""
+    base = _supabase_url()
+    now = datetime.now(timezone.utc)
+    body = {
+        "window_start": _iso(window_start),
+        "message_count": message_count,
+        "updated_at": _iso(now),
+    }
+    patch_url = f"{base}/rest/v1/ai_chat_rate_limits?identity_key=eq.{quote(identity_key, safe='')}"
+    insert_url = f"{base}/rest/v1/ai_chat_rate_limits"
+    insert_body = {"identity_key": identity_key, **body}
+    try:
+        async with httpx.AsyncClient(timeout=12.0) as client:
+            pr = await client.patch(
+                patch_url,
+                headers={**_headers(), "Prefer": "return=representation"},
+                json=body,
+            )
+        if pr.status_code == 204:
+            logger.info(
+                "chat rate limit PATCH ok (204) identity=%s count=%s",
+                identity_key[:48],
+                message_count,
+            )
+            return True
+        if pr.status_code == 200:
+            rows = pr.json()
+            if isinstance(rows, list) and len(rows) > 0:
+                logger.info(
+                    "chat rate limit PATCH ok identity=%s count=%s",
+                    identity_key[:48],
+                    message_count,
+                )
+                return True
+        logger.warning(
+            "chat rate limit PATCH miss status=%s identity=%s body=%s",
+            pr.status_code,
+            identity_key[:48],
+            pr.text[:200],
+        )
+
+        async with httpx.AsyncClient(timeout=12.0) as client:
+            ins = await client.post(
+                insert_url,
+                headers={**_headers(), "Prefer": "return=minimal"},
+                json=insert_body,
+            )
+        ok = ins.status_code in (200, 201, 204)
+        if ok:
+            logger.info(
+                "chat rate limit INSERT ok identity=%s count=%s",
+                identity_key[:48],
+                message_count,
+            )
+        else:
+            logger.error(
+                "chat rate limit INSERT failed: %s %s",
+                ins.status_code,
+                ins.text[:300],
+            )
+        return ok
+    except Exception as e:
+        logger.error("_persist_chat_rate_limit error: %s", e, exc_info=True)
+        return False
+
+
 async def try_consume_chat_quota(
     identity_key: str,
     locale: str = "en",
@@ -169,14 +272,23 @@ async def try_consume_chat_quota(
         return True, None, None
 
     base = _supabase_url()
-    read_url = f"{base}/rest/v1/ai_chat_rate_limits?identity_key=eq.{quote(identity_key, safe='')}&select=window_start,message_count"
+    read_url = (
+        f"{base}/rest/v1/ai_chat_rate_limits"
+        f"?identity_key=eq.{quote(identity_key, safe='')}"
+        f"&select=window_start,message_count"
+    )
 
     now = datetime.now(timezone.utc)
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
             r = await client.get(read_url, headers=_headers())
+        logger.info(
+            "chat quota GET ai_chat_rate_limits status=%s identity_key_prefix=%s",
+            r.status_code,
+            identity_key[:40],
+        )
         if r.status_code != 200:
-            logger.warning("rate limit read failed: %s", r.status_code)
+            logger.error("rate limit read failed: %s %s", r.status_code, r.text[:300])
             return True, None, None
 
         rows = r.json()
@@ -196,27 +308,23 @@ async def try_consume_chat_quota(
                 reset_at = ws + CHAT_WINDOW
                 rem = reset_at - now
                 phrase = format_remaining_phrase(rem, locale)
+                logger.info(
+                    "chat quota BLOCKED identity=%s count=%s window=%s",
+                    identity_key[:40],
+                    count,
+                    ws_raw,
+                )
                 return False, reset_at, phrase
             else:
                 new_start = ws
                 new_count = count + 1
 
-        write_url = f"{base}/rest/v1/ai_chat_rate_limits"
-        upsert_body = {
-            "identity_key": identity_key,
-            "window_start": _iso(new_start),
-            "message_count": new_count,
-            "updated_at": _iso(now),
-        }
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            wr = await client.post(
-                write_url,
-                headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
-                params={"on_conflict": "identity_key"},
-                json=upsert_body,
-            )
-        if wr.status_code not in (200, 201, 204):
-            logger.error("rate limit upsert failed: %s %s", wr.status_code, wr.text[:300])
+        ok = await _persist_chat_rate_limit(identity_key, new_start, new_count)
+        if not ok:
+            reset_at = new_start + CHAT_WINDOW
+            phrase = format_remaining_phrase(reset_at - now, locale)
+            logger.error("chat quota persist failed — blocking identity=%s", identity_key[:40])
+            return False, reset_at, phrase
         return True, None, None
     except Exception as e:
         logger.error("try_consume_chat_quota error: %s", e, exc_info=True)
@@ -233,5 +341,5 @@ def rate_limit_identity_key(ip: str, supabase_user_id: Optional[str], legacy_use
 
 def client_ip_from_request(client_host: Optional[str], x_forwarded_for: Optional[str]) -> str:
     if x_forwarded_for:
-        return x_forwarded_for.split(",")[0].strip()
-    return (client_host or "").strip() or "unknown"
+        return normalize_client_ip(x_forwarded_for.split(",")[0].strip())
+    return normalize_client_ip((client_host or "").strip() or "unknown")
