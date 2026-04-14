@@ -299,6 +299,17 @@ async def startup_event():
         # Don't fail startup, but log the error
         # The health endpoint will report the issue
 
+    try:
+        from app.services.push_notifications import supabase_rest_ready
+
+        if supabase_rest_ready():
+            logging.info(
+                "Supabase REST is configured: apply SQL migrations for usage/chat/vouchers "
+                "(see repo supabase/migrations/) so PostgREST tables exist."
+            )
+    except Exception:
+        pass
+
     logging.info("Application startup complete.")
 
 

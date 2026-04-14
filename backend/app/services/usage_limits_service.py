@@ -9,6 +9,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import quote
+from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -24,6 +25,22 @@ logger = logging.getLogger(__name__)
 PREDICT_DAILY_LIMIT = 5
 COMPARE_DAILY_LIMIT = 2
 DISPLAY_UNLIMITED_PREDICT = 999_999
+
+
+def usage_local_date(tz_name: str) -> str:
+    """
+    Calendar date YYYY-MM-DD in the given IANA timezone.
+    Used as usage_date for daily_feature_usage (must match client local day).
+    """
+    raw = (tz_name or "").strip() or "Asia/Baghdad"
+    try:
+        tz = ZoneInfo(raw)
+    except Exception:
+        try:
+            tz = ZoneInfo("Asia/Baghdad")
+        except Exception:
+            return datetime.now(timezone.utc).date().isoformat()
+    return datetime.now(tz).date().isoformat()
 
 
 def usage_limits_ready() -> bool:
