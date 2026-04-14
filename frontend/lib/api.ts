@@ -54,9 +54,13 @@ const getCacheKey = (config: any): string => {
 }
 
 const isCacheable = (config: any): boolean => {
-  return config.method?.toLowerCase() === 'get' &&
-    !config.headers?.['Cache-Control'] &&
-    !config.headers?.['cache-control']
+  if (config.method?.toLowerCase() !== 'get') return false
+  const cc = config.headers?.['Cache-Control'] ?? config.headers?.['cache-control']
+  if (cc === 'no-store' || cc === 'no-cache') return false
+  // Usage counters must always be fresh (otherwise UI stays at 5/5 for 5 minutes)
+  const path = String(config.url || '')
+  if (path.includes('usage/daily-status')) return false
+  return true
 }
 
 // Request interceptor: for FormData, remove Content-Type so browser sets multipart/form-data with boundary
@@ -812,7 +816,10 @@ export const apiClient = {
     const tz = getClientIanaTimezone()
     const response = await api.get<DailyUsageStatus>('/api/usage/daily-status', {
       params: { tz },
-      headers: { 'X-Client-Locale': getClientUiLocale() },
+      headers: {
+        'X-Client-Locale': getClientUiLocale(),
+        'Cache-Control': 'no-store',
+      },
     })
     return response.data
   },
