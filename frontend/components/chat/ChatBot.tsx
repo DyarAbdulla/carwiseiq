@@ -73,7 +73,6 @@ export default function ChatBot() {
 
   const quickReplies = (t.raw('quickReplies') as string[]) || [];
   const isRTL = locale === 'ku' || locale === 'ar';
-  const isRTL = locale === 'ku' || locale === 'ar';
   const fontClass = isRTL ? vazirmatn.className : inter.className;
 
   const limitRemainingLabel = useMemo(() => {
