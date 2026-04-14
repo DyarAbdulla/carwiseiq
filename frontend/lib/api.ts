@@ -252,7 +252,16 @@ api.interceptors.request.use(async (config) => {
       // Continue without token - backend will return 401 and response interceptor will handle redirect
     }
   } else {
-    // For non-protected endpoints, optionally add token if available
+    // Predict/compare usage and daily caps merge voucher benefits from user_vouchers (needs Supabase JWT).
+    const url = String(config.url || '')
+    const usageLinked = url.includes('/api/usage/') || url.includes('/api/predict')
+    if (usageLinked) {
+      const supabaseToken = await getSupabaseToken()
+      if (supabaseToken && typeof supabaseToken === 'string' && supabaseToken.length > 0) {
+        config.headers.Authorization = `Bearer ${supabaseToken}`
+        return config
+      }
+    }
     const token = getToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`

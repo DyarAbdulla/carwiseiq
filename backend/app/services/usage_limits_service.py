@@ -64,7 +64,8 @@ def merge_benefits_from_rows(rows: List[Dict[str, Any]]) -> Tuple[bool, int]:
                 continue
         if not isinstance(b, dict):
             continue
-        if b.get("unlimited_predictions") is True:
+        up = b.get("unlimited_predictions")
+        if up is True or (isinstance(up, str) and up.strip().lower() in ("true", "1", "yes")):
             unlimited = True
         dc = b.get("daily_comparisons")
         if isinstance(dc, bool):
