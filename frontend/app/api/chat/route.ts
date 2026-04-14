@@ -37,6 +37,18 @@ export async function POST(request: Request) {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (auth) headers.Authorization = auth;
 
+  // Forward real client IP so FastAPI profanity strikes + IP bans match the browser user (not the Next.js host).
+  const xff =
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-vercel-forwarded-for') ||
+    request.headers.get('cf-connecting-ip');
+  const realIp = request.headers.get('x-real-ip');
+  if (xff) {
+    headers['X-Forwarded-For'] = xff;
+  } else if (realIp) {
+    headers['X-Forwarded-For'] = realIp;
+  }
+
   try {
     const res = await fetch(`${base}/api/chat`, {
       method: 'POST',

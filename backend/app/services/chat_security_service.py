@@ -119,21 +119,39 @@ async def get_profanity_strikes(ip: str) -> int:
 
 
 async def set_profanity_strikes(ip: str, count: int) -> None:
-    if not ip or not chat_security_ready():
+    """Persist strike_count for this IP. Uses PATCH-then-INSERT so we do not rely on PostgREST upsert quirks."""
+    if not ip or ip == "unknown" or not chat_security_ready():
         return
     base = _supabase_url()
-    url = f"{base}/rest/v1/ai_chat_profanity_strikes"
-    body = {"ip_address": ip, "strike_count": count, "updated_at": _iso(datetime.now(timezone.utc))}
+    now = datetime.now(timezone.utc)
+    body = {"strike_count": max(0, int(count)), "updated_at": _iso(now)}
+    patch_url = f"{base}/rest/v1/ai_chat_profanity_strikes?ip_address=eq.{quote(ip, safe='')}"
+    insert_url = f"{base}/rest/v1/ai_chat_profanity_strikes"
+    insert_body = {"ip_address": ip, **body}
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
-            r = await client.post(
-                url,
-                headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
-                params={"on_conflict": "ip_address"},
+            pr = await client.patch(
+                patch_url,
+                headers={**_headers(), "Prefer": "return=representation"},
                 json=body,
             )
-        if r.status_code not in (200, 201, 204):
-            logger.error("set_profanity_strikes failed: %s %s", r.status_code, r.text[:300])
+        if pr.status_code == 204:
+            return
+        if pr.status_code == 200:
+            rows = pr.json()
+            if isinstance(rows, list) and len(rows) > 0:
+                return
+        else:
+            logger.warning("set_profanity_strikes patch: %s %s", pr.status_code, pr.text[:300])
+
+        async with httpx.AsyncClient(timeout=12.0) as client:
+            ins = await client.post(
+                insert_url,
+                headers={**_headers(), "Prefer": "return=minimal"},
+                json=insert_body,
+            )
+        if ins.status_code not in (200, 201, 204):
+            logger.error("set_profanity_strikes insert failed: %s %s", ins.status_code, ins.text[:300])
     except Exception as e:
         logger.error("set_profanity_strikes error: %s", e, exc_info=True)
 

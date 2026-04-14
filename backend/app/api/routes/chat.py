@@ -150,6 +150,40 @@ def _fallback_roast(lang: str) -> str:
     )
 
 
+def _claude_roast_line(api_key: str, lang: str, user_snippet: str) -> str:
+    """One short insult/roast in the user's language; falls back to _fallback_roast on any error."""
+    try:
+        from anthropic import Anthropic
+
+        lang_name = {"ar": "Arabic", "ku": "Kurdish Sorani", "en": "English"}.get(lang, "English")
+        client = Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=120,
+            system=(
+                f"Reply in {lang_name} only. The user was already warned once for profanity in chat "
+                "and swore again. Respond with exactly one or two short sentences: a sarcastic roast. "
+                "Plain text, no markdown, no emojis."
+            ),
+            messages=[
+                {
+                    "role": "user",
+                    "content": (user_snippet or "")[:500],
+                }
+            ],
+        )
+        text_content = next(
+            (b for b in response.content if getattr(b, "type", None) == "text"),
+            None,
+        )
+        text = (getattr(text_content, "text", None) or "").strip()
+        if text:
+            return text
+    except Exception as e:
+        logger.warning("claude roast fallback: %s", e)
+    return _fallback_roast(lang)
+
+
 async def _claude_chat(api_key: str, messages: List[ChatMessage]) -> str:
     from anthropic import Anthropic
 
@@ -214,11 +248,12 @@ async def chat(
     profane, lang = profanity_match_details(last_user)
     if profane and chat_security_ready():
         strikes = await get_profanity_strikes(ip)
-        if strikes < 1:
+        # First profane message: strike_count 0 -> 1 (warning only). Second+: ban + 5h IP block.
+        if strikes == 0:
             await set_profanity_strikes(ip, 1)
             return {"response": chat_warning_message(ui_locale), "profanity_warning": True}
 
-        roast_text = _fallback_roast(lang)
+        roast_text = _claude_roast_line(api_key, lang, last_user)
         ban_until = await insert_ip_ban(ip, "Repeated profanity in AI chat after warning")
         await set_profanity_strikes(ip, strikes + 1)
         return {
