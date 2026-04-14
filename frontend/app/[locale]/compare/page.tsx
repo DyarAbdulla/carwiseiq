@@ -529,7 +529,13 @@ function ComparePageContent() {
     })
 
     try {
-      const result = await apiClient.predictPrice(features)
+      // Single-card predict on Compare must use compare-batch quota (compare_count), not /api/predict.
+      const batch = await apiClient.predictCompareBatch([features])
+      const item = batch.results[0]
+      if (!item?.ok || !item.prediction) {
+        throw new Error(item?.error || 'Prediction failed')
+      }
+      const result = item.prediction
       if (process.env.NODE_ENV === 'development') {
         console.log("[Compare] response received", { requestedId: id, result, status: 'success' })
       }

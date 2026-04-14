@@ -848,21 +848,25 @@ export const apiClient = {
     successful: number
     failed: number
   }> {
-    const response = await api.post<{
-      results: Array<{ ok: boolean; prediction?: PredictionResponse; error?: string }>
-      successful: number
-      failed: number
-    }>(
-      '/api/predict/compare-batch',
-      { cars },
-      {
-        headers: {
-          'X-Client-Timezone': getClientIanaTimezone(),
-          'X-Client-Locale': getClientUiLocale(),
-        },
-      }
-    )
-    return response.data
+    try {
+      const response = await api.post<{
+        results: Array<{ ok: boolean; prediction?: PredictionResponse; error?: string }>
+        successful: number
+        failed: number
+      }>(
+        '/api/predict/compare-batch',
+        { cars },
+        {
+          headers: {
+            'X-Client-Timezone': getClientIanaTimezone(),
+            'X-Client-Locale': getClientUiLocale(),
+          },
+        }
+      )
+      return response.data
+    } catch (error) {
+      throw new Error(handleError(error))
+    }
   },
 
   // Batch prediction
