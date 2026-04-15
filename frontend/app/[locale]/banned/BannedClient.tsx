@@ -58,7 +58,7 @@ export default function BannedClient() {
     >
       <div className="max-w-md rounded-2xl border border-white/10 bg-white/[0.04] p-8 shadow-2xl backdrop-blur-md">
         <p className="text-lg leading-relaxed text-slate-100">
-          Your access has been temporarily restricted for 5 hours due to inappropriate behavior.
+          Your access has been temporarily restricted for 2 hours due to inappropriate behavior.
           If you believe this is a mistake, contact support at carwise15@gmail.com
         </p>
         {endsAt ? (
