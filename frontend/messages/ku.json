@@ -243,6 +243,8 @@
     "mediaVideosOptional": "ڤیدیۆ (ئارەزوومەندانە)",
     "mediaMaxFiles": "زۆرترین {max} فایل",
     "mediaIncludeTypes": "وێنەی دەرەوە، ناوەوە، و شوخت و سارد دیاری بکە",
+    "mediaCarCheckTitle": "پشکنینی وێنە",
+    "mediaCarCheckSoft": "ڕەنگە هەندێک وێنە وەک وێنەی ئۆتۆمبێل نەردەخرێنەوە، بەڵام دەتوانیت بەردەوام بیت.",
     "mediaInvalidType": "جۆری فایل گونجاو نییە: {name}",
     "mediaMaxSize": "قەبارەی فایل زۆرە: {name}",
     "mediaSetCover": "بیکە بە وێنەی سەرەکی",

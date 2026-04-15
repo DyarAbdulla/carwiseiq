@@ -163,14 +163,15 @@ export function SellWizardProvider({ children }: { children: React.ReactNode }) 
 
   const addMedia = useCallback((files: File[]) => {
     const videoTypes = ["video/mp4", "video/quicktime", "video/x-msvideo"]
-    const imageTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+    const imageTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"]
     setState((s) => {
       const next: WizardMediaItem[] = [...s.media]
       let order = next.length
       for (const f of files) {
         if (next.length >= 10) break
         const isVideo = videoTypes.includes(f.type) || /\.(mp4|mov|avi)$/i.test(f.name)
-        const isImage = imageTypes.includes(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name)
+        const isImage =
+          imageTypes.includes(f.type) || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name)
         if (!isVideo && !isImage) continue
         const previewUrl = URL.createObjectURL(f)
         next.push({

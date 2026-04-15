@@ -26,12 +26,15 @@ export function getPublicApiOrigin(): string {
 }
 const AUTH_API_BASE_URL = (process.env.NEXT_PUBLIC_AUTH_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000').replace(':3001', ':8000')
 
+/** Default cap for typical GET/POST; heavy routes override with a higher per-request timeout. */
+const DEFAULT_API_TIMEOUT_MS = 8000
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds timeout
+  timeout: DEFAULT_API_TIMEOUT_MS,
   withCredentials: true, // Include cookies for httpOnly token cookies
 })
 
@@ -41,7 +44,7 @@ const authApi = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds timeout (increased for slower connections)
+  timeout: DEFAULT_API_TIMEOUT_MS,
   withCredentials: true, // Include cookies for httpOnly token cookies
 })
 
@@ -96,6 +99,16 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+function dispatchApiTransportSuccess() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event('carwise-api-success'))
+}
+
+function dispatchApiTransportFailure() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event('carwise-api-fail'))
+}
+
 // Response interceptor for caching successful responses
 api.interceptors.response.use(
   (response) => {
@@ -115,9 +128,34 @@ api.interceptors.response.use(
         timestamp: Date.now(),
       })
     }
+    dispatchApiTransportSuccess()
     return response
   },
   async (error) => {
+    if (axios.isAxiosError(error)) {
+      const st = error.response?.status
+      const code = error.code
+      const transportFail =
+        (!error.response && (code === 'ECONNABORTED' || code === 'ERR_NETWORK' || code === 'ECONNRESET')) ||
+        (st != null && st >= 502)
+      if (transportFail) {
+        dispatchApiTransportFailure()
+      }
+      if (code === 'ECONNABORTED' && error.config) {
+        const cacheKey = getCacheKey(error.config)
+        const stale = cache.get(cacheKey)
+        if (stale && isCacheable(error.config)) {
+          return {
+            data: stale.data,
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            config: error.config,
+            request: error.request,
+          } as any
+        }
+      }
+    }
     if ((error.config as any).__fromCache) {
       const cacheKey = getCacheKey(error.config)
       cache.delete(cacheKey)
@@ -716,6 +754,7 @@ async function postPredictWithBackoff(
     try {
       return await api.post<PredictionResponse>('/api/predict', requestBody, {
         headers: extraHeaders,
+        timeout: 120000,
       })
     } catch (e) {
       lastErr = e
@@ -853,11 +892,15 @@ export const apiClient = {
   },
 
   async getMyVouchers(): Promise<VoucherMeResponse> {
+    const empty: VoucherMeResponse = {
+      redemptions: [],
+      merged_benefits: { unlimited_predictions: false, daily_comparisons: 2 },
+    }
     try {
       const response = await api.get<VoucherMeResponse>('/api/vouchers/me')
-      return response.data
-    } catch (error) {
-      throw new Error(handleError(error))
+      return response.data ?? empty
+    } catch {
+      return empty
     }
   },
 
@@ -876,6 +919,7 @@ export const apiClient = {
         '/api/predict/compare-batch',
         { cars },
         {
+          timeout: 120000,
           headers: {
             'X-Client-Timezone': getClientIanaTimezone(),
             'X-Client-Locale': getClientUiLocale(),
@@ -899,7 +943,7 @@ export const apiClient = {
         const response = await api.post<{ predictions: BatchPredictionResult[] }>(
           '/api/predict/batch',
           { cars },
-          { headers: usagePredictHeaders('predict') }
+          { headers: usagePredictHeaders('predict'), timeout: 120000 }
         )
         console.log('✅ [API] Batch endpoint successful:', response.data.predictions.length, 'predictions')
         return response.data.predictions

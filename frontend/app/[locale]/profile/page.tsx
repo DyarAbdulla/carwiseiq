@@ -136,27 +136,6 @@ export default function ProfilePage() {
     showActivityStatus: true
   })
 
-  useEffect(() => {
-    if (authLoading) return
-    if (!user) {
-      const returnUrl = `/${locale}/profile`
-      router.replace(`/${locale}/login?returnUrl=${encodeURIComponent(returnUrl)}`)
-      return
-    }
-    loadProfile()
-  }, [user, authLoading, router, locale])
-
-  useEffect(() => {
-    if (!user || authLoading) return
-    void loadVoucherInfo()
-  }, [user, authLoading, loadVoucherInfo])
-
-  // Single background: hide body bg on profile so only the animated gradient shows
-  useEffect(() => {
-    document.body.classList.add('profile-single-bg')
-    return () => document.body.classList.remove('profile-single-bg')
-  }, [])
-
   const loadProfile = useCallback(async () => {
     if (!user) return
     setLoading(true)
@@ -213,6 +192,30 @@ export default function ProfilePage() {
       setPrefsHydrated(true)
     }
   }, [user, toast, t, tCommon])
+
+  useEffect(() => {
+    if (authLoading) return
+    if (!user) {
+      const returnUrl = `/${locale}/profile`
+      router.replace(`/${locale}/login?returnUrl=${encodeURIComponent(returnUrl)}`)
+      return
+    }
+    void loadProfile()
+  }, [user, authLoading, router, locale, loadProfile])
+
+  useEffect(() => {
+    if (!user || authLoading) return
+    const t = window.setTimeout(() => {
+      void loadVoucherInfo()
+    }, 600)
+    return () => window.clearTimeout(t)
+  }, [user, authLoading, loadVoucherInfo])
+
+  // Single background: hide body bg on profile so only the animated gradient shows
+  useEffect(() => {
+    document.body.classList.add('profile-single-bg')
+    return () => document.body.classList.remove('profile-single-bg')
+  }, [])
 
   useEffect(() => {
     if (!user || !prefsHydrated) return
@@ -424,8 +427,25 @@ export default function ProfilePage() {
   }
   if (loading) {
     return (
-      <div className="flex min-h-[calc(100vh-200px)] items-center justify-center p-6 bg-slate-50 dark:bg-[#0f1117]">
-        <div className="text-slate-600 dark:text-[#94a3b8]">{tCommon('loading')}</div>
+      <div className="relative min-h-screen overflow-x-hidden text-slate-900 dark:text-gray-100">
+        <div
+          className="fixed inset-0 -z-20 bg-profile-gradient bg-[length:400%_400%] animate-gradient-shift profile-page-bg-animate"
+          aria-hidden
+        />
+        <div
+          className="fixed inset-0 -z-10 bg-profile-dots bg-[length:28px_28px] pointer-events-none"
+          aria-hidden
+        />
+        <div className="relative z-0 max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 animate-pulse" aria-busy>
+          <div className="h-10 w-56 rounded-xl bg-white/15 dark:bg-white/10 mb-6" />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr]">
+            <div className="h-96 rounded-2xl bg-white/12 dark:bg-white/[0.07] border border-white/10" />
+            <div className="space-y-6">
+              <div className="h-52 rounded-2xl bg-white/12 dark:bg-white/[0.07] border border-white/10" />
+              <div className="h-64 rounded-2xl bg-white/12 dark:bg-white/[0.07] border border-white/10" />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

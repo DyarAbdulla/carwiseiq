@@ -23,8 +23,9 @@ const MAX_VIDEO_BYTES = 50 * 1024 * 1024  // 50MB
 const MIN_FILES = 4
 const MAX_FILES = 10
 
-const ACCEPT = "image/jpeg,image/jpg,image/png,image/webp,video/mp4,video/quicktime,video/x-msvideo"
-const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+const ACCEPT =
+  "image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/x-msvideo"
+const IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"]
 const VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/x-msvideo"]
 
 function formatSize(bytes: number): string {
@@ -37,7 +38,9 @@ type ValidateError = { key: string; params?: Record<string, string> }
 
 function validateFile(file: File): ValidateError | null {
   const isVideo = VIDEO_TYPES.includes(file.type) || /\.(mp4|mov|avi)$/i.test(file.name)
-  const isImage = IMAGE_TYPES.includes(file.type) || /\.(jpe?g|png|webp)$/i.test(file.name)
+  const isImage =
+    IMAGE_TYPES.includes(file.type) ||
+    /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name)
   if (!isVideo && !isImage) return { key: "mediaInvalidType", params: { name: file.name } }
   const max = isVideo ? MAX_VIDEO_BYTES : MAX_IMAGE_BYTES
   if (file.size > max) return { key: "mediaMaxSize", params: { name: file.name, max: isVideo ? "50MB" : "5MB" } }

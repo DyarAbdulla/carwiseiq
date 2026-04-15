@@ -117,47 +117,85 @@ async def apply_voucher(
     return {"ok": True, "benefits": raw.get("benefits")}
 
 
+def _empty_vouchers_payload() -> Dict[str, Any]:
+    return {
+        "redemptions": [],
+        "merged_benefits": {
+            "unlimited_predictions": False,
+            "daily_comparisons": 2,
+        },
+    }
+
+
 @router.get("/vouchers/me")
 async def vouchers_me(current_user: Optional[UserResponse] = Depends(get_current_user)):
     if not current_user or not current_user.supabase_user_id:
         raise HTTPException(status_code=401, detail="Authentication required")
     if not supabase_rest_ready():
-        return {
-            "redemptions": [],
-            "merged_benefits": {
-                "unlimited_predictions": False,
-                "daily_comparisons": 2,
-            },
-        }
+        return _empty_vouchers_payload()
 
     uid = quote(str(current_user.supabase_user_id).strip(), safe="")
     base = _supabase_url()
-    url = (
+    uv_url = (
         f"{base}/rest/v1/user_vouchers"
         f"?user_id=eq.{uid}"
-        f"&select=redeemed_at,benefits_granted,voucher_codes(code)"
+        f"&select=redeemed_at,benefits_granted,voucher_code_id"
         f"&order=redeemed_at.desc"
     )
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
-            r = await client.get(url, headers=_headers())
+            r = await client.get(uv_url, headers=_headers())
     except Exception as e:
         logger.error("user_vouchers list failed: %s", e, exc_info=True)
-        raise HTTPException(status_code=502, detail="Could not load vouchers") from e
+        return _empty_vouchers_payload()
 
     if r.status_code != 200:
         logger.warning("user_vouchers HTTP %s: %s", r.status_code, r.text[:300])
-        raise HTTPException(status_code=502, detail="Could not load vouchers")
+        return _empty_vouchers_payload()
 
-    rows: List[Dict[str, Any]] = r.json() if isinstance(r.json(), list) else []
+    try:
+        raw = r.json()
+    except Exception:
+        return _empty_vouchers_payload()
+
+    rows: List[Dict[str, Any]] = raw if isinstance(raw, list) else []
     unlimited, daily_cmp = merge_benefits_from_rows(rows)
+
+    code_by_id: Dict[str, str] = {}
+    ids: List[str] = []
+    for row in rows:
+        vcid = row.get("voucher_code_id")
+        if vcid is not None:
+            s = str(vcid).strip()
+            if s and s not in ids:
+                ids.append(s)
+    if ids:
+        in_filter = "in.(" + ",".join(ids) + ")"
+        vc_url = f"{base}/rest/v1/voucher_codes"
+        try:
+            async with httpx.AsyncClient(timeout=12.0) as client:
+                vr = await client.get(
+                    vc_url,
+                    headers=_headers(),
+                    params={"id": in_filter, "select": "id,code"},
+                )
+            if vr.status_code == 200:
+                vrows = vr.json()
+                if isinstance(vrows, list):
+                    for vr_row in vrows:
+                        if not isinstance(vr_row, dict):
+                            continue
+                        rid = vr_row.get("id")
+                        c = vr_row.get("code")
+                        if rid is not None and isinstance(c, str):
+                            code_by_id[str(rid)] = c
+        except Exception as e:
+            logger.warning("voucher_codes lookup failed (non-fatal): %s", e, exc_info=True)
 
     redemptions: List[Dict[str, Any]] = []
     for row in rows:
-        vc = row.get("voucher_codes")
-        code_val: Optional[str] = None
-        if isinstance(vc, dict):
-            code_val = vc.get("code")
+        vcid = row.get("voucher_code_id")
+        code_val: Optional[str] = code_by_id.get(str(vcid)) if vcid is not None else None
         redemptions.append(
             {
                 "code": code_val,

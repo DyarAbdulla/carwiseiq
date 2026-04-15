@@ -7,6 +7,7 @@ import { SellWizardFooter } from "@/components/sell/SellWizardFooter"
 import { useSellWizard } from "@/context/SellWizardContext"
 import { useAuthContext } from "@/context/AuthContext"
 import { supabase } from "@/lib/supabase"
+import { apiClient } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { ImagePlus } from "lucide-react"
 
@@ -54,8 +55,25 @@ export default function SellStep2Page() {
     }
     if (uploadingRef.current) return
 
+    const orderedSkip = [...media].sort((a, b) => (a.isCover ? -1 : b.isCover ? 1 : a.order - b.order))
     if (uploadedMediaUrls.length === media.length && imgCount >= MEDIA_MIN) {
       router.push(`/${locale}/sell/step3`)
+      const imageFilesSkip = orderedSkip.filter((m) => !m.isVideo).map((m) => m.file)
+      if (imageFilesSkip.length >= MEDIA_MIN) {
+        void apiClient.detectCarVision(imageFilesSkip.slice(0, 10)).then((det) => {
+          const hasId =
+            Boolean((det.make && String(det.make).trim()) || (det.model && String(det.model).trim()))
+          const conf = typeof det.confidence === "number" ? det.confidence : 0
+          const uncertain = Boolean(det.error || !hasId || conf < 0.35)
+          if (uncertain) {
+            toast({
+              title: t("mediaCarCheckTitle"),
+              description: t("mediaCarCheckSoft"),
+              variant: "default",
+            })
+          }
+        })
+      }
       return
     }
 
@@ -84,7 +102,8 @@ export default function SellStep2Page() {
       console.log("[Step2] Starting upload to bucket:", BUCKET)
 
       const uploads = ordered.map((m, i) => {
-        const ext = m.file.name.match(/\.(jpe?g|png|webp|mp4|mov|avi)$/i)?.[0]?.toLowerCase() || ".jpg"
+        const ext =
+          m.file.name.match(/\.(jpe?g|png|webp|heic|heif|mp4|mov|avi)$/i)?.[0]?.toLowerCase() || ".jpg"
         const name = `f${i}${ext}`
         const path = `${basePath}/${name}`
         const contentType = getContentType(m.file)
@@ -130,6 +149,23 @@ export default function SellStep2Page() {
       setUploading(false)
       uploadingRef.current = false
       router.push(`/${locale}/sell/step3`)
+
+      const imageFiles = ordered.filter((m) => !m.isVideo).map((m) => m.file)
+      if (imageFiles.length >= MEDIA_MIN) {
+        void apiClient.detectCarVision(imageFiles.slice(0, 10)).then((det) => {
+          const hasId =
+            Boolean((det.make && String(det.make).trim()) || (det.model && String(det.model).trim()))
+          const conf = typeof det.confidence === "number" ? det.confidence : 0
+          const uncertain = Boolean(det.error || !hasId || conf < 0.35)
+          if (uncertain) {
+            toast({
+              title: t("mediaCarCheckTitle"),
+              description: t("mediaCarCheckSoft"),
+              variant: "default",
+            })
+          }
+        })
+      }
     } catch (e) {
       console.error("[Step2] Upload exception:", e)
       const msg = e instanceof Error ? e.message : String(e)

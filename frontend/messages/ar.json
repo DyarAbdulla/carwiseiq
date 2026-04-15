@@ -243,6 +243,8 @@
     "mediaVideosOptional": "الفيديو اختياري",
     "mediaMaxFiles": "الحد الأقصى {max} ملفات",
     "mediaIncludeTypes": "صور الهيكل الخارجي، الداخل، والمحرك",
+    "mediaCarCheckTitle": "التحقق من الصور",
+    "mediaCarCheckSoft": "قد لا تبدو بعض الصور كصور سيارات لأداتنا، ويمكنك المتابعة على أي حال.",
     "mediaInvalidType": "نوع الملف غير مدعوم: {name}",
     "mediaMaxSize": "حجم الملف كبير جداً: {name}",
     "mediaSetCover": "تعيين كصورة رئيسية",

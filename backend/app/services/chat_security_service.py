@@ -49,43 +49,55 @@ def _iso(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-async def _latest_active_ban_end(table: str, ip: str, now: datetime) -> Optional[datetime]:
+PERMANENT_BAN_END = datetime(9999, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+
+
+async def _active_ban_rows_user_bans(ip: str, now: datetime) -> list[dict]:
+    """Rows for this IP where ban is still active: ends_at IS NULL OR ends_at > now (two queries, no PostgREST or= quirks)."""
     base = _supabase_url()
-    url = (
-        f"{base}/rest/v1/{table}"
-        f"?ip_address=eq.{quote(ip, safe='')}"
-        f"&ends_at=gt.{quote(_iso(now), safe='')}"
-        f"&select=ends_at"
-        f"&order=ends_at.desc"
-        f"&limit=1"
-    )
+    ip_q = quote(ip, safe="")
+    headers = _headers()
+    merged: list[dict] = []
     async with httpx.AsyncClient(timeout=12.0) as client:
-        r = await client.get(url, headers=_headers())
-    if r.status_code != 200:
-        logger.warning("%s select failed: %s %s", table, r.status_code, r.text[:200])
-        return None
-    rows = r.json()
+        u_perm = f"{base}/rest/v1/user_bans?ip_address=eq.{ip_q}&ends_at=is.null&select=ends_at"
+        r1 = await client.get(u_perm, headers=headers)
+        if r1.status_code != 200:
+            logger.warning("user_bans (permanent) select failed: %s %s", r1.status_code, r1.text[:200])
+        elif isinstance(r1.json(), list):
+            merged.extend(r1.json())
+        u_temp = (
+            f"{base}/rest/v1/user_bans?ip_address=eq.{ip_q}"
+            f"&ends_at=gt.{quote(_iso(now), safe='')}&select=ends_at"
+        )
+        r2 = await client.get(u_temp, headers=headers)
+        if r2.status_code != 200:
+            logger.warning("user_bans (temporary) select failed: %s %s", r2.status_code, r2.text[:200])
+        elif isinstance(r2.json(), list):
+            merged.extend(r2.json())
+    return merged
+
+
+def _max_active_ban_end(rows: list[dict]) -> Optional[datetime]:
     if not rows:
         return None
-    raw = rows[0].get("ends_at")
-    if not raw:
-        return None
-    return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    ends_list: list[datetime] = []
+    for row in rows:
+        raw = row.get("ends_at")
+        if raw is None:
+            return PERMANENT_BAN_END
+        ends_list.append(datetime.fromisoformat(str(raw).replace("Z", "+00:00")))
+    return max(ends_list) if ends_list else None
 
 
 async def get_active_ban_ends_at(ip: str) -> Optional[datetime]:
-    """Returns latest ban end time if IP is currently banned (ip_bans + user_bans)."""
+    """Latest ban end time if IP is currently banned (public.user_bans only). NULL ends_at = permanent."""
     ip = normalize_client_ip(ip)
     if not ip or ip == "unknown" or not chat_security_ready():
         return None
     now = datetime.now(timezone.utc)
     try:
-        ends: list[datetime] = []
-        for table in ("ip_bans", "user_bans"):
-            e = await _latest_active_ban_end(table, ip, now)
-            if e is not None:
-                ends.append(e)
-        return max(ends) if ends else None
+        rows = await _active_ban_rows_user_bans(ip, now)
+        return _max_active_ban_end(rows)
     except Exception as e:
         logger.error("get_active_ban_ends_at error: %s", e, exc_info=True)
         return None
@@ -99,12 +111,6 @@ async def insert_ip_ban(ip: str, reason: str) -> datetime:
     base = _supabase_url()
     started = _iso(datetime.now(timezone.utc))
     ends_s = _iso(ends)
-    ip_body = {
-        "ip_address": ip,
-        "reason": reason,
-        "starts_at": started,
-        "ends_at": ends_s,
-    }
     ub_body = {
         "ip_address": ip,
         "reason": reason,
@@ -113,17 +119,13 @@ async def insert_ip_ban(ip: str, reason: str) -> datetime:
     }
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
-            for path, body in (
-                ("ip_bans", ip_body),
-                ("user_bans", ub_body),
-            ):
-                r = await client.post(
-                    f"{base}/rest/v1/{path}",
-                    headers={**_headers(), "Prefer": "return=minimal"},
-                    json=body,
-                )
-                if r.status_code not in (200, 201, 204):
-                    logger.error("insert %s failed: %s %s", path, r.status_code, r.text[:300])
+            r = await client.post(
+                f"{base}/rest/v1/user_bans",
+                headers={**_headers(), "Prefer": "return=minimal"},
+                json=ub_body,
+            )
+            if r.status_code not in (200, 201, 204):
+                logger.error("insert user_bans failed: %s %s", r.status_code, r.text[:300])
     except Exception as e:
         logger.error("insert_ip_ban error: %s", e, exc_info=True)
     return ends

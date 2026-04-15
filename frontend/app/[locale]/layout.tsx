@@ -22,8 +22,8 @@ const ScrollToTop = dynamic(
   () => import('@/components/ScrollToTop').then((m) => ({ default: m.ScrollToTop })),
   { ssr: false, loading: () => null }
 );
-const APIStatusBanner = dynamic(
-  () => import('@/components/APIStatusBanner').then((m) => ({ default: m.APIStatusBanner })),
+const BackendStatusBanner = dynamic(
+  () => import('@/components/BackendStatusBanner').then((m) => ({ default: m.BackendStatusBanner })),
   { ssr: false, loading: () => null }
 );
 const Footer = dynamic(
@@ -105,7 +105,7 @@ export default async function LocaleLayout({
                 <PredictLoadingProvider>
                   <ScrollToTop />
                   <SkipToContent />
-                  <APIStatusBanner />
+                  <BackendStatusBanner />
                   <div className="flex flex-col min-h-screen">
                     <ErrorBoundary>
                       <Suspense fallback={<div className="h-16" aria-hidden />}>
