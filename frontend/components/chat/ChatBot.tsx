@@ -45,10 +45,15 @@ export default function ChatBot() {
   const [limitResetAt, setLimitResetAt] = useState<string | null>(null);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [limitTick, setLimitTick] = useState(0);
+  const [banUntil, setBanUntil] = useState<string | null>(null);
+  const [banTick, setBanTick] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isRateLimited =
     !!limitResetAt && Number.isFinite(Date.parse(limitResetAt)) && Date.parse(limitResetAt) > Date.now();
+
+  const isIpBanned =
+    !!banUntil && Number.isFinite(Date.parse(banUntil)) && Date.parse(banUntil) > Date.now();
 
   useEffect(() => {
     if (!limitResetAt || !isRateLimited) return;
@@ -63,6 +68,20 @@ export default function ChatBot() {
       setLimitMessage(null);
     }
   }, [limitResetAt, limitTick]);
+
+  useEffect(() => {
+    if (!banUntil || !Number.isFinite(Date.parse(banUntil))) return;
+    if (Date.parse(banUntil) <= Date.now()) return;
+    const id = window.setInterval(() => setBanTick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [banUntil]);
+
+  useEffect(() => {
+    if (!banUntil || !Number.isFinite(Date.parse(banUntil))) return;
+    if (Date.parse(banUntil) <= Date.now()) {
+      setBanUntil(null);
+    }
+  }, [banUntil, banTick]);
 
   const quickReplies = (t.raw('quickReplies') as string[]) || [];
   const isRTL = locale === 'ku' || locale === 'ar';
@@ -80,13 +99,25 @@ export default function ChatBot() {
     return `${s}s`;
   }, [limitResetAt, limitTick]);
 
+  const banRemainingLabel = useMemo(() => {
+    if (!banUntil || !Number.isFinite(Date.parse(banUntil))) return '';
+    const left = Math.max(0, Date.parse(banUntil) - Date.now());
+    const totalSec = Math.floor(left / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  }, [banUntil, banTick]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
   const sendMessage = async (text?: string) => {
     const messageToSend = (text ?? input.trim()).trim();
-    if (!messageToSend || isLoading || isRateLimited) return;
+    if (!messageToSend || isLoading || isRateLimited || isIpBanned) return;
 
     const userMessage = messageToSend;
     if (!text) setInput('');
@@ -156,13 +187,16 @@ export default function ChatBot() {
             'code' in detail &&
             (detail as { code?: string }).code === 'ip_banned'
           ) {
-            const d = detail as { ends_at?: string };
-            setMessages(previousMessages);
-            if (d.ends_at) {
-              window.location.assign(
-                `/${locale}/banned?until=${encodeURIComponent(d.ends_at)}`
-              );
-            }
+            const d = detail as { ends_at?: string; message?: string };
+            const banText =
+              typeof d.message === 'string' && d.message.trim()
+                ? d.message
+                : t('banFallback');
+            setMessages([
+              ...payloadMessages,
+              { role: 'assistant', content: banText },
+            ]);
+            if (d.ends_at) setBanUntil(d.ends_at);
             setIsLoading(false);
             return;
           }
@@ -187,9 +221,7 @@ export default function ChatBot() {
         setMessages((prev) => [...prev, { role: 'assistant', content: assistantText }]);
 
         if (data.banned && data.ban_ends_at) {
-          window.location.assign(
-            `/${locale}/banned?until=${encodeURIComponent(data.ban_ends_at)}`
-          );
+          setBanUntil(data.ban_ends_at);
         }
 
         setIsLoading(false);
@@ -394,6 +426,42 @@ export default function ChatBot() {
 
             {/* Input */}
             <div className="flex-shrink-0 border-t border-white/[0.08] bg-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+              {isIpBanned && (
+                <div
+                  className={cn(
+                    'mb-3 rounded-xl border border-red-500/35 bg-red-500/10 px-3 py-2.5 text-sm text-red-100/95',
+                    isRTL && 'text-right'
+                  )}
+                  role="alert"
+                >
+                  <p className="whitespace-pre-wrap leading-relaxed">{t('banActiveHint')}</p>
+                  {banRemainingLabel ? (
+                    <p
+                      className={cn(
+                        'mt-2 font-mono text-xs tabular-nums text-red-200/90',
+                        isRTL && 'text-right'
+                      )}
+                    >
+                      {t('resetIn', { time: banRemainingLabel })}
+                    </p>
+                  ) : null}
+                  <div className={cn('mt-3 flex flex-wrap gap-2', isRTL && 'flex-row-reverse')}>
+                    <a
+                      href="mailto:carwise15@gmail.com"
+                      className="inline-flex items-center justify-center rounded-lg border border-red-400/40 bg-red-950/30 px-3 py-1.5 text-xs font-medium text-red-100 hover:bg-red-500/20"
+                    >
+                      {t('supportEmail')}
+                    </a>
+                    <a
+                      href="tel:+9647774472106"
+                      className="inline-flex items-center justify-center rounded-lg border border-red-400/40 bg-red-950/30 px-3 py-1.5 text-xs font-medium text-red-100 hover:bg-red-500/20 ltr-embed"
+                      dir="ltr"
+                    >
+                      0777 447 2106
+                    </a>
+                  </div>
+                </div>
+              )}
               {(limitMessage || isRateLimited) && (
                 <div
                   className={cn(
@@ -415,6 +483,21 @@ export default function ChatBot() {
                       {t('resetIn', { time: limitRemainingLabel })}
                     </p>
                   ) : null}
+                  <div className={cn('mt-3 flex flex-wrap gap-2', isRTL && 'flex-row-reverse')}>
+                    <a
+                      href="mailto:carwise15@gmail.com"
+                      className="inline-flex items-center justify-center rounded-lg border border-amber-400/40 bg-amber-950/20 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-500/15"
+                    >
+                      {t('supportEmail')}
+                    </a>
+                    <a
+                      href="tel:+9647774472106"
+                      className="inline-flex items-center justify-center rounded-lg border border-amber-400/40 bg-amber-950/20 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-500/15 ltr-embed"
+                      dir="ltr"
+                    >
+                      0777 447 2106
+                    </a>
+                  </div>
                 </div>
               )}
               {messages.length === 0 && quickReplies.length > 0 && (
@@ -424,7 +507,7 @@ export default function ChatBot() {
                       key={idx}
                       type="button"
                       onClick={() => sendMessage(reply)}
-                      disabled={isLoading || isRateLimited}
+                      disabled={isLoading || isRateLimited || isIpBanned}
                       className={cn(
                         'rounded-xl border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-left text-sm font-medium text-gray-200 transition-colors',
                         'hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-white',
@@ -449,13 +532,13 @@ export default function ChatBot() {
                     'placeholder:text-gray-500 focus:border-purple-500/40 focus:outline-none focus:ring-2 focus:ring-purple-500/25',
                     isRTL && 'text-right'
                   )}
-                  disabled={isLoading || isRateLimited}
+                  disabled={isLoading || isRateLimited || isIpBanned}
                   dir={isRTL ? 'rtl' : 'ltr'}
                 />
                 <button
                   type="button"
                   onClick={() => void sendMessage()}
-                  disabled={isLoading || isRateLimited || !input.trim()}
+                  disabled={isLoading || isRateLimited || isIpBanned || !input.trim()}
                   className={cn(
                     'flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-purple-500/30 bg-purple-600/80 text-white transition-all',
                     'hover:border-purple-400/50 hover:bg-purple-500 hover:shadow-[0_0_24px_rgba(168,85,247,0.55)]',

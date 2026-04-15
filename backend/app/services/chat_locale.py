@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 
 def normalize_chat_locale(locale: str | None) -> str:
@@ -67,36 +67,59 @@ def chat_warning_message(locale: str | None) -> str:
 
 
 def chat_rate_limit_message(locale: str | None, remaining_phrase: str) -> str:
+    """10 messages per 5h window exhausted; includes support contacts."""
     loc = normalize_chat_locale(locale)
     if loc == "ar":
         return (
-            f"لقد وصلت إلى حد الرسائل. يرجى المحاولة مرة أخرى بعد {remaining_phrase}. "
-            "للمساعدة: carwise15@gmail.com أو اتصل على 07774472106"
+            f"⏱️ لقد وصلتَ إلى حد 10 رسائل. للمزيد من المساعدة، تواصل مع فريق الدعم. "
+            f"ستكون المحادثة متاحة مجددًا بعد {remaining_phrase}. "
+            "البريد: carwise15@gmail.com — الهاتف: 0777 447 2106"
         )
     if loc == "ku":
         return (
-            f"گەیشتیتە سنووری پەیامەکان. تکایە دوای {remaining_phrase} دووبارە هەوڵ بدەوە. "
-            "یارمەتی: carwise15@gmail.com یان 07774472106"
+            f"⏱️ گەیشتیتە سنووری 10 پەیام. بۆ یارمەتی زیاتر پەیوەندی بە پشتگیری بکە. "
+            f"چات دوای {remaining_phrase} دووبارە بەردەست دەبێت. "
+            "ئیمەیڵ: carwise15@gmail.com — مۆبایل: 0777 447 2106"
         )
     return (
-        f"You've reached the message limit. Try again in {remaining_phrase}. "
-        "Contact support at carwise15@gmail.com or 07774472106."
+        f"⏱️ You've reached the limit of 10 messages. "
+        f"For more help, contact our support. Chat will be available again in {remaining_phrase}. "
+        "Email: carwise15@gmail.com — Phone: 0777 447 2106"
     )
 
 
-def chat_ip_ban_message(locale: str | None) -> str:
+def chat_ip_ban_message(locale: str | None, ends_at: datetime | None = None) -> str:
+    """Inappropriate-language ban (e.g. 2h); ends_at in UTC for display."""
     loc = normalize_chat_locale(locale)
+    permanent = ends_at is None or ends_at.year >= 9999
+    if permanent:
+        if loc == "ar":
+            return (
+                "تم حظرك بسبب لغة غير لائقة. للمساعدة: carwise15@gmail.com أو 0777 447 2106"
+            )
+        if loc == "ku":
+            return (
+                "قەدەغەکراویت بەهۆی زمانێکی ناشایستەوە. یارمەتی: carwise15@gmail.com یان 0777 447 2106"
+            )
+        return (
+            "You are banned due to inappropriate language. "
+            "Contact support at carwise15@gmail.com or 0777 447 2106."
+        )
+    utc_str = ends_at.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     if loc == "ar":
         return (
-            "تم تقييد وصولك مؤقتًا بسبب سلوك غير لائق. "
-            "تواصل مع الدعم: carwise15@gmail.com"
+            "تم حظرك لمدة ساعتين بسبب لغة غير لائقة. "
+            f"حاول مرة أخرى بعد {utc_str}. "
+            "للمساعدة: carwise15@gmail.com"
         )
     if loc == "ku":
         return (
-            "دەستگەیشتنەکەت کاتیی سنووردارکراوە بەهۆی هەڵسوکەوتی ناشایستەوە. "
-            "پەیوەندی بە پشتگیری: carwise15@gmail.com"
+            "بۆ ماوەی 2 کاتژمێر قەدەغەکراویت بەهۆی زمانێکی ناشایستەوە. "
+            f"دوای {utc_str} دووبارە هەوڵ بدەوە. "
+            "یارمەتی: carwise15@gmail.com"
         )
     return (
-        "Your access has been temporarily restricted due to inappropriate behavior. "
-        "Contact support at carwise15@gmail.com"
+        "You are banned for 2 hours due to inappropriate language. "
+        f"Try again after {utc_str}. "
+        "For help, contact carwise15@gmail.com or 0777 447 2106."
     )

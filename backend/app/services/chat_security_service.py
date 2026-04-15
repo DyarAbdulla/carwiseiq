@@ -17,9 +17,11 @@ from app.services.push_notifications import _service_key, _supabase_url, supabas
 
 logger = logging.getLogger(__name__)
 
-CHAT_WINDOW = timedelta(minutes=120)
+# Rolling window from window_start: max CHAT_MAX_MESSAGES, then block until window_start + CHAT_WINDOW.
+CHAT_WINDOW = timedelta(hours=5)
 CHAT_MAX_MESSAGES = 10
-BAN_DURATION = timedelta(hours=5)
+# Profanity: third strike inserts user_bans with this duration.
+PROFANITY_BAN_DURATION = timedelta(hours=2)
 
 
 def normalize_client_ip(ip: str) -> str:
@@ -103,9 +105,15 @@ async def get_active_ban_ends_at(ip: str) -> Optional[datetime]:
         return None
 
 
-async def insert_ip_ban(ip: str, reason: str) -> datetime:
+async def insert_ip_ban(
+    ip: str,
+    reason: str,
+    *,
+    duration: Optional[timedelta] = None,
+) -> datetime:
     ip = normalize_client_ip(ip)
-    ends = datetime.now(timezone.utc) + BAN_DURATION
+    delta = duration if duration is not None else PROFANITY_BAN_DURATION
+    ends = datetime.now(timezone.utc) + delta
     if not chat_security_ready():
         return ends
     base = _supabase_url()
