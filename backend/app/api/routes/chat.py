@@ -205,6 +205,14 @@ async def _claude_chat(api_key: str, messages: List[ChatMessage]) -> str:
     )
 
 
+@router.get("/chat/ban-status")
+async def chat_ban_status(request: Request) -> Dict[str, Any]:
+    """IP ban check for static frontends (Cloudflare Pages). Same logic as GET /api/security/ip-ban-status."""
+    from app.api.routes.security import ip_ban_status
+
+    return await ip_ban_status(request)
+
+
 @router.post("/chat")
 async def chat(
     request: Request,

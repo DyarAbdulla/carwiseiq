@@ -14,6 +14,16 @@ import { normalizePredictionResponse } from './normalizePredictionResponse'
 
 // Use NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 in .env.local (or .env)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+
+/** FastAPI origin for browser fetch (Cloudflare static export has no Next /app/api routes). */
+export function getPublicApiOrigin(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    ''
+  const trimmed = raw.replace(/\/$/, '').replace('http://localhost', 'http://127.0.0.1')
+  return trimmed || 'http://127.0.0.1:8000'
+}
 const AUTH_API_BASE_URL = (process.env.NEXT_PUBLIC_AUTH_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000').replace(':3001', ':8000')
 
 const api = axios.create({

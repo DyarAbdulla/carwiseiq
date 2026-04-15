@@ -6,6 +6,7 @@ import { MessageCircle, X, Send, Bot } from 'lucide-react';
 import { vazirmatn, inter } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/context/AuthContext';
+import { getPublicApiOrigin } from '@/lib/api';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -97,8 +98,7 @@ export default function ChatBot() {
     const maxRetries = 3;
     let lastError: unknown = null;
 
-    // Same-origin proxy forwards X-Forwarded-For so rate limits / profanity / bans use one IP key.
-    const chatUrl = '/api/chat';
+    const chatUrl = `${getPublicApiOrigin()}/api/chat`;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {

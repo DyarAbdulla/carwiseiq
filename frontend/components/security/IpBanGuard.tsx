@@ -3,9 +3,10 @@
 import { useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
+import { getPublicApiOrigin } from '@/lib/api';
 
 /**
- * Checks active IP ban on each navigation via same-origin proxy (forwards real client IP).
+ * Checks active IP ban on each navigation (direct FastAPI — static export has no Next API routes).
  * Redirects to /[locale]/banned when restricted (full ban UX is on that route).
  */
 export function IpBanGuard({ children }: { children: React.ReactNode }) {
@@ -18,7 +19,8 @@ export function IpBanGuard({ children }: { children: React.ReactNode }) {
     const run = async () => {
       if (!pathname || pathname.includes('/banned')) return;
       try {
-        const r = await fetch('/api/security/ip-ban-status', {
+        const origin = getPublicApiOrigin();
+        const r = await fetch(`${origin}/api/chat/ban-status`, {
           method: 'GET',
           cache: 'no-store',
         });
