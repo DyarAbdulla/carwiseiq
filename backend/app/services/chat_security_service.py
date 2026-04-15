@@ -76,6 +76,10 @@ async def _active_ban_rows_user_bans(ip: str, now: datetime) -> list[dict]:
             logger.warning("user_bans (temporary) select failed: %s %s", r2.status_code, r2.text[:200])
         elif isinstance(r2.json(), list):
             merged.extend(r2.json())
+    try:
+        print(f"[BAN CHECK] ip={ip}, active_bans={len(merged)}", flush=True)
+    except Exception:
+        pass
     return merged
 
 
@@ -113,19 +117,21 @@ async def insert_ip_ban(
 ) -> datetime:
     ip = normalize_client_ip(ip)
     delta = duration if duration is not None else PROFANITY_BAN_DURATION
-    ends = datetime.now(timezone.utc) + delta
+    now_dt = datetime.now(timezone.utc)
+    ends = now_dt + delta
     if not chat_security_ready():
         return ends
     base = _supabase_url()
-    started = _iso(datetime.now(timezone.utc))
+    banned_at_s = _iso(now_dt)
     ends_s = _iso(ends)
     ub_body = {
         "ip_address": ip,
         "reason": reason,
-        "started_at": started,
+        "banned_at": banned_at_s,
         "ends_at": ends_s,
     }
     try:
+        print(f"[INSERTING BAN] ip={ip}, ends_at={ends_s}", flush=True)
         async with httpx.AsyncClient(timeout=12.0) as client:
             r = await client.post(
                 f"{base}/rest/v1/user_bans",
@@ -152,48 +158,45 @@ async def get_profanity_strikes(ip: str) -> int:
             return 0
         rows = r.json()
         if not rows:
+            try:
+                print(f"[WARNING COUNT] ip={ip}, count=0", flush=True)
+            except Exception:
+                pass
             return 0
-        return int(rows[0].get("strike_count") or 0)
+        c = int(rows[0].get("strike_count") or 0)
+        try:
+            print(f"[WARNING COUNT] ip={ip}, count={c}", flush=True)
+        except Exception:
+            pass
+        return c
     except Exception as e:
         logger.error("get_profanity_strikes error: %s", e, exc_info=True)
         return 0
 
 
 async def set_profanity_strikes(ip: str, count: int) -> None:
-    """Persist strike_count for this IP. Uses PATCH-then-INSERT so we do not rely on PostgREST upsert quirks."""
+    """Persist strike_count for this IP (warning tier). PostgREST upsert — PATCH+204 on zero rows broke first-time writes."""
     ip = normalize_client_ip(ip)
     if not ip or ip == "unknown" or not chat_security_ready():
         return
     base = _supabase_url()
     now = datetime.now(timezone.utc)
-    body = {"strike_count": max(0, int(count)), "updated_at": _iso(now)}
-    patch_url = f"{base}/rest/v1/ai_chat_profanity_strikes?ip_address=eq.{quote(ip, safe='')}"
-    insert_url = f"{base}/rest/v1/ai_chat_profanity_strikes"
-    insert_body = {"ip_address": ip, **body}
+    body = {
+        "ip_address": ip,
+        "strike_count": max(0, int(count)),
+        "updated_at": _iso(now),
+    }
+    url = f"{base}/rest/v1/ai_chat_profanity_strikes"
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
-            pr = await client.patch(
-                patch_url,
-                headers={**_headers(), "Prefer": "return=representation"},
+            r = await client.post(
+                url,
+                headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+                params={"on_conflict": "ip_address"},
                 json=body,
             )
-        if pr.status_code == 204:
-            return
-        if pr.status_code == 200:
-            rows = pr.json()
-            if isinstance(rows, list) and len(rows) > 0:
-                return
-        else:
-            logger.warning("set_profanity_strikes patch: %s %s", pr.status_code, pr.text[:300])
-
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            ins = await client.post(
-                insert_url,
-                headers={**_headers(), "Prefer": "return=minimal"},
-                json=insert_body,
-            )
-        if ins.status_code not in (200, 201, 204):
-            logger.error("set_profanity_strikes insert failed: %s %s", ins.status_code, ins.text[:300])
+        if r.status_code not in (200, 201, 204):
+            logger.error("set_profanity_strikes upsert failed: %s %s", r.status_code, r.text[:300])
     except Exception as e:
         logger.error("set_profanity_strikes error: %s", e, exc_info=True)
 
@@ -203,65 +206,36 @@ async def _persist_chat_rate_limit(
     window_start: datetime,
     message_count: int,
 ) -> bool:
-    """PATCH row if it exists, else INSERT. PostgREST merge-duplicates is unreliable in some deployments."""
+    """Upsert ai_chat_rate_limits row. Do NOT use PATCH-then-INSERT: PostgREST returns 204 when zero rows match PATCH, which skipped INSERT."""
     base = _supabase_url()
     now = datetime.now(timezone.utc)
     body = {
+        "identity_key": identity_key,
         "window_start": _iso(window_start),
         "message_count": message_count,
         "updated_at": _iso(now),
     }
-    patch_url = f"{base}/rest/v1/ai_chat_rate_limits?identity_key=eq.{quote(identity_key, safe='')}"
-    insert_url = f"{base}/rest/v1/ai_chat_rate_limits"
-    insert_body = {"identity_key": identity_key, **body}
+    url = f"{base}/rest/v1/ai_chat_rate_limits"
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
-            pr = await client.patch(
-                patch_url,
-                headers={**_headers(), "Prefer": "return=representation"},
+            r = await client.post(
+                url,
+                headers={**_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+                params={"on_conflict": "identity_key"},
                 json=body,
             )
-        if pr.status_code == 204:
-            logger.info(
-                "chat rate limit PATCH ok (204) identity=%s count=%s",
-                identity_key[:48],
-                message_count,
-            )
-            return True
-        if pr.status_code == 200:
-            rows = pr.json()
-            if isinstance(rows, list) and len(rows) > 0:
-                logger.info(
-                    "chat rate limit PATCH ok identity=%s count=%s",
-                    identity_key[:48],
-                    message_count,
-                )
-                return True
-        logger.warning(
-            "chat rate limit PATCH miss status=%s identity=%s body=%s",
-            pr.status_code,
-            identity_key[:48],
-            pr.text[:200],
-        )
-
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            ins = await client.post(
-                insert_url,
-                headers={**_headers(), "Prefer": "return=minimal"},
-                json=insert_body,
-            )
-        ok = ins.status_code in (200, 201, 204)
+        ok = r.status_code in (200, 201, 204)
         if ok:
             logger.info(
-                "chat rate limit INSERT ok identity=%s count=%s",
+                "chat rate limit upsert ok identity=%s count=%s",
                 identity_key[:48],
                 message_count,
             )
         else:
             logger.error(
-                "chat rate limit INSERT failed: %s %s",
-                ins.status_code,
-                ins.text[:300],
+                "chat rate limit upsert failed: %s %s",
+                r.status_code,
+                r.text[:300],
             )
         return ok
     except Exception as e:
@@ -307,10 +281,18 @@ async def try_consume_chat_quota(
         if not row:
             new_start = now
             new_count = 1
+            try:
+                print(f"[RATE LIMIT] identity_key={identity_key}, message_count=0 (new row → 1)", flush=True)
+            except Exception:
+                pass
         else:
             ws_raw = row.get("window_start")
             ws = datetime.fromisoformat(str(ws_raw).replace("Z", "+00:00"))
             count = int(row.get("message_count") or 0)
+            try:
+                print(f"[RATE LIMIT] identity_key={identity_key}, message_count={count}", flush=True)
+            except Exception:
+                pass
             if now >= ws + CHAT_WINDOW:
                 new_start = now
                 new_count = 1

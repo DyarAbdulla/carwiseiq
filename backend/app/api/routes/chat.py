@@ -208,13 +208,14 @@ async def chat(
     # Rate limit (10 msg / 5h) before profanity handling so quota matches "messages sent".
     if chat_security_ready():
         allowed, reset_at, remaining_phrase = await try_consume_chat_quota(identity, ui_locale)
-        if not allowed and reset_at and remaining_phrase:
+        if not allowed and reset_at is not None:
+            phrase = remaining_phrase or ""
             raise HTTPException(
                 status_code=429,
                 detail={
                     "code": "chat_limit",
                     "reset_at": reset_at.isoformat().replace("+00:00", "Z"),
-                    "message": chat_rate_limit_message(ui_locale, remaining_phrase),
+                    "message": chat_rate_limit_message(ui_locale, phrase),
                 },
             )
 
