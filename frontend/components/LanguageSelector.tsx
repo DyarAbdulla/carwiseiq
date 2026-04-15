@@ -82,11 +82,7 @@ export function LanguageSelector({ variant = 'dropdown' }: LanguageSelectorProps
   const currentLabel = (() => { try { return t(locale) } catch { return locale } })()
   const currentCode = localeCodes[locale] || locale
 
-  // isRTL: ar and ku use RTL; LTR → EN|KU|AR, RTL → AR|KU|EN
-  const isRTL = locale === 'ar' || locale === 'ku'
-  const orderedLocales = isRTL ? [...locales].reverse() : locales
-
-  // Inline: LTR → EN | KU | AR; RTL → AR | KU | EN (glassmorphism)
+  // Inline language chips: ku | en | ar (order from i18n.ts)
   // Light mode: ensure EN/KU/AR text has proper contrast (text-slate-900 on light bg)
   // inlineCompact: smaller for mobile menu (EN | KU | AR)
   const isCompact = variant === 'inlineCompact'
@@ -100,7 +96,7 @@ export function LanguageSelector({ variant = 'dropdown' }: LanguageSelectorProps
         role="group"
         aria-label="Language"
       >
-        {orderedLocales.map((loc, i) => {
+        {locales.map((loc, i) => {
           const code = localeCodes[loc] || loc
           const isSelected = locale === loc
           return (

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { X, GitCompare, Trash2 } from 'lucide-react'
@@ -31,7 +32,7 @@ interface ComparisonBarProps {
 
 export function ComparisonBar({ selectedCars, onRemove, onClear }: ComparisonBarProps) {
   const router = useRouter()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {

@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { supabase } from '@/lib/supabase'
 import { apiClient, setToken } from '@/lib/api'
 
@@ -44,7 +45,7 @@ async function syncSupabaseTokenToRestAPI(supabaseToken: string) {
 function AuthCallbackPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {

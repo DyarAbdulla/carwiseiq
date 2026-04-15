@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { usePathname, useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
+import { defaultLocale } from "@/i18n"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Car,
@@ -23,7 +24,7 @@ const SLIDE_COUNT = 4
 
 export function OnboardingModal() {
   const t = useTranslations("onboarding")
-  const locale = useLocale() || "en"
+  const locale = useLocale() || defaultLocale
   const pathname = usePathname() || ""
   const router = useRouter()
   const isRTL = locale === "ar" || locale === "ku"

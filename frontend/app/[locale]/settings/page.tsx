@@ -2,10 +2,11 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 
 export default function SettingsIndexPage() {
   const router = useRouter()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
 
   useEffect(() => {
     router.replace(`/${locale}/settings/notifications`)

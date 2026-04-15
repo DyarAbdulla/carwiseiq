@@ -3,6 +3,12 @@ const withNextIntl = require('next-intl/plugin')(
   './i18n.ts'
 );
 
+/**
+ * Locales and defaultLocale live in ./i18n.ts (ku first, default Kurdish Sorani).
+ * With `output: 'export'`, Next.js built-in `i18n` in next.config is not used;
+ * routing is `[locale]` + next-intl.
+ */
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,

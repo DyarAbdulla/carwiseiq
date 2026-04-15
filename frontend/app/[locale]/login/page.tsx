@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -40,7 +41,7 @@ function LoginPageContent() {
   const t = useTranslations('auth')
   const tCommon = useTranslations('common')
   const tRoot = useTranslations()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()

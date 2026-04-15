@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useTranslations, useLocale } from "next-intl"
+import { defaultLocale } from "@/i18n"
 import { Button } from "@/components/ui/button"
 import {
   Select,
@@ -31,7 +32,7 @@ const HERO_INPUT =
 
 export function HeroValuationForm() {
   const router = useRouter()
-  const locale = useLocale() || "en"
+  const locale = useLocale() || defaultLocale
   const t = useTranslations("home.heroForm")
   const tHome = useTranslations("home")
 

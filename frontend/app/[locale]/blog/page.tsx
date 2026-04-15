@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useTranslations, useLocale } from "next-intl"
+import { defaultLocale } from "@/i18n"
 
 const BLOG_POSTS = [
   { slug: "how-to-know-used-car-value", titleKey: "post1" },
@@ -11,7 +12,7 @@ const BLOG_POSTS = [
 
 export default function BlogPage() {
   const t = useTranslations("blog")
-  const locale = useLocale() || "en"
+  const locale = useLocale() || defaultLocale
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4">

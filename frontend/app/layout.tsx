@@ -56,8 +56,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="ku" dir="rtl" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var p=location.pathname;var m=p.match(/^\\/([a-z]{2})(?:\\/|$)/);var c=m&&m[1]&&m[1].toLowerCase();var loc=(c==='en'||c==='ku'||c==='ar')?c:'ku';var rtl=(loc==='ar'||loc==='ku');document.documentElement.setAttribute('lang',loc);document.documentElement.setAttribute('dir',rtl?'rtl':'ltr');})();`,
+          }}
+        />
         {/* OPTIMIZED: Preconnect to API for faster requests */}
         <link rel="preconnect" href={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'} />
         <link rel="dns-prefetch" href={process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'} />

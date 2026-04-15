@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { supabase } from '@/lib/supabase'
 import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
 import type { CarRow, CarInsert } from '@/lib/supabase'
@@ -25,7 +26,7 @@ import Link from 'next/link'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const { toast } = useToast()
   const t = useTranslations()
 

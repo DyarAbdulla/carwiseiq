@@ -3,7 +3,7 @@
  * 1. Stored preference (cookie/localStorage)
  * 2. IP geolocation (Iraq/Kurdistan → ku, other Arab → ar)
  * 3. Browser Accept-Language
- * 4. Fallback: en
+ * 4. Fallback: ku (site default)
  */
 export type Locale = "en" | "ku" | "ar"
 
@@ -38,7 +38,7 @@ export async function detectLocaleFromRequest(request: Request): Promise<Locale>
   if (acceptLang.includes("ar")) return "ar"
   if (acceptLang.includes("en")) return "en"
 
-  return "en"
+  return "ku"
 }
 
 async function fetchCountryFromIP(ip: string): Promise<string> {

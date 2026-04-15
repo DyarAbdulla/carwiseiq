@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { defaultLocale } from "@/i18n"
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://carwiseiq.com"
 
@@ -28,8 +29,8 @@ const localeMeta: Record<string, { title: string; description: string }> = {
   },
 }
 
-export function getMetadata(locale: string = "en"): Metadata {
-  const meta = localeMeta[locale] || localeMeta.en
+export function getMetadata(locale: string = defaultLocale): Metadata {
+  const meta = localeMeta[locale] || localeMeta[defaultLocale]
   return {
     title: meta.title,
     description: meta.description,

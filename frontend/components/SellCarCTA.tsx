@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { useAuthContext } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Car, Plus } from 'lucide-react'
@@ -45,7 +46,7 @@ export function SellCarCTA({
   onClick,
 }: SellCarCTAProps) {
   const router = useRouter()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const t = useTranslations('auth')
   const { user } = useAuthContext()
   const [authPromptOpen, setAuthPromptOpen] = useState(false)

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Home, Search, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -9,7 +10,7 @@ import { useState } from 'react'
 
 export default function NotFoundPage() {
   const t = useTranslations('common')
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
 

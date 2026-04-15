@@ -1,13 +1,14 @@
 "use client"
 
 import { useTranslations, useLocale } from "next-intl"
+import { defaultLocale } from "@/i18n"
 import Link from "next/link"
 import { BookOpen, ArrowRight } from "lucide-react"
 import { motion } from "framer-motion"
 
 export function BlogSection() {
   const t = useTranslations("blog")
-  const locale = useLocale() || "en"
+  const locale = useLocale() || defaultLocale
 
   return (
     <section className="w-full py-8 sm:py-12" aria-labelledby="blog-section-title">

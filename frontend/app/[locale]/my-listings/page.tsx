@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import Link from 'next/link'
 import { apiClient } from '@/lib/api'
 import { getUserFacingApiError } from '@/lib/getUserFacingApiError'
@@ -141,7 +142,7 @@ function normalizeSupabaseListing(row: Record<string, unknown>): Record<string, 
 }
 
 function MyListingsContent() {
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()

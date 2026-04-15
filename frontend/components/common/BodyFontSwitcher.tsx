@@ -2,6 +2,7 @@
 
 import { useLocale } from 'next-intl'
 import { useEffect } from 'react'
+import { defaultLocale } from '@/i18n'
 
 const RTL_LOCALES = ['ar', 'ku']
 
@@ -16,7 +17,7 @@ export function BodyFontSwitcher({
   interClass: string
   vazirmatnClass: string
 }) {
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
 
   useEffect(() => {
     if (typeof document === 'undefined') return

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, Home, ArrowLeft } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -9,7 +10,7 @@ import Link from 'next/link'
 
 export default function NotFound() {
   const router = useRouter()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#0f1117] p-4 relative overflow-hidden">

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -77,7 +78,7 @@ export function AuthModal({ open, onOpenChange, returnUrl, defaultTab = 'signin'
   const t = useTranslations('auth')
   const tCommon = useTranslations('common')
   const tRoot = useTranslations()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const router = useRouter()
   const { toast } = useToast()
 

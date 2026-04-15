@@ -1,5 +1,6 @@
 "use client"
 
+import { defaultLocale, locales } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Share2 } from 'lucide-react'
 
@@ -23,7 +24,9 @@ export function ShareComparison({
   const handleClick = () => {
     try {
       if (typeof window === 'undefined') return
-      const locale = window.location.pathname.split('/')[1] || 'en'
+      const seg = window.location.pathname.split('/').filter(Boolean)[0]?.toLowerCase() ?? ''
+      const locale =
+        seg && (locales as readonly string[]).includes(seg) ? seg : defaultLocale
       let url = `${window.location.origin}/${locale}/compare`
       if (mode === 'marketplace' && ids?.length) {
         url += `?ids=${ids.join(',')}`

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
+import { defaultLocale } from "@/i18n"
 import {
   Home,
   Sparkles,
@@ -31,7 +32,7 @@ const items: { key: NavKey; href: string; Icon: typeof Home; labelKey: string }[
 
 export function BottomNav() {
   const pathname = usePathname() || ""
-  const locale = useLocale() || "en"
+  const locale = useLocale() || defaultLocale
   const isRTL = locale === "ar" || locale === "ku"
   const t = useTranslations("nav")
   const tOnboarding = useTranslations("onboarding")

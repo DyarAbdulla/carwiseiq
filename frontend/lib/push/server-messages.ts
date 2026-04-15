@@ -1,4 +1,5 @@
 import type { PushPrefs } from './types'
+import { defaultLocale, locales } from '@/i18n'
 
 export type ListingBrief = {
   id: string
@@ -10,11 +11,11 @@ export type ListingBrief = {
   imageUrl?: string | null
 }
 
-const locales = new Set(['en', 'ar', 'ku'])
+const localeSet = new Set<string>(locales as unknown as string[])
 
 function loc(prefs: PushPrefs): string {
-  const l = (prefs.locale || 'en').toLowerCase()
-  return locales.has(l) ? l : 'en'
+  const l = (prefs.locale || defaultLocale).toLowerCase()
+  return localeSet.has(l) ? l : defaultLocale
 }
 
 export function formatUsd(n: number): string {

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { Car, Menu, X, User, LogOut, Sun, Moon, LayoutDashboard, List, ChevronDown, UserCircle, Sparkles, Info } from 'lucide-react'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
@@ -54,7 +55,7 @@ export function Header() {
   const tAuth = useTranslations('auth')
   const tOnboarding = useTranslations('onboarding')
   const pathname = usePathname() || ''
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const isRTL = locale === 'ar' || locale === 'ku'
   const router = useRouter()
   const toastHook = useToast()
@@ -154,7 +155,7 @@ export function Header() {
     >
       <div className="flex h-16 min-h-[44px] items-center justify-between gap-4 px-3 sm:px-6 max-w-[1800px] mx-auto">
         {/* Logo (left on mobile); center empty on mobile */}
-        <Link href={`/${locale || 'en'}`} className="flex items-center gap-2.5 shrink-0 min-w-0">
+        <Link href={`/${locale || defaultLocale}`} className="flex items-center gap-2.5 shrink-0 min-w-0">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
             <Image
               src="/carwiseiq-logo.jpg"

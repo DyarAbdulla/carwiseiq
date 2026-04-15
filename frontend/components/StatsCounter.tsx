@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useLocale, useTranslations } from "next-intl"
+import { defaultLocale } from "@/i18n"
 import { Database, Factory, Award } from "lucide-react"
 import {
   MODEL_FIT_R2_PERCENT,
@@ -46,7 +47,7 @@ function useCountUp(end: number, duration = 2000, startOnMount = true) {
 
 export function StatsCounter() {
   const t = useTranslations("home.stats")
-  const locale = useLocale() || "en"
+  const locale = useLocale() || defaultLocale
   const { count: listingsCount, ref: carsRef } = useCountUp(TRAINING_LISTING_COUNT_DISPLAY, 2000)
   const { count: makesCount, ref: makesRef } = useCountUp(UNIQUE_MAKE_COUNT_DISPLAY, 2000)
 

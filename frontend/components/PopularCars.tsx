@@ -1,6 +1,7 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
+import { defaultLocale } from "@/i18n"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Car } from "lucide-react"
@@ -8,7 +9,7 @@ import { motion } from "framer-motion"
 import { POPULAR_MARKET_MODELS } from "@/lib/platformPublicStats"
 
 export function PopularCars() {
-  const locale = useLocale() || "en"
+  const locale = useLocale() || defaultLocale
   const t = useTranslations("home.popularCars")
 
   return (

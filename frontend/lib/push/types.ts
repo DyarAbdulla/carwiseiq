@@ -1,4 +1,5 @@
 import type { Json } from '@/lib/database.types'
+import { defaultLocale } from '@/i18n'
 
 export type PushPrefs = {
   newListing?: boolean
@@ -22,7 +23,7 @@ export const defaultPushPrefs: Required<
   watchModels: [],
   priceMin: null,
   priceMax: null,
-  locale: 'en',
+  locale: defaultLocale,
 }
 
 export function mergePushPrefs(raw: Json | null | undefined): PushPrefs {
@@ -39,6 +40,6 @@ export function mergePushPrefs(raw: Json | null | undefined): PushPrefs {
       : [],
     priceMin: typeof o.priceMin === 'number' ? o.priceMin : o.priceMin === null ? null : undefined,
     priceMax: typeof o.priceMax === 'number' ? o.priceMax : o.priceMax === null ? null : undefined,
-    locale: typeof o.locale === 'string' ? o.locale : 'en',
+    locale: typeof o.locale === 'string' ? o.locale : defaultLocale,
   }
 }

@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { useAuthContext } from '@/context/AuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
@@ -15,7 +16,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
   const { user, loading, isAdmin } = useAuthContext()
   const router = useRouter()
   const pathname = usePathname()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const { toast } = useToast()
 
   useEffect(() => {

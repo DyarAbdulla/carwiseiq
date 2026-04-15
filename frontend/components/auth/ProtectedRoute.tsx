@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthSession } from '@/lib/useAuthSession'
 import { useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { Loader2 } from 'lucide-react'
 
 interface ProtectedRouteProps {
@@ -14,7 +15,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { sessionLoaded, user } = useAuthSession()
   const router = useRouter()
   const pathname = usePathname()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
 
   useEffect(() => {
     // Only redirect after session has loaded

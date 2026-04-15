@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { useAuthContext } from '@/context/AuthContext'
 import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 
@@ -16,7 +17,7 @@ export function ProtectedRoute({ children, redirectTo = 'login' }: ProtectedRout
   const { user, loading } = useAuthContext()
   const router = useRouter()
   const pathname = usePathname()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
 
   // Debug: uncomment to see auth state when loading/user changes
   // useEffect(() => { console.log('[ProtectedRoute]', { loading, hasUser: !!user }) }, [loading, user])

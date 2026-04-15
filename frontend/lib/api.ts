@@ -11,6 +11,17 @@ import type {
   SellCarResponse,
 } from './types'
 import { normalizePredictionResponse } from './normalizePredictionResponse'
+import { defaultLocale, locales } from '@/i18n'
+
+const VALID_UI_LOCALES = new Set<string>(locales as unknown as string[])
+
+/** First path segment if it is en|ku|ar; otherwise site default (Kurdish). */
+export function pathLocaleFromPathname(pathname: string): string {
+  const m = pathname.match(/^\/([a-z]{2})(?:\/|$)/)
+  const code = m?.[1]?.toLowerCase()
+  if (code && VALID_UI_LOCALES.has(code)) return code
+  return defaultLocale
+}
 
 // Use NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 in .env.local (or .env)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
@@ -388,9 +399,7 @@ longRunningApi.interceptors.response.use(
 
         // Only redirect if NOT on login/register AND NOT on pages that handle their own auth
         if (!isLoginPage && !isProtectedPage) {
-          // Extract locale from pathname (e.g., /en/favorites -> en)
-          const localeMatch = pathname.match(/^\/([a-z]{2})(?:\/|$)/)
-          const locale = localeMatch ? localeMatch[1] : 'en'
+          const locale = pathLocaleFromPathname(pathname)
           console.log('[LongRunningAPI Interceptor] Redirecting to login:', `/${locale}/login`)
           window.location.href = `/${locale}/login`
         } else {
@@ -486,7 +495,7 @@ authApi.interceptors.response.use(
           if (typeof window !== 'undefined') {
             const pathname = window.location.pathname
             if (!pathname.includes('/login') && !pathname.includes('/register')) {
-              window.location.href = '/en/login'
+              window.location.href = `/${pathLocaleFromPathname(pathname)}/login`
             }
           }
         }
@@ -502,7 +511,7 @@ authApi.interceptors.response.use(
         if (typeof window !== 'undefined') {
           const pathname = window.location.pathname
           if (!pathname.includes('/login') && !pathname.includes('/register')) {
-            window.location.href = '/en/login'
+            window.location.href = `/${pathLocaleFromPathname(pathname)}/login`
           }
         }
       }
@@ -565,9 +574,7 @@ api.interceptors.response.use(
 
         // Only redirect if NOT on login/register AND NOT on pages that handle their own auth
         if (!isLoginPage && !isProtectedPage) {
-          // Extract locale from pathname (e.g., /en/favorites -> en)
-          const localeMatch = pathname.match(/^\/([a-z]{2})(?:\/|$)/)
-          const locale = localeMatch ? localeMatch[1] : 'en'
+          const locale = pathLocaleFromPathname(pathname)
           console.log('[API Interceptor] Redirecting to login:', `/${locale}/login`)
           window.location.href = `/${locale}/login`
         } else {
@@ -693,12 +700,10 @@ export function getClientIanaTimezone(): string {
   }
 }
 
-/** UI locale from URL path (/en, /ku, /ar) for localized API error messages. */
+/** UI locale from URL path (/ku, /en, /ar) for localized API error messages. */
 export function getClientUiLocale(): string {
-  if (typeof window === 'undefined') return 'en'
-  const seg = window.location.pathname.split('/').filter(Boolean)[0]?.toLowerCase() ?? ''
-  if (seg === 'ar' || seg === 'ku') return seg
-  return 'en'
+  if (typeof window === 'undefined') return defaultLocale
+  return pathLocaleFromPathname(window.location.pathname)
 }
 
 function usagePredictHeaders(usageSource: 'predict' | 'estimate' = 'predict'): Record<string, string> {

@@ -3,7 +3,7 @@ import { getMessages, unstable_setRequestLocale } from 'next-intl/server';
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import { inter, vazirmatn } from '@/lib/fonts';
-import { locales } from '@/i18n';
+import { locales, defaultLocale } from '@/i18n';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { ToastProvider } from '@/hooks/use-toast';
@@ -47,7 +47,7 @@ const PushClientKit = dynamic(
   { ssr: false, loading: () => null }
 );
 export function generateStaticParams() {
-  return [{ locale: 'en' }, { locale: 'ar' }, { locale: 'ku' }]
+  return [{ locale: 'ku' }, { locale: 'en' }, { locale: 'ar' }]
 }
 
 export default async function LocaleLayout({
@@ -57,16 +57,16 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 }) {
-  let locale: string = 'en';
+  let locale: string = defaultLocale;
   let messages: any = {};
 
   try {
     const resolvedParams = await params;
-    locale = resolvedParams?.locale || 'en';
+    locale = resolvedParams?.locale || defaultLocale;
 
     // Validate locale
     if (!locale || !locales.includes(locale as any)) {
-      locale = 'en';
+      locale = defaultLocale;
     }
 
     // Enable static rendering
@@ -87,7 +87,7 @@ export default async function LocaleLayout({
   } catch (error) {
     console.error('Error in LocaleLayout:', error);
     // Don't call notFound() here, just use defaults
-    locale = 'en';
+    locale = defaultLocale;
     messages = {};
   }
 

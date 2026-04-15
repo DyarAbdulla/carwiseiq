@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, memo } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -1052,7 +1053,7 @@ export default function HomePage() {
 
   // Hooks must be called unconditionally - handle errors in render
   const t = useTranslations('home')
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const tCommon = useTranslations('common')
 
   // Memoize translations to prevent re-renders

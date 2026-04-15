@@ -2,6 +2,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { useAuthContext } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -45,7 +46,7 @@ function validateFile(file: File): string | null {
 }
 
 function SellCarForm() {
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const router = useRouter()
   const { user } = useAuthContext()
   const { toast } = useToast()

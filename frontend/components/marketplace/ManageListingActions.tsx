@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Pencil, CheckCircle2, XCircle } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import { useTranslations } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { useRouter } from 'next/navigation'
 
 interface ManageListingActionsProps {
@@ -27,7 +28,7 @@ export function ManageListingActions({
   togglingSold,
   className = '',
 }: ManageListingActionsProps) {
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const t = useTranslations('listing')
   const router = useRouter()
 

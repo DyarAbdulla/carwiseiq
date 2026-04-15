@@ -1,8 +1,8 @@
 import { MetadataRoute } from 'next'
+import { locales } from '@/i18n'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-  const locales = ['en', 'ar', 'ku']
   
   const routes = [
     '',
@@ -19,7 +19,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const sitemapEntries: MetadataRoute.Sitemap = []
 
   // Add all routes for each locale
-  locales.forEach(locale => {
+  ;(locales as readonly string[]).forEach((locale) => {
     routes.forEach(route => {
       sitemapEntries.push({
         url: `${baseUrl}/${locale}${route}`,

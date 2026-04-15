@@ -1,6 +1,7 @@
 "use client"
 
 import { useTranslations, useLocale } from "next-intl"
+import { defaultLocale } from "@/i18n"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { BarChart3 } from "lucide-react"
@@ -8,7 +9,7 @@ import { motion } from "framer-motion"
 
 export function ComparePromo() {
   const t = useTranslations("home.comparePromo")
-  const locale = useLocale() || "en"
+  const locale = useLocale() || defaultLocale
 
   return (
     <section className="w-full py-8 sm:py-12" aria-labelledby="compare-promo-title">

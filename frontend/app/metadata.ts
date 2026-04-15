@@ -14,16 +14,17 @@ export const defaultMetadata: Metadata = {
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   alternates: {
-    canonical: '/',
+    canonical: '/ku',
     languages: {
+      'ku': '/ku',
       'en': '/en',
       'ar': '/ar',
-      'ku': '/ku',
+      'x-default': '/ku',
     },
   },
   openGraph: {
     type: 'website',
-    locale: 'en_US',
+    locale: 'ku_IQ',
     url: '/',
     siteName: 'CarWiseIQ',
     title: 'CarWiseIQ | AI-Powered Car Valuations',

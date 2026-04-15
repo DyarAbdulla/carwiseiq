@@ -3,6 +3,7 @@
 import { notFound, useParams } from "next/navigation"
 import Link from "next/link"
 import { useTranslations, useLocale } from "next-intl"
+import { defaultLocale } from "@/i18n"
 import { ChevronLeft } from "lucide-react"
 
 const POSTS: Record<string, { titleKey: string; contentKey: string }> = {
@@ -16,7 +17,7 @@ export function BlogPostClient() {
   const slug = params?.slug as string
   const post = slug ? POSTS[slug] : null
   const t = useTranslations("blog")
-  const locale = useLocale() || "en"
+  const locale = useLocale() || defaultLocale
 
   if (!post) notFound()
 

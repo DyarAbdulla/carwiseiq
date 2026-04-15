@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
+import { defaultLocale } from "@/i18n"
 import {
   DndContext,
   closestCenter,
@@ -171,7 +172,7 @@ export function MediaUploadStep({
   onReorder,
   errors = [],
 }: MediaUploadStepProps) {
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
   const t = useTranslations("sell")
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)

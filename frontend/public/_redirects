@@ -1,5 +1,5 @@
 # Cloudflare Pages redirects
-/ /en 302
+/ /ku 302
 
 # Dynamic routes: redirect detail URL to list page with id in query (static export has no [id] pages)
 /en/buy-sell/:id /en/buy-sell?id=:id 302

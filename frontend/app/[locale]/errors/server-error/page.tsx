@@ -1,6 +1,7 @@
 "use client"
 import { useRouter } from 'next/navigation'
 import { useLocale } from 'next-intl'
+import { defaultLocale } from '@/i18n'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Home, RefreshCw, Mail } from 'lucide-react'
@@ -8,7 +9,7 @@ import { motion } from 'framer-motion'
 
 export default function ServerErrorPage() {
   const router = useRouter()
-  const locale = useLocale() || 'en'
+  const locale = useLocale() || defaultLocale
 
   const handleReport = () => {
     const subject = encodeURIComponent('Server Error Report')

@@ -1,10 +1,11 @@
 import { getRequestConfig } from 'next-intl/server';
 import type { AbstractIntlMessages } from 'next-intl';
 
-export const locales = ['en', 'ku', 'ar'] as const;
+/** Kurdish (Sorani) first — default site language. */
+export const locales = ['ku', 'en', 'ar'] as const;
 export type Locale = (typeof locales)[number];
 
-export const defaultLocale: Locale = 'en';
+export const defaultLocale: Locale = 'ku';
 
 function deepMerge(
   base: Record<string, unknown>,
