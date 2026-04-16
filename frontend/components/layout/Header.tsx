@@ -28,7 +28,6 @@ import { Badge } from '@/components/ui/badge'
 import { tKey } from '@/lib/i18n-dev'
 import { useTheme } from '@/context/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CARWISE_OPEN_ONBOARDING_EVENT } from '@/components/onboarding/OnboardingModal'
 
 type NavItem = { href: string; labelKey: string; icon?: LucideIcon }
 
@@ -61,7 +60,6 @@ export function Header() {
   const t = useTranslations()
   const tCommon = useTranslations('common')
   const tAuth = useTranslations('auth')
-  const tOnboarding = useTranslations('onboarding')
   const pathname = usePathname() || ''
   const locale = useLocale() || defaultLocale
   const isRTL = locale === 'ar' || locale === 'ku'
@@ -473,23 +471,8 @@ export function Header() {
 
                     <div className="border-t border-slate-200/80 dark:border-white/10 my-1" role="separator" />
 
-                    {/* Mobile: full nav (Sell stays on header). Bottom bar still offers quick Home/Predict/etc. */}
+                    {/* Mobile drawer: only links not in the bottom tab bar (Home, Predict, Buy & Sell, Compare, AI Chat). */}
                     <nav className="space-y-1" aria-label={tKey(t, 'nav.menu')}>
-                      {primaryNavItems.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={`/${locale}${item.href}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={mobileNavItemClass(isActiveNav(item.href))}
-                        >
-                          {tKey(t, item.labelKey)}
-                        </Link>
-                      ))}
-                      <div className="pt-2 pb-0.5" role="presentation">
-                        <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          {tKey(t, 'nav.more')}
-                        </p>
-                      </div>
                       {moreNavItems.map((item) => (
                         <Link
                           key={item.href}
@@ -497,32 +480,20 @@ export function Header() {
                           onClick={() => setMobileMenuOpen(false)}
                           className={mobileNavItemClass(isActiveNav(item.href))}
                         >
+                          {item.icon && (
+                            <item.icon className="h-4 w-4 shrink-0 text-indigo-500" aria-hidden />
+                          )}
                           {tKey(t, item.labelKey)}
                         </Link>
                       ))}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          try {
-                            localStorage.removeItem('carwise-onboarded')
-                          } catch {
-                            /* ignore */
-                          }
-                          window.dispatchEvent(new Event(CARWISE_OPEN_ONBOARDING_EVENT))
-                          setMobileMenuOpen(false)
-                        }}
-                        className={cn(mobileNavItemClass(false), 'text-start')}
-                      >
-                        {tOnboarding('takeTour')}
-                      </button>
                     </nav>
 
-                    {/* Logout when authenticated */}
                     {isAuthenticated && (
                       <>
                         <div className="border-t border-slate-200/80 dark:border-white/10 my-1" role="separator" />
                         <button
-                          onClick={() => { handleLogoutClick(); setMobileMenuOpen(false) }}
+                          type="button"
+                          onClick={() => { void handleLogoutClick(); setMobileMenuOpen(false) }}
                           className="flex items-center gap-2 rounded-lg px-3 py-2 w-full text-start text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10"
                         >
                           <LogOut className="h-4 w-4 shrink-0" />

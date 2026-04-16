@@ -26,7 +26,7 @@ const items: { key: NavKey; href: string; Icon: typeof Home; labelKey: string }[
   { key: "home", href: "/", Icon: Home, labelKey: "home" },
   { key: "predict", href: "/predict", Icon: Sparkles, labelKey: "predict" },
   { key: "compare", href: "/compare", Icon: ArrowLeftRight, labelKey: "compare" },
-  { key: "market", href: "/buy-sell", Icon: ShoppingBag, labelKey: "market" },
+  { key: "market", href: "/buy-sell", Icon: ShoppingBag, labelKey: "buySell" },
   { key: "ai", href: "/ai-assistant", Icon: MessageCircle, labelKey: "aiChat" },
 ]
 
@@ -311,11 +311,9 @@ export function BottomNav() {
                   active ? "font-semibold text-white" : "font-normal text-white/50"
                 )}
               >
-                {labelKey === "market"
-                  ? t("market")
-                  : labelKey === "aiChat"
-                    ? t("aiChat")
-                    : t(labelKey as "home" | "predict" | "compare")}
+                {labelKey === "aiChat"
+                  ? t("aiChat")
+                  : t(labelKey as "home" | "predict" | "compare" | "buySell")}
               </span>
             </Link>
           )
