@@ -56,6 +56,31 @@ interface ListingCard {
   description?: string
 }
 
+/**
+ * Display confidence as 0–100%. API `confidence_range` is half the price interval width in dollars, not a percent.
+ */
+function getCompareConfidencePercent(prediction: PredictionResponse | null | undefined): number | null {
+  if (!prediction) return null
+  const pct = prediction.confidence_percent
+  if (typeof pct === 'number' && Number.isFinite(pct) && pct > 0) {
+    return Math.round(Math.min(100, Math.max(0, pct)))
+  }
+  const price = prediction.predicted_price
+  const ci = prediction.confidence_interval
+  if (ci && typeof price === 'number' && price > 0) {
+    const width = ci.upper - ci.lower
+    const raw = (1 - width / price) * 100
+    if (Number.isFinite(raw)) {
+      return Math.round(Math.min(100, Math.max(0, raw)))
+    }
+  }
+  const level = prediction.confidence_level
+  if (level === 'high') return 92
+  if (level === 'medium') return 82
+  if (level === 'low') return 65
+  return null
+}
+
 function ComparePageBackground() {
   return (
     <div className="compare-page-bg-layers" aria-hidden>
@@ -242,7 +267,7 @@ function ComparePageContent() {
         ...car,
         index: index + 1,
         price: car.prediction?.predicted_price || 0,
-        confidence: car.prediction?.confidence_range || 0,
+        confidence: getCompareConfidencePercent(car.prediction) ?? 0,
       }))
       .sort((a, b) => a.price - b.price)
 
@@ -345,7 +370,7 @@ function ComparePageContent() {
       { label: 'Drivetrain', values: cars.map((_, i) => specMaps[i]?.drivetrain ?? na) },
       { label: 'Fuel Economy', values: cars.map((_, i) => { const e = specMaps[i]?.fuelEconomy; return e ? formatFuelEconomyL100km(e.city, e.highway) : na; }) },
       { label: 'Predicted Price', values: cars.map(c => c.prediction?.predicted_price ?? null), format: (v: string | number) => formatCurrency(Number(v)) },
-      { label: 'Confidence', values: cars.map(c => c.prediction?.confidence_range ?? null), higherIsBetter: true, suffix: '%' },
+      { label: 'Confidence', values: cars.map(c => getCompareConfidencePercent(c.prediction)), higherIsBetter: true, suffix: '%' },
       { label: 'Savings vs Highest', values: comparisonMetrics.savings, format: (v: string | number) => formatCurrency(Number(v)), suffix: '' },
     ]
     if (highlightDifferencesOnly) {
@@ -1334,6 +1359,7 @@ function ComparePageContent() {
                   const isBestDeal = comparisonMetrics?.bestDealIndex === index
                   const isMostExpensive = comparisonMetrics?.mostExpensiveIndex === index
                   const hasFeatures = car.features && isValidCarFeatures(car.features)
+                  const compareConfidencePct = getCompareConfidencePercent(car.prediction)
 
                   // CRITICAL FIX: Calculate progress based on step (33%/66%/100%), not field completion
                   // Step 1 = 33%, Step 2 = 66%, Step 3 = 100%
@@ -1548,10 +1574,10 @@ function ComparePageContent() {
                                 <div className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
                                   {formatCurrency(car.prediction.predicted_price)}
                                 </div>
-                                {car.prediction.confidence_range && (
+                                {compareConfidencePct != null && (
                                   <div className="flex items-center gap-2 text-xs text-gray-300 mt-3">
                                     <Shield className="h-3 w-3 text-indigo-400" />
-                                    Confidence: <span className="font-semibold text-indigo-300">{car.prediction.confidence_range}%</span>
+                                    Confidence: <span className="font-semibold text-indigo-300">{compareConfidencePct}%</span>
                                   </div>
                                 )}
                               </div>
