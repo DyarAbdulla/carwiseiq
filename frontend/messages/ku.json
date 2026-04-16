@@ -143,8 +143,8 @@
     "emptySearchTitle": "هیچ ئۆتۆمبێلێک نەدۆزرایەوە",
     "emptySearchHint": "گەڕان یان فلتەرەکان بگۆڕە.",
     "emptyIllustrationAlt": "هیچ ئۆتۆمبێلێک نییە",
-    "earlySellerBanner": "🚗 یەکێک لە یەکەم فرۆشیارەکان بەر لە CarWiseIQ ببە! ئۆتۆمبێلەکەت بەخۆڕایی بڵاو بکەرەوە و بگە بە هەزاران کڕیار لە عێراق و کوردستان.",
-    "sellYourCarFreeCta": "ئۆتۆمبێلەکەت بەخۆڕایی بفرۆشە",
+    "earlySellerBanner": "🚗 ئۆتۆمبێلەکەت بەخۆرایی بفرۆشە لە CarWiseIQ — بەبێ کۆمیسیۆن، بەبێ کرێ. دەست پێ بکە ئێستا!",
+    "sellYourCarFreeCta": "ئۆتۆمبێلەکەت تۆمار بکە →",
     "emptyCategoryTitle": "هیچ ئۆتۆمبێلێک نەدۆزرایەوە. یەکەم کەس بەر لەم پۆلە ئۆتۆمبێلەکەت دابنێ!"
   },
   "listing": {
@@ -475,6 +475,9 @@
     "heroForm": {
       "make": "جۆر",
       "makePlaceholder": "جۆری ئۆتۆمبێل",
+      "makeSearchPlaceholder": "بۆ گەڕان بنووسە…",
+      "loadingMakes": "بارکردنی جۆرەکان…",
+      "noMakesAvailable": "هیچ جۆرێک بەردەست نییە",
       "model": "مۆدێل",
       "modelPlaceholder": "مۆدێل",
       "year": "ساڵ",

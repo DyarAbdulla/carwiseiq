@@ -12,23 +12,58 @@ interface SmartDealAnalystProps {
   result: PredictionResponse
 }
 
-/** Get deal status: 'great' | 'fair' | 'above' */
-function getDealStatus(dealAnalysis?: string, dealScore?: { score?: string }): 'great' | 'fair' | 'above' {
-  const raw = dealAnalysis ?? dealScore?.score ?? 'fair'
-  const s = (typeof raw === 'string' ? raw : safeText(raw, 'fair')).toLowerCase()
-  if (s === 'excellent' || s === 'good') return 'great'
-  if (s === 'poor') return 'above'
+/**
+ * UI buckets for colors — prefer API `deal_score` / `deal_analysis`, else infer from
+ * `market_comparison.percentage_difference` (same thresholds as backend market_analyzer).
+ */
+function getDealStatus(result: PredictionResponse): 'great' | 'fair' | 'above' {
+  const score = result.deal_score?.score
+  if (score) {
+    const s = score.toLowerCase()
+    if (s === 'excellent' || s === 'good') return 'great'
+    if (s === 'poor') return 'above'
+    return 'fair'
+  }
+  const analysis = result.deal_analysis
+  if (analysis) {
+    const a = analysis.toLowerCase()
+    if (a === 'excellent' || a === 'good') return 'great'
+    if (a === 'poor') return 'above'
+    return 'fair'
+  }
+  const pd = result.market_comparison?.percentage_difference
+  if (pd != null && Number.isFinite(pd)) {
+    if (pd <= -5) return 'great'
+    if (pd >= 15) return 'above'
+    return 'fair'
+  }
   return 'fair'
 }
 
-/** Get position 0-100 for gauge: great=75, fair=50, above=25 */
-function getGaugePosition(status: 'great' | 'fair' | 'above'): number {
-  switch (status) {
-    case 'great': return 75
-    case 'fair': return 50
-    case 'above': return 25
-    default: return 50
+/**
+ * Needle position on the semicircle: 0 = left (great / below market), 50 = center (fair), 100 = right (above market).
+ * Driven by `market_comparison.percentage_difference` when present (same signal as deal_analysis on the server).
+ */
+function getGaugeNeedlePercent(result: PredictionResponse): number {
+  const pdRaw = result.market_comparison?.percentage_difference
+  if (pdRaw != null && Number.isFinite(pdRaw)) {
+    const span = 25
+    const needle = 50 + (pdRaw / span) * 50
+    return Math.min(100, Math.max(0, needle))
   }
+
+  const score = result.deal_score?.score
+  const analysis = result.deal_analysis
+  const impliedPd =
+    score === 'excellent' || analysis === 'excellent'
+      ? -17
+      : score === 'good' || analysis === 'good'
+        ? -8
+        : score === 'poor' || analysis === 'poor'
+          ? 18
+          : 2
+  const span = 25
+  return Math.min(100, Math.max(0, 50 + (impliedPd / span) * 50))
 }
 
 /** Get gauge color based on status */
@@ -44,9 +79,16 @@ function getGaugeColor(status: 'great' | 'fair' | 'above'): string {
 export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
   const low = result.confidence_interval?.lower ?? result.predicted_price * 0.85
   const high = result.confidence_interval?.upper ?? result.predicted_price * 1.15
-  const dealStatus = getDealStatus(result.deal_analysis, result.deal_score)
-  const gaugePosition = getGaugePosition(dealStatus)
+  const dealStatus = getDealStatus(result)
+  const gaugePosition = getGaugeNeedlePercent(result)
   const gaugeColor = getGaugeColor(dealStatus)
+  const badgeLabel =
+    result.deal_score?.label?.trim() ||
+    (dealStatus === 'great'
+      ? 'Great Deal'
+      : dealStatus === 'above'
+        ? 'Above Market'
+        : 'Fair Price')
   const marketComparison = result.market_comparison
   const priceFactors = result.price_factors || []
 
@@ -238,7 +280,7 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
               <span className="text-xs sm:text-sm text-amber-400 font-medium">Above Market</span>
             </div>
 
-            {/* Current Status Badge */}
+            {/* Current Status Badge — label from API deal_score when available */}
             <div className="mt-4 text-center">
               <span className={cn(
                 "inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium",
@@ -246,9 +288,10 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
                 dealStatus === 'fair' && "bg-blue-500/20 text-blue-400 border border-blue-500/50",
                 dealStatus === 'above' && "bg-amber-500/20 text-amber-400 border border-amber-500/50"
               )}>
-                {dealStatus === 'great' && '✓ Great Deal'}
-                {dealStatus === 'fair' && '= Fair Price'}
-                {dealStatus === 'above' && '⚠ Above Market'}
+                {dealStatus === 'great' && '✓ '}
+                {dealStatus === 'fair' && '= '}
+                {dealStatus === 'above' && '⚠ '}
+                {badgeLabel}
               </span>
             </div>
           </div>

@@ -10,7 +10,14 @@ import { useToast } from '@/hooks/use-toast'
 import { X, Plus, Download, Share2, Save, Trophy, TrendingDown, TrendingUp, Sparkles, Check, X as XIcon, Gauge, Fuel, Cog, Calendar, Shield, Loader2, Car } from 'lucide-react'
 import type { CarFeatures, PredictionResponse } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
-import { formatCurrency, formatFuelEconomy, formatFuelEconomyL100km, formatApproxIqdFromUsd } from '@/lib/utils'
+import {
+  formatCurrency,
+  formatFuelEconomy,
+  formatFuelEconomyL100km,
+  formatApproxIqdFromUsd,
+  normalizeConfidencePercentForDisplay,
+  confidencePercentFromInterval,
+} from '@/lib/utils'
 import { CompareSkeleton } from '@/components/skeletons'
 import { useCarQuerySpecs } from '@/hooks/useCarQuerySpecs'
 import { ComparisonChart } from '@/components/compare/ComparisonChart'
@@ -57,36 +64,14 @@ interface ListingCard {
 }
 
 /**
- * Display confidence as 0–100%.
- * - `confidence_range` is dollars (half-interval width) — never use as %.
- * - Ignore `confidence_percent` if out of 0–100 (wrong scale / corrupted payloads).
+ * Display confidence as 0–100% only (never `confidence_range` as a percent).
  */
 function getCompareConfidencePercent(prediction: PredictionResponse | null | undefined): number | null {
   if (!prediction) return null
-  const rawPctUnknown = prediction.confidence_percent as unknown
-  let pct: number | null = null
-  if (typeof rawPctUnknown === 'number' && Number.isFinite(rawPctUnknown) && rawPctUnknown > 0 && rawPctUnknown <= 100) {
-    pct = rawPctUnknown
-  } else if (typeof rawPctUnknown === 'string' && rawPctUnknown.trim() !== '') {
-    const p = parseFloat(rawPctUnknown)
-    if (Number.isFinite(p) && p > 0 && p <= 100) pct = p
-  }
-  if (pct != null) {
-    return Math.round(Math.min(100, Math.max(0, pct)))
-  }
-  const price = prediction.predicted_price
-  const ci = prediction.confidence_interval
-  if (ci && typeof price === 'number' && price > 0) {
-    const lo = Math.min(ci.lower, ci.upper)
-    const hi = Math.max(ci.lower, ci.upper)
-    const width = hi - lo
-    if (Number.isFinite(width) && width >= 0) {
-      const raw = (1 - width / price) * 100
-      if (Number.isFinite(raw)) {
-        return Math.round(Math.min(100, Math.max(0, raw)))
-      }
-    }
-  }
+  const fromField = normalizeConfidencePercentForDisplay(prediction.confidence_percent)
+  if (fromField != null) return fromField
+  const fromCi = confidencePercentFromInterval(prediction.predicted_price, prediction.confidence_interval)
+  if (fromCi != null) return fromCi
   const level = prediction.confidence_level
   if (level === 'high') return 92
   if (level === 'medium') return 82

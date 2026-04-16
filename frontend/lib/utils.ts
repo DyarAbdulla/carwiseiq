@@ -22,6 +22,54 @@ export function formatApproxIqdFromUsd(usd: number): string {
   return Math.round(usd * USD_TO_IQD_APPROX).toLocaleString("en-US")
 }
 
+/**
+ * Normalize API `confidence_percent` (or string variants) to 0–100 for UI.
+ * - Values in (0, 1] are treated as fractions (e.g. 0.75 → 75).
+ * - Values in (100, ∞) are treated as invalid (returns null so callers can fall back).
+ * - Slight overflow (100–101) clamps to 100.
+ */
+export function normalizeConfidencePercentForDisplay(raw: unknown): number | null {
+  if (raw == null) return null
+  let n: number
+  if (typeof raw === "string") {
+    const trimmed = raw.trim()
+    const t = trimmed.endsWith("%") ? trimmed.slice(0, -1).trim() : trimmed
+    if (t === "") return null
+    n = parseFloat(t)
+  } else if (typeof raw === "number") {
+    n = raw
+  } else {
+    return null
+  }
+  if (!Number.isFinite(n) || n < 0) return null
+  if (n > 0 && n <= 1) n *= 100
+  if (n > 100) {
+    if (n <= 101) n = 100
+    else return null
+  }
+  return Math.round(Math.min(100, Math.max(0, n)))
+}
+
+/**
+ * Infer 0–100 confidence from interval width vs price when percent is missing.
+ * Returns null if the result would be unreliable (e.g. width ≥ price).
+ */
+export function confidencePercentFromInterval(
+  predictedPrice: number,
+  interval: { lower: number; upper: number } | undefined
+): number | null {
+  if (!interval || typeof predictedPrice !== "number" || !Number.isFinite(predictedPrice) || predictedPrice <= 0) {
+    return null
+  }
+  const lo = Math.min(interval.lower, interval.upper)
+  const hi = Math.max(interval.lower, interval.upper)
+  const width = hi - lo
+  if (!Number.isFinite(width) || width < 0 || width >= predictedPrice) return null
+  const raw = (1 - width / predictedPrice) * 100
+  if (!Number.isFinite(raw)) return null
+  return Math.round(Math.min(100, Math.max(0, raw)))
+}
+
 /** Re-export formatPrice for IQD/USD with locale support (use from @/lib/formatters for full options) */
 export { formatPrice, formatPriceWithToggle } from "./formatters"
 

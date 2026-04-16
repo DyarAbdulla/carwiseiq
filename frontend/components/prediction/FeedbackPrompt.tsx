@@ -5,7 +5,11 @@ import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Star, ThumbsUp, ThumbsDown } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import {
+  cn,
+  normalizeConfidencePercentForDisplay,
+  confidencePercentFromInterval,
+} from '@/lib/utils'
 import { DetailedFeedbackModal } from './DetailedFeedbackModal'
 import type { PredictionResponse } from '@/lib/types'
 import { apiClient } from '@/lib/api'
@@ -37,14 +41,21 @@ export function FeedbackPrompt({
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
-  // Calculate AI confidence score from precision or confidence level
-  const confidenceScore = result.precision
-    ? Math.round(100 - result.precision)
-    : result.confidence_level === 'high'
-      ? 90
-      : result.confidence_level === 'medium'
-        ? 75
-        : 60
+  const confidenceScore = Math.min(
+    100,
+    Math.max(
+      0,
+      normalizeConfidencePercentForDisplay(result.confidence_percent) ??
+        confidencePercentFromInterval(result.predicted_price, result.confidence_interval) ??
+        (result.precision != null && Number.isFinite(result.precision)
+          ? Math.round(100 - result.precision)
+          : result.confidence_level === 'high'
+            ? 90
+            : result.confidence_level === 'medium'
+              ? 75
+              : 60)
+    )
+  )
 
   const handleQuickFeedback = async (accurate: boolean) => {
     setIsAccurate(accurate)

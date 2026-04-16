@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { Upload, FileSpreadsheet, Download, X, FileDown, ArrowUpDown, ArrowUp, ArrowDown, Link as LinkIcon, Loader2, CheckCircle2 } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import {
+  formatCurrency,
+  normalizeConfidencePercentForDisplay,
+  confidencePercentFromInterval,
+} from '@/lib/utils'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
 import type { CarFeatures, BatchPredictionResult } from '@/lib/types'
@@ -124,9 +128,10 @@ export default function BatchPage() {
     const avgPrice = results.reduce((sum, r) => sum + (r.predicted_price || 0), 0) / results.length
 
     return results.map((result) => {
-      const confidencePercent = result.confidence_interval
-        ? Math.round((1 - (result.confidence_interval.upper - result.confidence_interval.lower) / result.predicted_price) * 100)
-        : undefined
+      const confidencePercent =
+        normalizeConfidencePercentForDisplay(result.confidence_percent) ??
+        confidencePercentFromInterval(result.predicted_price, result.confidence_interval) ??
+        undefined
 
       const priceRange = result.confidence_interval
         ? { min: result.confidence_interval.lower, max: result.confidence_interval.upper }

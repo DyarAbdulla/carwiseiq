@@ -230,7 +230,7 @@
     "emptySearchHint": "Try a different search or adjust your filters.",
     "emptyIllustrationAlt": "No cars illustration",
     "earlySellerBanner": "🚗 Be one of the first sellers on CarWiseIQ! List your car for free and reach thousands of buyers in Iraq & Kurdistan.",
-    "sellYourCarFreeCta": "Sell Your Car Free",
+    "sellYourCarFreeCta": "List Your Car Free →",
     "emptyCategoryTitle": "No cars found. Be the first to list in this category!"
   },
   "listing": {
@@ -570,6 +570,9 @@
     "heroForm": {
       "make": "Make",
       "makePlaceholder": "Make",
+      "makeSearchPlaceholder": "Type to search…",
+      "loadingMakes": "Loading makes…",
+      "noMakesAvailable": "No makes available",
       "model": "Model",
       "modelPlaceholder": "Model",
       "year": "Year",

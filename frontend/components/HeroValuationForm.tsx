@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { SearchableSelect } from "@/components/ui/searchable-select"
 import { Input } from "@/components/ui/input"
 import { apiClient } from "@/lib/api"
 import { Car } from "lucide-react"
@@ -86,18 +87,17 @@ export function HeroValuationForm() {
           <label htmlFor="hero-make" className="text-sm font-medium text-slate-200 sr-only">
             {t("make")}
           </label>
-          <Select value={make} onValueChange={setMake} disabled={loadingMakes}>
-            <SelectTrigger id="hero-make" className={HERO_SELECT_TRIGGER}>
-              <SelectValue placeholder={t("makePlaceholder")} />
-            </SelectTrigger>
-            <SelectContent className={HERO_SELECT_CONTENT}>
-              {makes.map((m) => (
-                <SelectItem key={m} value={m} className={HERO_SELECT_ITEM}>
-                  {m}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchableSelect
+            id="hero-make"
+            value={make}
+            onValueChange={setMake}
+            options={makes}
+            placeholder={loadingMakes ? t("loadingMakes") : t("makePlaceholder")}
+            disabled={loadingMakes}
+            emptyMessage={t("noMakesAvailable")}
+            searchPlaceholder={t("makeSearchPlaceholder")}
+            className={`${HERO_SELECT_TRIGGER} !text-white placeholder:!text-slate-400 border-white/25 bg-[rgba(30,30,50,0.88)]`}
+          />
         </div>
         <div className="space-y-2">
           <label htmlFor="hero-model" className="text-sm font-medium text-slate-200 sr-only">

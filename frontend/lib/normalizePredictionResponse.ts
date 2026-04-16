@@ -11,6 +11,7 @@ import type {
   MarketDemand,
   ConfidenceInterval,
 } from '@/lib/types'
+import { normalizeConfidencePercentForDisplay } from '@/lib/utils'
 
 function asString(v: unknown, fallback = ''): string {
   if (v == null) return fallback
@@ -159,10 +160,9 @@ export function normalizePredictionResponse(data: unknown): PredictionResponse {
   const deal_analysis =
     d.deal_analysis == null ? undefined : asString(d.deal_analysis, '')
 
-  let confidence_percent: number | undefined
-  if (typeof d.confidence_percent === 'number' && Number.isFinite(d.confidence_percent) && d.confidence_percent > 0) {
-    confidence_percent = d.confidence_percent
-  }
+  const confidence_percent_raw = normalizeConfidencePercentForDisplay(d.confidence_percent)
+  const confidence_percent: number | undefined =
+    confidence_percent_raw != null ? confidence_percent_raw : undefined
 
   const luxury_adjusted =
     typeof d.luxury_adjusted === 'boolean' ? d.luxury_adjusted : undefined

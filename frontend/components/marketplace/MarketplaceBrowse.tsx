@@ -506,10 +506,6 @@ export function MarketplaceBrowse() {
                       className="inline-flex items-center justify-center gap-2"
                     >
                       {t("sellYourCarFreeCta")}
-                      <ArrowRight
-                        className={`h-5 w-5 shrink-0 ${isRTL ? "rotate-180" : ""}`}
-                        aria-hidden
-                      />
                     </Link>
                   </Button>
                 </div>

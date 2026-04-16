@@ -144,7 +144,7 @@
     "emptySearchHint": "جرّب بحثاً مختلفاً أو عدّل الفلاتر.",
     "emptyIllustrationAlt": "لا توجد سيارات",
     "earlySellerBanner": "🚗 كن من أوائل البائعين على CarWiseIQ! أدرج سيارتك مجاناً ووصل لآلاف المشترين في العراق وكوردستان.",
-    "sellYourCarFreeCta": "اعرض سيارتك مجاناً",
+    "sellYourCarFreeCta": "أضف سيارتك مجاناً ←",
     "emptyCategoryTitle": "لا توجد سيارات. كن أول من ينشر في هذا التصنيف!"
   },
   "listing": {
@@ -475,6 +475,9 @@
     "heroForm": {
       "make": "العلامة",
       "makePlaceholder": "العلامة",
+      "makeSearchPlaceholder": "اكتب للبحث…",
+      "loadingMakes": "جاري تحميل العلامات…",
+      "noMakesAvailable": "لا توجد علامات متاحة",
       "model": "الموديل",
       "modelPlaceholder": "الموديل",
       "year": "السنة",

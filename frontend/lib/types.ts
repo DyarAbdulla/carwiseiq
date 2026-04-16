@@ -128,6 +128,7 @@ export interface BatchPredictionResult {
   car: CarFeatures
   predicted_price: number
   confidence_interval?: ConfidenceInterval
+  confidence_percent?: number
   error?: string
 }
 

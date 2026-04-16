@@ -3,7 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { safeText, safeNumber } from '@/lib/safeDisplay'
-import { formatCurrency, formatApproxIqdFromUsd } from '@/lib/utils'
+import {
+  formatCurrency,
+  formatApproxIqdFromUsd,
+  normalizeConfidencePercentForDisplay,
+  confidencePercentFromInterval,
+} from '@/lib/utils'
 import type { PredictionResponse, CarFeatures } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Share2, Bookmark, Check } from 'lucide-react'
@@ -77,16 +82,15 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
   const low = result.confidence_interval?.lower ?? predicted * 0.85
   const high = result.confidence_interval?.upper ?? predicted * 1.15
 
-  const confidencePercent =
-    result.confidence_percent != null &&
-    Number.isFinite(result.confidence_percent) &&
-    result.confidence_percent > 0
-      ? Math.round(Math.min(99, Math.max(1, result.confidence_percent)))
-      : result.confidence_level === 'high'
-        ? 92
-        : result.confidence_level === 'medium'
-          ? 82
-          : 65
+  const confidencePercent = Math.min(
+    100,
+    Math.max(
+      0,
+      normalizeConfidencePercentForDisplay(result.confidence_percent) ??
+        confidencePercentFromInterval(predicted, result.confidence_interval) ??
+        (result.confidence_level === 'high' ? 92 : result.confidence_level === 'medium' ? 82 : 65)
+    )
+  )
 
   const luxuryNote =
     result.luxury_reference_note?.trim() ||
