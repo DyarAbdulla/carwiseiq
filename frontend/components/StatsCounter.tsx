@@ -52,44 +52,44 @@ export function StatsCounter() {
   const { count: makesCount, ref: makesRef } = useCountUp(UNIQUE_MAKE_COUNT_DISPLAY, 2000)
 
   return (
-    <section className="relative z-10 w-full py-8 sm:py-10" aria-labelledby="stats-title">
+    <section className="relative z-10 w-full py-8 sm:py-10" aria-label={t("listingsAnalyzed")}>
       <div className="container mx-auto px-3 sm:px-6 max-w-[1200px]">
-        <div className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-4 sm:p-6">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12">
-            <div className="flex items-center gap-3 rtl:flex-row-reverse rtl:gap-3" role="listitem">
-              <div className="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
-                <Database className="h-6 w-6 text-indigo-400" aria-hidden />
+        <div className="rounded-2xl border border-white/20 md:border-white/10 bg-white/5 backdrop-blur-xl p-3 sm:p-6">
+          <ul className="grid grid-cols-3 gap-2 sm:gap-6 md:gap-10 items-stretch text-center sm:text-start list-none m-0 p-0">
+            <li className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 rtl:sm:flex-row-reverse min-w-0">
+              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
+                <Database className="h-4 w-4 sm:h-6 sm:w-6 text-indigo-400" aria-hidden />
               </div>
-              <div>
-                <span ref={carsRef} className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
+              <div className="min-w-0">
+                <span ref={carsRef} className="block text-lg sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tabular-nums leading-tight">
                   {listingsCount.toLocaleString(locale)}+
                 </span>
-                <div className="text-sm text-slate-600 dark:text-slate-300">{t("listingsAnalyzed")}</div>
+                <div className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-300 leading-snug">{t("listingsAnalyzed")}</div>
               </div>
-            </div>
-            <div className="flex items-center gap-3 rtl:flex-row-reverse rtl:gap-3" role="listitem">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
-                <Factory className="h-6 w-6 text-purple-400" aria-hidden />
+            </li>
+            <li className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 rtl:sm:flex-row-reverse min-w-0 border-x border-white/10 px-1 sm:px-0">
+              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center shrink-0">
+                <Factory className="h-4 w-4 sm:h-6 sm:w-6 text-purple-400" aria-hidden />
               </div>
-              <div>
-                <span ref={makesRef} className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tabular-nums">
+              <div className="min-w-0">
+                <span ref={makesRef} className="block text-lg sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tabular-nums leading-tight">
                   {makesCount.toLocaleString(locale)}+
                 </span>
-                <div className="text-sm text-slate-600 dark:text-slate-300">{t("makesCovered")}</div>
+                <div className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-300 leading-snug">{t("makesCovered")}</div>
               </div>
-            </div>
-            <div className="flex items-center gap-3 rtl:flex-row-reverse rtl:gap-3" role="listitem">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                <Award className="h-6 w-6 text-blue-400" aria-hidden />
+            </li>
+            <li className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-1.5 sm:gap-3 rtl:sm:flex-row-reverse min-w-0">
+              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+                <Award className="h-4 w-4 sm:h-6 sm:w-6 text-blue-400" aria-hidden />
               </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+              <div className="min-w-0">
+                <div className="text-lg sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-white leading-tight">
                   {MODEL_FIT_R2_PERCENT}%
                 </div>
-                <div className="text-sm text-slate-600 dark:text-slate-300">{t("modelFitR2")}</div>
+                <div className="text-[10px] sm:text-sm text-slate-600 dark:text-slate-300 leading-snug">{t("modelFitR2")}</div>
               </div>
-            </div>
-          </div>
+            </li>
+          </ul>
         </div>
       </div>
     </section>

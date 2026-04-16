@@ -6,6 +6,7 @@ import type { PredictionResponse } from '@/lib/types'
 import { TrendingUp, TrendingDown, MapPin, Gauge, Lightbulb, ArrowUp, ArrowDown, Minus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { safeText } from '@/lib/safeDisplay'
+import { formatPriceFactorImpactLabel } from '@/lib/priceFactorDisplay'
 
 interface SmartDealAnalystProps {
   result: PredictionResponse
@@ -80,12 +81,13 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
     const mileageFactor = priceFactors.find(f =>
       safeText(f.factor, '').toLowerCase().includes('mileage'))
     if (mileageFactor) {
-      const impact = Math.abs(mileageFactor.impact)
       const direction = mileageFactor.direction
       insights.push({
         title: 'Mileage Impact',
-        value: `${direction === 'up' ? '+' : '-'}${impact.toFixed(1)}%`,
-        description: safeText(mileageFactor.description, '') || `Low mileage ${direction === 'up' ? 'increased' : 'decreased'} value by ~${impact.toFixed(0)}%.`,
+        value: formatPriceFactorImpactLabel(mileageFactor),
+        description:
+          safeText(mileageFactor.description, '') ||
+          'Estimated vs. similar mileage bands in our listing data (USD).',
         icon: direction === 'up' ? ArrowUp : ArrowDown,
         color: direction === 'up' ? 'text-green-400' : 'text-amber-400',
       })
@@ -152,10 +154,10 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
       const factor = otherFactors[0]
       insights.push({
         title: safeText(factor.factor, 'Factor'),
-        value: `${factor.direction === 'up' ? '+' : '-'}${Math.abs(factor.impact).toFixed(1)}%`,
+        value: formatPriceFactorImpactLabel(factor),
         description:
           safeText(factor.description, '') ||
-          `${safeText(factor.factor, 'Factor')} ${factor.direction === 'up' ? 'increased' : 'decreased'} value.`,
+          `Estimated vs. similar listings in our data (USD).`,
         icon: factor.direction === 'up' ? ArrowUp : ArrowDown,
         color: factor.direction === 'up' ? 'text-green-400' : 'text-amber-400',
       })

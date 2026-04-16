@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { safeText, safeNumber } from '@/lib/safeDisplay'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatApproxIqdFromUsd } from '@/lib/utils'
 import type { PredictionResponse, CarFeatures } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Share2, Bookmark, Check } from 'lucide-react'
@@ -300,6 +300,9 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
             >
               {formatCurrency(displayValue)}
             </div>
+            <p className="text-slate-400 text-base md:text-lg mt-3 font-medium tabular-nums">
+              ≈ {formatApproxIqdFromUsd(displayValue)} IQD
+            </p>
 
             {/* Glow effect pulsing */}
             {isAnimating && (

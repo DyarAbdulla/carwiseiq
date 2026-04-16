@@ -13,8 +13,8 @@ import {
   CheckCircle2, ArrowRight, Star, Globe,
   TrendingUp, Brain, MapPin,
   ChevronDown, Mail, Sparkles, Gift,
-  Play, Award, TrendingDown,
-  Database, CheckCircle, Clipboard, Search, Gavel, Plus, Car, Wallet,
+  Play, TrendingDown,
+  CheckCircle, Plus, Car, Wallet, Gauge,
 } from 'lucide-react'
 import Link from 'next/link'
 import { LearnMoreModal } from '@/components/LearnMoreModal'
@@ -101,9 +101,9 @@ const HeroSection = memo(function HeroSection({ t, locale, tCommon, onLearnMoreC
 // Memoized components for performance
 const HowItWorksSection = memo(function HowItWorksSection({ t }: { t: (k: string) => string }) {
   const steps = [
-    { icon: Clipboard, title: t('howItWorks.step1.title'), description: t('howItWorks.step1.description') },
-    { icon: Search, title: t('howItWorks.step2.title'), description: t('howItWorks.step2.description') },
-    { icon: Gavel, title: t('howItWorks.step3.title'), description: t('howItWorks.step3.description') },
+    { icon: Car, title: t('howItWorks.step1.title'), description: t('howItWorks.step1.description') },
+    { icon: Brain, title: t('howItWorks.step2.title'), description: t('howItWorks.step2.description') },
+    { icon: Gauge, title: t('howItWorks.step3.title'), description: t('howItWorks.step3.description') },
   ]
 
   return (
@@ -115,10 +115,19 @@ const HowItWorksSection = memo(function HowItWorksSection({ t }: { t: (k: string
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-8 sm:mb-10 lg:mb-12 text-slate-900 dark:text-white tracking-tight"
+          className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-3 sm:mb-4 text-slate-900 dark:text-white tracking-tight"
         >
           {t('howItWorks.title')}
         </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.05 }}
+          className="text-center text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-10 lg:mb-12"
+        >
+          {t('howItWorks.subtitle')}
+        </motion.p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6 md:gap-4 md:gap-6 max-w-6xl mx-auto">
           {steps.map((step, index) => {
@@ -893,58 +902,6 @@ const MarketPulseSection = memo(function MarketPulseSection({ t }: { t: (k: stri
   )
 })
 
-// Trust Bar Section - Glass effect strip with stats
-const TrustBarSection = memo(function TrustBarSection({ t }: { t: (k: string) => string }) {
-  return (
-    <section className="relative z-10 w-full py-6 sm:py-8" aria-labelledby="trust-bar">
-      <div className="container mx-auto px-4 sm:px-6 max-w-[1200px]">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="rounded-2xl border border-slate-200 dark:border-white/20 md:border-slate-200 dark:md:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-xl p-3 sm:p-5 lg:p-6"
-        >
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 sm:gap-8 md:gap-12">
-            {/* Stat 1: Cars Analyzed */}
-            <div className="flex items-center gap-3" role="listitem">
-              <div className="w-12 h-12 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
-                <Database className="h-6 w-6 text-indigo-400" aria-hidden="true" />
-              </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{t('trustBarListingsValue')}</div>
-                <div className="text-sm text-slate-600 dark:text-slate-300">{t('analyzedCount')}</div>
-              </div>
-            </div>
-
-            {/* Stat 2: Model Accuracy */}
-            <div className="flex items-center gap-3" role="listitem">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center flex-shrink-0">
-                <Award className="h-6 w-6 text-purple-400" aria-hidden="true" />
-              </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{t('trustBarAccuracyValue')}</div>
-                <div className="text-sm text-slate-600 dark:text-slate-300">{t('trustBarAccuracy')}</div>
-              </div>
-            </div>
-
-            {/* Stat 3: Daily Market Updates */}
-            <div className="flex items-center gap-3" role="listitem">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="h-6 w-6 text-blue-400" aria-hidden="true" />
-              </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">{t('dailyUpdates')}</div>
-                <div className="text-sm text-slate-600 dark:text-slate-300">{t('marketUpdates')}</div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  )
-})
-
 // Bento Grid Section - Feature Discovery Zone
 const BentoGridSection = memo(function BentoGridSection({ t, locale }: { t: (k: string) => string; locale: string }) {
   const BUDGET_CHIPS = [
@@ -1095,20 +1052,20 @@ export default function HomePage() {
             }}
           />
 
-          {/* 2. Stats Counter */}
+          {/* 2. How it works */}
+          <HowItWorksSection t={t} />
+
+          {/* 3. Stats (single bar: listings, makes, R²) */}
           <StatsCounter />
 
-          {/* 3. Compare Promo */}
+          {/* 4. Compare Promo */}
           <ComparePromo />
 
-          {/* 4. Popular Cars */}
+          {/* 5. Popular Cars */}
           <PopularCars />
 
-          {/* 5. Bento Grid */}
+          {/* 6. Bento Grid */}
           <BentoGridSection t={t} locale={locale} />
-
-          {/* 6. Trust Bar */}
-          <TrustBarSection t={t} />
 
           {/* 7. Blog Section */}
           <BlogSection />

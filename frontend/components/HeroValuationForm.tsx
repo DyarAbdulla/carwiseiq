@@ -18,7 +18,7 @@ import { Car } from "lucide-react"
 import { SellCarCTA } from "@/components/SellCarCTA"
 
 const currentYear = new Date().getFullYear()
-const YEARS = Array.from({ length: 15 }, (_, i) => currentYear - i)
+const YEARS = Array.from({ length: 35 }, (_, i) => currentYear - i)
 
 /** Always dark controls — hero sits on a dark image in every theme */
 const HERO_SELECT_TRIGGER =
@@ -40,7 +40,7 @@ export function HeroValuationForm() {
   const [models, setModels] = useState<string[]>([])
   const [make, setMake] = useState("")
   const [model, setModel] = useState("")
-  const [year, setYear] = useState<string>(String(currentYear))
+  const [year, setYear] = useState<string>("")
   const [mileage, setMileage] = useState("")
   const [loadingMakes, setLoadingMakes] = useState(true)
 
@@ -70,7 +70,7 @@ export function HeroValuationForm() {
     const params = new URLSearchParams()
     if (make) params.set("make", make)
     if (model) params.set("model", model)
-    if (year) params.set("year", year)
+    if (year && year.trim() !== "") params.set("year", year.trim())
     if (mileage) params.set("mileage", mileage)
     router.push(`/${locale}/predict?${params.toString()}`)
   }
@@ -120,9 +120,12 @@ export function HeroValuationForm() {
           <label htmlFor="hero-year" className="text-sm font-medium text-slate-200 sr-only">
             {t("year")}
           </label>
-          <Select value={year} onValueChange={setYear}>
+          <Select
+            value={year || undefined}
+            onValueChange={(v) => setYear(v)}
+          >
             <SelectTrigger id="hero-year" className={HERO_SELECT_TRIGGER}>
-              <SelectValue />
+              <SelectValue placeholder={t("yearPlaceholder")} />
             </SelectTrigger>
             <SelectContent className={HERO_SELECT_CONTENT}>
               {YEARS.map((y) => (

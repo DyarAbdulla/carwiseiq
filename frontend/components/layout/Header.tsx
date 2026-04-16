@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { defaultLocale } from '@/i18n'
-import { Car, Menu, X, User, LogOut, Sun, Moon, LayoutDashboard, List, ChevronDown, UserCircle, Sparkles, Info } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { Car, Menu, X, User, LogOut, Sun, Moon, List, ChevronDown, UserCircle, Sparkles, Info } from 'lucide-react'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
@@ -29,16 +30,23 @@ import { useTheme } from '@/context/ThemeContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CARWISE_OPEN_ONBOARDING_EVENT } from '@/components/onboarding/OnboardingModal'
 
-const navItems = [
+type NavItem = { href: string; labelKey: string; icon?: LucideIcon }
+
+/** Visible in the bar; order matches product priority */
+const primaryNavItems: NavItem[] = [
   { href: '/', labelKey: 'nav.home', icon: Car },
   { href: '/predict', labelKey: 'nav.predict' },
-  { href: '/services', labelKey: 'nav.services', icon: Sparkles },
-  { href: '/about', labelKey: 'nav.about', icon: Info },
   { href: '/buy-sell', labelKey: 'nav.buySell' },
-  { href: '/favorites', labelKey: 'nav.favorites' },
-  { href: '/batch', labelKey: 'nav.batch' },
   { href: '/compare', labelKey: 'nav.compare' },
+]
+
+/** Desktop: "More" dropdown; mobile: grouped under a heading inside the drawer */
+const moreNavItems: NavItem[] = [
+  { href: '/services', labelKey: 'nav.services', icon: Sparkles },
+  { href: '/batch', labelKey: 'nav.batch' },
   { href: '/history', labelKey: 'nav.history' },
+  { href: '/favorites', labelKey: 'nav.favorites' },
+  { href: '/about', labelKey: 'nav.about', icon: Info },
 ]
 
 export function Header() {
@@ -106,6 +114,8 @@ export function Header() {
     if (href === '/sell') return basePathname.startsWith('/sell')
     return basePathname === href || basePathname.startsWith(`${href}/`)
   }
+
+  const isMoreMenuActive = moreNavItems.some((item) => isActiveNav(item.href))
 
   const mobileNavItemClass = (active: boolean) =>
     cn(
@@ -177,9 +187,12 @@ export function Header() {
           )}
         </Link>
 
-        {/* Desktop nav (hidden on mobile) */}
-        <nav className="hidden lg:flex items-center gap-1 flex-1 justify-center min-w-0 max-w-2xl mx-2">
-          {navItems.map((item) => (
+        {/* Desktop nav: primary links + More (hidden on mobile) */}
+        <nav
+          className="hidden lg:flex items-center gap-1 flex-1 justify-center min-w-0 max-w-2xl mx-2"
+          aria-label={tKey(t, 'nav.menu')}
+        >
+          {primaryNavItems.map((item) => (
             <Link
               key={item.href}
               href={`/${locale}${item.href}`}
@@ -191,23 +204,72 @@ export function Header() {
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-white/5"
               )}
             >
-              {'icon' in item && item.icon && (
-                <item.icon className={cn(
-                  "w-4 h-4 shrink-0",
-                  isActiveNav(item.href)
-                    ? "text-indigo-600 dark:text-indigo-400"
-                    : "text-indigo-400 dark:text-indigo-500",
-                  // Special animation for Services (Sparkles icon)
-                  item.href === '/services' && "group-hover:animate-spin-slow"
-                )} />
+              {item.icon && (
+                <item.icon
+                  className={cn(
+                    "w-4 h-4 shrink-0",
+                    isActiveNav(item.href)
+                      ? "text-indigo-600 dark:text-indigo-400"
+                      : "text-indigo-400 dark:text-indigo-500"
+                  )}
+                />
               )}
               {tKey(t, item.labelKey)}
             </Link>
           ))}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "min-h-[44px] flex items-center gap-1 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50",
+                  isMoreMenuActive
+                    ? "text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/10"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-white/5"
+                )}
+              >
+                {tKey(t, 'nav.more')}
+                <ChevronDown className="w-4 h-4 shrink-0 opacity-80" aria-hidden />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="center"
+              sideOffset={6}
+              className="min-w-[12rem] rounded-xl border-slate-200 dark:border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-xl"
+            >
+              {moreNavItems.map((item) => (
+                    <DropdownMenuItem key={item.href} asChild className="cursor-pointer py-2.5 px-3">
+                  <Link
+                    href={`/${locale}${item.href}`}
+                    className={cn(
+                      'flex w-full items-center gap-2 text-slate-700 dark:text-slate-200',
+                      item.href === '/services' && 'group'
+                    )}
+                  >
+                    {item.icon && (
+                      <item.icon
+                        className={cn(
+                          'h-4 w-4 shrink-0 text-indigo-500',
+                          item.href === '/services' && 'group-hover:animate-spin-slow'
+                        )}
+                      />
+                    )}
+                    {tKey(t, item.labelKey)}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
 
-        {/* Desktop: Theme, Language, Sell Car, Account (dropdown). */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Theme, language, Sell, account (desktop); mobile: Sell + hamburger only */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <SellCarCTA
+            className="lg:hidden inline-flex items-center justify-center gap-2 h-10 min-h-[44px] shrink-0 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white px-3 sm:px-4 text-sm font-semibold shadow-md shadow-indigo-600/20 transition-all duration-200"
+            showIcon={false}
+          >
+            {t('nav.sell')}
+          </SellCarCTA>
           <div className="hidden lg:flex items-center gap-2.5">
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -292,7 +354,7 @@ export function Header() {
             </DropdownMenu>
           </div>
 
-          {/* Mobile: hamburger only (≥44px) */}
+          {/* Mobile: hamburger (nav, language, theme, account live in drawer) */}
           <div style={{ fontSize: '16px' }} className="lg:hidden">
             <Button
               variant="ghost"
@@ -411,55 +473,33 @@ export function Header() {
 
                     <div className="border-t border-slate-200/80 dark:border-white/10 my-1" role="separator" />
 
-                    {/* Mobile nav: primary CTA + secondary links (Predict/Compare/Market/AI live in bottom bar) */}
+                    {/* Mobile: full nav (Sell stays on header). Bottom bar still offers quick Home/Predict/etc. */}
                     <nav className="space-y-1" aria-label={tKey(t, 'nav.menu')}>
-                      <SellCarCTA
-                        as="button"
-                        variant="ghost"
-                        onClick={() => setMobileMenuOpen(false)}
-                        showIcon={false}
-                        className={cn(
-                          mobileNavItemClass(isActiveNav('/sell')),
-                          'h-auto min-h-[44px] w-full justify-start border-0 shadow-none font-medium'
-                        )}
-                      >
-                        {t('nav.sellCar')}
-                      </SellCarCTA>
-                      <Link
-                        href={`/${locale}/favorites`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={mobileNavItemClass(isActiveNav('/favorites'))}
-                      >
-                        {tKey(t, 'nav.favorites')}
-                      </Link>
-                      <Link
-                        href={`/${locale}/history`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={mobileNavItemClass(isActiveNav('/history'))}
-                      >
-                        {tKey(t, 'nav.history')}
-                      </Link>
-                      <Link
-                        href={`/${locale}/services`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={mobileNavItemClass(isActiveNav('/services'))}
-                      >
-                        {tKey(t, 'nav.services')}
-                      </Link>
-                      <Link
-                        href={`/${locale}/batch`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={mobileNavItemClass(isActiveNav('/batch'))}
-                      >
-                        {tKey(t, 'nav.batch')}
-                      </Link>
-                      <Link
-                        href={`/${locale}/about`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={mobileNavItemClass(isActiveNav('/about'))}
-                      >
-                        {tKey(t, 'nav.about')}
-                      </Link>
+                      {primaryNavItems.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={`/${locale}${item.href}`}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={mobileNavItemClass(isActiveNav(item.href))}
+                        >
+                          {tKey(t, item.labelKey)}
+                        </Link>
+                      ))}
+                      <div className="pt-2 pb-0.5" role="presentation">
+                        <p className="px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          {tKey(t, 'nav.more')}
+                        </p>
+                      </div>
+                      {moreNavItems.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={`/${locale}${item.href}`}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={mobileNavItemClass(isActiveNav(item.href))}
+                        >
+                          {tKey(t, item.labelKey)}
+                        </Link>
+                      ))}
                       <button
                         type="button"
                         onClick={() => {

@@ -31,3 +31,19 @@ export const POPULAR_MARKET_MODELS: PopularMarketModel[] = [
   { make: 'Chevrolet', model: 'Malibu', priceRangeUsd: '$10,000 – $15,000' },
   { make: 'Nissan', model: 'Altima', priceRangeUsd: '$13,000 – $18,500' },
 ]
+
+/** Illustrations in /public/images/cars (SVG). Fallback for models without a dedicated asset. */
+export function popularMarketModelImagePath(make: string, model: string): string {
+  const key = `${make.toLowerCase().trim()}|${model.toLowerCase().trim()}`
+  const map: Record<string, string> = {
+    'toyota|camry': '/images/cars/toyota_camry_2025.svg',
+    'toyota|corolla': '/images/cars/toyota_corolla_2025.svg',
+    'hyundai|sonata': '/images/cars/hyundai_sonata_2025.svg',
+    'hyundai|elantra': '/images/cars/hyundai_elantra_2025.svg',
+    'kia|optima': '/images/cars/hyundai_sonata_2025.svg',
+    'kia|cerato': '/images/cars/toyota_corolla_2025.svg',
+    'chevrolet|malibu': '/images/cars/honda_accord_2025.svg',
+    'nissan|altima': '/images/cars/toyota_camry_2025.svg',
+  }
+  return map[key] ?? '/images/cars/default-car.svg'
+}

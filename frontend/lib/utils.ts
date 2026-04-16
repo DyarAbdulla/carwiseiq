@@ -14,6 +14,14 @@ export function formatCurrency(value: number, currency: string = "USD"): string 
   }).format(value)
 }
 
+/** Display-only approximate IQD equivalent (not a live FX rate). */
+export const USD_TO_IQD_APPROX = 1310
+
+export function formatApproxIqdFromUsd(usd: number): string {
+  if (!Number.isFinite(usd) || usd <= 0) return "0"
+  return Math.round(usd * USD_TO_IQD_APPROX).toLocaleString("en-US")
+}
+
 /** Re-export formatPrice for IQD/USD with locale support (use from @/lib/formatters for full options) */
 export { formatPrice, formatPriceWithToggle } from "./formatters"
 

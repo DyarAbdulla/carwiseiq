@@ -4,9 +4,8 @@ import { useLocale, useTranslations } from "next-intl"
 import { defaultLocale } from "@/i18n"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Car } from "lucide-react"
 import { motion } from "framer-motion"
-import { POPULAR_MARKET_MODELS } from "@/lib/platformPublicStats"
+import { POPULAR_MARKET_MODELS, popularMarketModelImagePath } from "@/lib/platformPublicStats"
 
 export function PopularCars() {
   const locale = useLocale() || defaultLocale
@@ -33,11 +32,23 @@ export function PopularCars() {
             >
               <Link
                 href={`/${locale}/predict?make=${encodeURIComponent(car.make)}&model=${encodeURIComponent(car.model)}`}
-                className="block rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-4 sm:p-5 hover:bg-white/10 hover:border-white/20 transition-all h-full"
+                className="block rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden hover:bg-white/10 hover:border-white/20 transition-all h-full"
               >
-                <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center mb-3">
-                  <Car className="h-6 w-6 text-indigo-400" aria-hidden />
+                <div className="relative aspect-[16/10] w-full bg-slate-900/40 overflow-hidden">
+                  <img
+                    src={popularMarketModelImagePath(car.make, car.model)}
+                    alt={`${car.make} ${car.model}`}
+                    className="h-full w-full object-cover object-center"
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => {
+                      const el = e.target as HTMLImageElement
+                      el.src = "/images/cars/default-car.svg"
+                      el.onerror = null
+                    }}
+                  />
                 </div>
+                <div className="p-4 sm:p-5 pt-3 sm:pt-4">
                 <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg mb-1">
                   {car.make} {car.model}
                 </h3>
@@ -51,6 +62,7 @@ export function PopularCars() {
                 >
                   <span>{t("cta")}</span>
                 </Button>
+                </div>
               </Link>
             </motion.div>
           ))}

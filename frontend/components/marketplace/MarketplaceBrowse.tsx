@@ -23,6 +23,7 @@ import {
   Sparkles,
   Gauge,
   ArrowUpDown,
+  ArrowRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
@@ -106,6 +107,10 @@ function EmptySearchIllustration({ className }: { className?: string }) {
 
 export function MarketplaceBrowse() {
   const [listings, setListings] = useState<CarListing[]>([]);
+  /** All active listings in DB (unfiltered); used for early-seller banner when count < 10 */
+  const [totalActiveInMarketplace, setTotalActiveInMarketplace] = useState<
+    number | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -124,8 +129,24 @@ export function MarketplaceBrowse() {
     max_mileage: "",
   });
   const locale = useLocale();
+  const isRTL = locale === "ar" || locale === "ku";
   const t = useTranslations("marketplace");
   const { toast } = useToast();
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const { count, error } = await supabase
+        .from("car_listings")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "active");
+      if (cancelled || error) return;
+      setTotalActiveInMarketplace(count ?? 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const budgetChips = [
     { label: "Under $5k", value: 5000 },
@@ -468,6 +489,33 @@ export function MarketplaceBrowse() {
             {t("title")}
           </h1>
 
+          {totalActiveInMarketplace !== null &&
+            totalActiveInMarketplace < 10 &&
+            !loadError && (
+              <div className="mb-6 rounded-2xl border border-violet-400/35 bg-gradient-to-br from-violet-600/20 via-indigo-600/15 to-fuchsia-600/20 px-4 py-5 shadow-[0_8px_32px_rgba(124,58,237,0.15)] sm:px-6 dark:border-violet-500/25 dark:from-violet-500/15 dark:via-indigo-500/10 dark:to-fuchsia-500/15 dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                  <p className="max-w-3xl text-base font-medium leading-relaxed text-slate-900 dark:text-white sm:text-lg">
+                    {t("earlySellerBanner")}
+                  </p>
+                  <Button
+                    asChild
+                    className="h-12 min-h-[48px] shrink-0 rounded-xl bg-violet-600 px-6 text-base font-semibold text-white shadow-lg shadow-violet-600/25 hover:bg-violet-500 sm:shrink-0"
+                  >
+                    <Link
+                      href={`/${locale}/sell/step1`}
+                      className="inline-flex items-center justify-center gap-2"
+                    >
+                      {t("sellYourCarFreeCta")}
+                      <ArrowRight
+                        className={`h-5 w-5 shrink-0 ${isRTL ? "rotate-180" : ""}`}
+                        aria-hidden
+                      />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            )}
+
           {/* Toolbar: mobile stacks search, then sort + filters row (16px text avoids iOS input zoom) */}
           <div className="glass-card mb-6 rounded-2xl p-3 shadow-[0_8px_40px_rgba(0,0,0,0.12)] md:p-4 dark:shadow-[0_8px_40px_rgba(0,0,0,0.35)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-3">
@@ -567,41 +615,51 @@ export function MarketplaceBrowse() {
           ) : sortedListings.length === 0 ? (
             <div className="glass-card rounded-2xl border border-dashed border-slate-300/80 px-4 py-16 text-center dark:border-white/15">
               <EmptySearchIllustration className="mx-auto mb-6 h-36 w-48 text-violet-500 dark:text-violet-400" />
-              <p className="mb-2 text-xl font-semibold text-slate-900 dark:text-white">
-                {listings.length === 0
-                  ? t("noListings")
-                  : t("emptySearchTitle")}
+              <p className="mb-3 text-xl font-semibold text-slate-900 dark:text-white md:text-2xl">
+                {t("emptyCategoryTitle")}
               </p>
-              <p className="mb-8 text-slate-600 dark:text-slate-400">
-                {listings.length === 0 ? t("postFirst") : t("emptySearchHint")}
-              </p>
-              {listings.length === 0 ? (
+              {listings.length > 0 && (
+                <p className="mb-6 text-slate-600 dark:text-slate-400">
+                  {t("emptySearchHint")}
+                </p>
+              )}
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Button
                   asChild
-                  className="min-h-[44px] bg-violet-600 hover:bg-violet-500"
+                  className="h-12 min-h-[48px] bg-violet-600 px-6 text-base font-semibold hover:bg-violet-500"
                 >
-                  <Link href={`/${locale}/sell`}>{t("postFirst")}</Link>
+                  <Link
+                    href={`/${locale}/sell/step1`}
+                    className="inline-flex items-center justify-center gap-2"
+                  >
+                    {t("sellYourCarFreeCta")}
+                    <ArrowRight
+                      className={`h-5 w-5 shrink-0 ${isRTL ? "rotate-180" : ""}`}
+                      aria-hidden
+                    />
+                  </Link>
                 </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="min-h-[44px] border-white/20"
-                  onClick={() => {
-                    setSearch("");
-                    setFilters({
-                      min_price: "",
-                      max_price: "",
-                      min_year: "",
-                      max_year: "",
-                      max_mileage: "",
-                    });
-                    setBudget(null);
-                  }}
-                >
-                  {t("clearAll")}
-                </Button>
-              )}
+                {listings.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-[44px] border-slate-300 dark:border-white/20"
+                    onClick={() => {
+                      setSearch("");
+                      setFilters({
+                        min_price: "",
+                        max_price: "",
+                        min_year: "",
+                        max_year: "",
+                        max_mileage: "",
+                      });
+                      setBudget(null);
+                    }}
+                  >
+                    {t("clearAll")}
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <>

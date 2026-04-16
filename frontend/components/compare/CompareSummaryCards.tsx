@@ -1,6 +1,6 @@
 "use client"
 
-import { formatCurrency } from '@/lib/utils'
+import { formatApproxIqdFromUsd, formatCurrency } from '@/lib/utils'
 
 interface CarItem {
   name: string
@@ -41,6 +41,9 @@ export function CompareSummaryCards({
           )}
           <p className="text-xs uppercase tracking-wider text-gray-400 mb-2 truncate">{c.name}</p>
           <p className="text-white text-2xl font-bold mb-1">{formatCurrency(c.price)}</p>
+          <p className="text-sm text-slate-400 font-medium tabular-nums mb-1">
+            ≈ {formatApproxIqdFromUsd(c.price)} IQD
+          </p>
           {savings != null && savings[i] != null && savings[i] > 0 && (
             <p className="text-xs text-green-400 font-medium">Save {formatCurrency(savings[i])}</p>
           )}

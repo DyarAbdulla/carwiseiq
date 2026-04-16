@@ -145,6 +145,7 @@
   },
   "nav": {
     "menu": "Menu",
+    "more": "More",
     "home": "Home",
     "buySell": "Buy & Sell",
     "favorites": "Favorites",
@@ -227,7 +228,10 @@
     "sortPriceDesc": "Price: high to low",
     "emptySearchTitle": "No matching listings",
     "emptySearchHint": "Try a different search or adjust your filters.",
-    "emptyIllustrationAlt": "No cars illustration"
+    "emptyIllustrationAlt": "No cars illustration",
+    "earlySellerBanner": "🚗 Be one of the first sellers on CarWiseIQ! List your car for free and reach thousands of buyers in Iraq & Kurdistan.",
+    "sellYourCarFreeCta": "Sell Your Car Free",
+    "emptyCategoryTitle": "No cars found. Be the first to list in this category!"
   },
   "listing": {
     "noImageAvailable": "No Image Available",
@@ -569,12 +573,13 @@
       "model": "Model",
       "modelPlaceholder": "Model",
       "year": "Year",
+      "yearPlaceholder": "Year",
       "mileage": "Mileage",
       "mileagePlaceholder": "Mileage (km)",
       "cta": "Get Free Valuation"
     },
     "stats": {
-      "listingsAnalyzed": "Listings analyzed",
+      "listingsAnalyzed": "Real listings analyzed",
       "makesCovered": "Makes covered",
       "modelFitR2": "Model fit (R²)"
     },
@@ -664,19 +669,19 @@
       }
     },
     "howItWorks": {
-      "title": "How it Works",
-      "subtitle": "Get accurate price predictions in 3 simple steps",
+      "title": "How it works",
+      "subtitle": "Three quick steps to a trusted price",
       "step1": {
-        "title": "Enter Details",
-        "description": "Select your car's make, model, year, and mileage."
+        "title": "Enter your car details",
+        "description": "Make, model, year, and mileage."
       },
       "step2": {
-        "title": "AI Analysis",
-        "description": "Our model is trained on 62,000+ real listings and refreshed as the dataset grows."
+        "title": "AI analyzes 62,000+ listings",
+        "description": "Trained on real market listings from Iraq, Kurdistan, and our dataset."
       },
       "step3": {
-        "title": "Get Result",
-        "description": "Receive an instant, fair market valuation you can trust."
+        "title": "Get your prediction",
+        "description": "Instant price estimate with a confidence score."
       }
     },
     "valueProposition": {

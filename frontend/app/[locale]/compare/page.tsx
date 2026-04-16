@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast'
 import { X, Plus, Download, Share2, Save, Trophy, TrendingDown, TrendingUp, Sparkles, Check, X as XIcon, Gauge, Fuel, Cog, Calendar, Shield, Loader2, Car } from 'lucide-react'
 import type { CarFeatures, PredictionResponse } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
-import { formatCurrency, formatFuelEconomy, formatFuelEconomyL100km } from '@/lib/utils'
+import { formatCurrency, formatFuelEconomy, formatFuelEconomyL100km, formatApproxIqdFromUsd } from '@/lib/utils'
 import { CompareSkeleton } from '@/components/skeletons'
 import { useCarQuerySpecs } from '@/hooks/useCarQuerySpecs'
 import { ComparisonChart } from '@/components/compare/ComparisonChart'
@@ -57,21 +57,34 @@ interface ListingCard {
 }
 
 /**
- * Display confidence as 0–100%. API `confidence_range` is half the price interval width in dollars, not a percent.
+ * Display confidence as 0–100%.
+ * - `confidence_range` is dollars (half-interval width) — never use as %.
+ * - Ignore `confidence_percent` if out of 0–100 (wrong scale / corrupted payloads).
  */
 function getCompareConfidencePercent(prediction: PredictionResponse | null | undefined): number | null {
   if (!prediction) return null
-  const pct = prediction.confidence_percent
-  if (typeof pct === 'number' && Number.isFinite(pct) && pct > 0) {
+  const rawPctUnknown = prediction.confidence_percent as unknown
+  let pct: number | null = null
+  if (typeof rawPctUnknown === 'number' && Number.isFinite(rawPctUnknown) && rawPctUnknown > 0 && rawPctUnknown <= 100) {
+    pct = rawPctUnknown
+  } else if (typeof rawPctUnknown === 'string' && rawPctUnknown.trim() !== '') {
+    const p = parseFloat(rawPctUnknown)
+    if (Number.isFinite(p) && p > 0 && p <= 100) pct = p
+  }
+  if (pct != null) {
     return Math.round(Math.min(100, Math.max(0, pct)))
   }
   const price = prediction.predicted_price
   const ci = prediction.confidence_interval
   if (ci && typeof price === 'number' && price > 0) {
-    const width = ci.upper - ci.lower
-    const raw = (1 - width / price) * 100
-    if (Number.isFinite(raw)) {
-      return Math.round(Math.min(100, Math.max(0, raw)))
+    const lo = Math.min(ci.lower, ci.upper)
+    const hi = Math.max(ci.lower, ci.upper)
+    const width = hi - lo
+    if (Number.isFinite(width) && width >= 0) {
+      const raw = (1 - width / price) * 100
+      if (Number.isFinite(raw)) {
+        return Math.round(Math.min(100, Math.max(0, raw)))
+      }
     }
   }
   const level = prediction.confidence_level
@@ -1032,6 +1045,7 @@ function ComparePageContent() {
                     <SmartRecommendations
                       cars={listings.map((l, i) => ({
                         name: `${l.make} ${l.model}`,
+                        year: l.year,
                         index: i,
                         price: l.price,
                         horsepower: specMaps[i]?.horsepower,
@@ -1040,6 +1054,7 @@ function ComparePageContent() {
                         reliability: undefined,
                       }))}
                       bestDealIndex={marketplaceMetrics.bestDealIndex}
+                      mostExpensiveIndex={marketplaceMetrics.mostExpensiveIndex}
                       savings={marketplaceMetrics.savings}
                       bestForPerformance={listings.reduce((b, _, i) => ((specMaps[i]?.horsepower ?? 0) > (specMaps[b]?.horsepower ?? 0) ? i : b), 0)}
                       bestForEconomy={listings.reduce((b, _, i) => { const e = specMaps[i]?.fuelEconomy; const x = specMaps[b]?.fuelEconomy; const ei = e ? (e.city + e.highway) / 2 : Infinity; const xi = x ? (x.city + x.highway) / 2 : Infinity; return ei < xi ? i : b; }, 0)}
@@ -1264,6 +1279,7 @@ function ComparePageContent() {
                   <SmartRecommendations
                     cars={cars.map((c, i) => ({
                       name: c.features ? `${c.features.make} ${c.features.model}` : `Car ${i + 1}`,
+                      year: c.features?.year,
                       index: i,
                       price: c.prediction?.predicted_price || 0,
                       horsepower: specMaps[i]?.horsepower,
@@ -1272,6 +1288,7 @@ function ComparePageContent() {
                       reliability: undefined,
                     }))}
                     bestDealIndex={comparisonMetrics.bestDealIndex}
+                    mostExpensiveIndex={comparisonMetrics.mostExpensiveIndex}
                     savings={comparisonMetrics.savings}
                     bestForPerformance={cars.reduce((best, c, i) => ((specMaps[i]?.horsepower ?? 0) > (specMaps[best]?.horsepower ?? 0) ? i : best), 0)}
                     bestForEconomy={cars.reduce((best, c, i) => { const e = specMaps[i]?.fuelEconomy; const b = specMaps[best]?.fuelEconomy; const ei = e ? (e.city + e.highway) / 2 : Infinity; const bi = b ? (b.city + b.highway) / 2 : Infinity; return ei < bi ? i : best; }, 0)}
@@ -1361,11 +1378,6 @@ function ComparePageContent() {
                   const hasFeatures = car.features && isValidCarFeatures(car.features)
                   const compareConfidencePct = getCompareConfidencePercent(car.prediction)
 
-                  // CRITICAL FIX: Calculate progress based on step (33%/66%/100%), not field completion
-                  // Step 1 = 33%, Step 2 = 66%, Step 3 = 100%
-                  const currentStep = car.currentStep ?? 1
-                  const stepProgressPercentage = Math.round((currentStep / 3) * 100)
-
                   return (
                     <motion.div
                       key={car.id}
@@ -1395,49 +1407,6 @@ function ComparePageContent() {
                             animate={{ opacity: 1 }}
                             className="absolute inset-0 -z-10 bg-gradient-radial from-green-500/30 via-green-500/15 to-transparent blur-3xl rounded-2xl"
                           />
-                        )}
-
-                        {/* Progress Indicator - Positioned top-left, below header to avoid overlap with remove button */}
-                        {/* X button is at top-4 right-4 with z-20, badge is at top-16 left-4 with z-10 to ensure no overlap */}
-                        {!car.prediction && (
-                          <div className="absolute top-16 left-4 z-10 pointer-events-none">
-                            <div className="relative w-10 h-10">
-                              <svg className="transform -rotate-90 w-10 h-10">
-                                <circle
-                                  cx="20"
-                                  cy="20"
-                                  r="16"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                  fill="none"
-                                  className="text-white/20"
-                                />
-                                <motion.circle
-                                  cx="20"
-                                  cy="20"
-                                  r="16"
-                                  stroke={`url(#gradient-${car.id})`}
-                                  strokeWidth="3"
-                                  fill="none"
-                                  strokeLinecap="round"
-                                  strokeDasharray={`${2 * Math.PI * 16}`}
-                                  initial={{ strokeDashoffset: 2 * Math.PI * 16 }}
-                                  animate={{ strokeDashoffset: 2 * Math.PI * 16 * (1 - stepProgressPercentage / 100) }}
-                                  transition={{ duration: 0.3 }}
-                                  style={{ filter: 'drop-shadow(0 0 6px rgba(99, 102, 241, 0.65))' }}
-                                />
-                                <defs>
-                                  <linearGradient id={`gradient-${car.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#5B7FFF" />
-                                    <stop offset="100%" stopColor="#9333EA" />
-                                  </linearGradient>
-                                </defs>
-                              </svg>
-                              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.85)]">
-                                {stepProgressPercentage}%
-                              </span>
-                            </div>
-                          </div>
                         )}
 
                         <div className="pb-3 mb-4">
@@ -1497,6 +1466,9 @@ function ComparePageContent() {
                               <span className="text-lg font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                                 {formatCurrency(car.prediction.predicted_price)}
                               </span>
+                              <p className="text-sm text-slate-400 mt-1 font-medium tabular-nums">
+                                ≈ {formatApproxIqdFromUsd(car.prediction.predicted_price)} IQD
+                              </p>
                             </motion.div>
                           )}
                         </div>
@@ -1574,6 +1546,9 @@ function ComparePageContent() {
                                 <div className="text-3xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
                                   {formatCurrency(car.prediction.predicted_price)}
                                 </div>
+                                <p className="text-sm text-slate-400 font-medium tabular-nums mb-1">
+                                  ≈ {formatApproxIqdFromUsd(car.prediction.predicted_price)} IQD
+                                </p>
                                 {compareConfidencePct != null && (
                                   <div className="flex items-center gap-2 text-xs text-gray-300 mt-3">
                                     <Shield className="h-3 w-3 text-indigo-400" />
