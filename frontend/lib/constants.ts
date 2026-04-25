@@ -105,10 +105,10 @@ export const CAR_COLORS = [
   'Other'
 ]
 
-/** Iraq locations fallback (sorted) when dataset/API is unavailable. Matches backend fallback. */
+/** Iraq locations when dataset/API is unavailable. Order is normalized by `orderLocationsKurdistanFirst`. */
 export const IRAQ_LOCATIONS_FALLBACK = [
   'Abu Al-Khaseeb', 'Al-Fallujah', 'Al Nashwa', 'Amara', 'Anbar', 'Baqubah', 'Basra', 'Baghdad',
-  'Diwaniyah', 'Duhok', 'Erbil', 'Haswa', 'Hillah', 'Karbala', 'Kirkuk', 'Kut', 'Latifiya',
+  'Diwaniyah', 'Duhok', 'Erbil', 'Haswa', 'Hillah', 'Halabja', 'Karbala', 'Kirkuk', 'Kut', 'Latifiya',
   'Mosul', 'Najaf', 'Nasiriyah', 'Ramadi', 'Samarra', 'Sulaymaniyah',
 ].sort((a, b) => a.localeCompare(b))
 

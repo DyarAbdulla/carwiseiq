@@ -12,7 +12,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
 import { SAMPLE_CAR, CONDITIONS, FUEL_TYPES, IRAQ_LOCATIONS_FALLBACK, FALLBACK_ENGINE_DISPLACEMENTS, PREDICT_YEAR_MIN, PREDICT_YEAR_MAX } from '@/lib/constants'
-import { orderLocationsKurdistanFirst } from '@/lib/locationOrdering'
+import { orderLocationsKurdistanFirst, ORDERED_IRAQ_LOCATIONS_FALLBACK } from '@/lib/locationOrdering'
 import { getCylinderOptionsForDisplacement, getDefaultCylinderForDisplacement } from '@/lib/engineCylinderMapping'
 import type { CarFeatures } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
@@ -108,7 +108,7 @@ export function CompactWizardCard({
   const [modelsByMake, setModelsByMake] = useState<Record<string, string[]>>({})
   const [models, setModels] = useState<string[]>([])
   const [trims, setTrims] = useState<string[]>([])
-  const [locations, setLocations] = useState<string[]>(IRAQ_LOCATIONS_FALLBACK)
+  const [locations, setLocations] = useState<string[]>(ORDERED_IRAQ_LOCATIONS_FALLBACK)
   const [conditions, setConditions] = useState<string[]>(CONDITIONS)
   const [fuelTypes, setFuelTypes] = useState<string[]>(FUEL_TYPES)
   const [selectedMake, setSelectedMake] = useState<string>(SAMPLE_CAR.make || '')
@@ -505,8 +505,8 @@ export function CompactWizardCard({
       setLocations(list)
       return list
     } catch {
-      setLocations(IRAQ_LOCATIONS_FALLBACK)
-      return IRAQ_LOCATIONS_FALLBACK
+      setLocations(ORDERED_IRAQ_LOCATIONS_FALLBACK)
+      return ORDERED_IRAQ_LOCATIONS_FALLBACK
     }
   }
 
