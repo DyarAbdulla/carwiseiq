@@ -1,37 +1,43 @@
 "use client"
 
+import { useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { motion } from 'framer-motion'
 import { formatCurrency } from '@/lib/utils'
 import type { PredictionResponse } from '@/lib/types'
-import { TrendingUp, TrendingDown, MapPin, Gauge, Lightbulb, ArrowUp, ArrowDown, Minus } from 'lucide-react'
+import { TrendingUp, TrendingDown, MapPin, Lightbulb, ArrowUp, ArrowDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { safeText } from '@/lib/safeDisplay'
 import { formatPriceFactorImpactLabel } from '@/lib/priceFactorDisplay'
+import { computeMarketPercentDiff } from '@/lib/marketPercentDiff'
 
 interface SmartDealAnalystProps {
   result: PredictionResponse
 }
 
-/**
- * UI buckets for colors — prefer API `deal_score` / `deal_analysis`, else infer from
- * `market_comparison.percentage_difference` (same thresholds as backend market_analyzer).
- */
-function getDealStatus(result: PredictionResponse): 'great' | 'fair' | 'above' {
+function getMarketDiffPercent(result: PredictionResponse): number | null {
+  const m = result.market_comparison
+  if (!m) return null
+  return computeMarketPercentDiff(m.your_car, m.market_average)
+}
+
+type DealStatus = 'great' | 'fair' | 'above'
+
+function getDealStatus(result: PredictionResponse, pd: number | null): DealStatus {
   const score = result.deal_score?.score
   if (score) {
-    const s = score.toLowerCase()
+    const s = String(score).toLowerCase()
     if (s === 'excellent' || s === 'good') return 'great'
     if (s === 'poor') return 'above'
     return 'fair'
   }
   const analysis = result.deal_analysis
   if (analysis) {
-    const a = analysis.toLowerCase()
+    const a = String(analysis).toLowerCase()
     if (a === 'excellent' || a === 'good') return 'great'
     if (a === 'poor') return 'above'
     return 'fair'
   }
-  const pd = result.market_comparison?.percentage_difference
   if (pd != null && Number.isFinite(pd)) {
     if (pd <= -5) return 'great'
     if (pd >= 15) return 'above'
@@ -40,18 +46,12 @@ function getDealStatus(result: PredictionResponse): 'great' | 'fair' | 'above' {
   return 'fair'
 }
 
-/**
- * Needle position on the semicircle: 0 = left (great / below market), 50 = center (fair), 100 = right (above market).
- * Driven by `market_comparison.percentage_difference` when present (same signal as deal_analysis on the server).
- */
-function getGaugeNeedlePercent(result: PredictionResponse): number {
-  const pdRaw = result.market_comparison?.percentage_difference
-  if (pdRaw != null && Number.isFinite(pdRaw)) {
+function getGaugeNeedlePercent(result: PredictionResponse, pd: number | null): number {
+  if (pd != null && Number.isFinite(pd)) {
     const span = 25
-    const needle = 50 + (pdRaw / span) * 50
+    const needle = 50 + (pd / span) * 50
     return Math.min(100, Math.max(0, needle))
   }
-
   const score = result.deal_score?.score
   const analysis = result.deal_analysis
   const impliedPd =
@@ -66,122 +66,94 @@ function getGaugeNeedlePercent(result: PredictionResponse): number {
   return Math.min(100, Math.max(0, 50 + (impliedPd / span) * 50))
 }
 
-/** Get gauge color based on status */
-function getGaugeColor(status: 'great' | 'fair' | 'above'): string {
-  switch (status) {
-    case 'great': return 'from-green-500 to-emerald-500'
-    case 'fair': return 'from-blue-500 to-indigo-500'
-    case 'above': return 'from-amber-500 to-orange-500'
-    default: return 'from-blue-500 to-indigo-500'
-  }
-}
-
 export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
-  const low = result.confidence_interval?.lower ?? result.predicted_price * 0.85
-  const high = result.confidence_interval?.upper ?? result.predicted_price * 1.15
-  const dealStatus = getDealStatus(result)
-  const gaugePosition = getGaugeNeedlePercent(result)
-  const gaugeColor = getGaugeColor(dealStatus)
-  const badgeLabel =
-    result.deal_score?.label?.trim() ||
-    (dealStatus === 'great'
-      ? 'Great Deal'
-      : dealStatus === 'above'
-        ? 'Above Market'
-        : 'Fair Price')
-  const marketComparison = result.market_comparison
+  const t = useTranslations('predict.result')
+  const pd = useMemo(() => getMarketDiffPercent(result), [result])
+  const dealStatus = getDealStatus(result, pd)
+  const gaugePosition = getGaugeNeedlePercent(result, pd)
+
+  const badgeLabel = useMemo(() => {
+    if (result.deal_score?.label?.trim()) return result.deal_score.label.trim()
+    if (dealStatus === 'great') return t('dealLabelGreat')
+    if (dealStatus === 'above') return t('dealLabelAbove')
+    return t('dealLabelFair')
+  }, [result.deal_score?.label, dealStatus, t])
+
+  const proTipText = useMemo(() => {
+    if (dealStatus === 'above' && pd != null) {
+      return t('proTipAbove', {
+        offer: formatCurrency(result.predicted_price * 0.85),
+      })
+    }
+    if (dealStatus === 'great') return t('proTipGreat')
+    return t('proTipFair')
+  }, [dealStatus, pd, result.predicted_price, t])
+
   const priceFactors = result.price_factors || []
 
-  // Calculate negotiation tip
-  const getNegotiationTip = () => {
-    if (dealStatus === 'above' && marketComparison) {
-      const suggestedPrice = result.predicted_price * 0.85 // 15% below predicted
-      return {
-        type: 'negotiate' as const,
-        message: `This car is listed ~${Math.abs(marketComparison.percentage_difference).toFixed(0)}% above average. Consider offering **${formatCurrency(suggestedPrice)}** as a starting point.`,
-      }
-    } else if (dealStatus === 'great') {
-      return {
-        type: 'alert' as const,
-        message: `This is a great price. We recommend contacting the seller quickly.`,
-      }
-    } else {
-      return {
-        type: 'info' as const,
-        message: `This price is in line with market averages. You can still negotiate, but the seller's price is reasonable.`,
-      }
-    }
-  }
-
-  const negotiationTip = getNegotiationTip()
-
-  // Get insights from price factors
   const getInsights = () => {
-    const insights = []
+    const insights: {
+      title: string
+      value: string
+      description: string
+      icon: typeof ArrowUp
+      color: string
+    }[] = []
 
-    // Mileage impact
-    const mileageFactor = priceFactors.find(f =>
-      safeText(f.factor, '').toLowerCase().includes('mileage'))
+    const mileageFactor = priceFactors.find((f) => safeText(f.factor, '').toLowerCase().includes('mileage'))
     if (mileageFactor) {
       const direction = mileageFactor.direction
       insights.push({
-        title: 'Mileage Impact',
+        title: t('insightMileage'),
         value: formatPriceFactorImpactLabel(mileageFactor),
-        description:
-          safeText(mileageFactor.description, '') ||
-          'Estimated vs. similar mileage bands in our listing data (USD).',
+        description: safeText(mileageFactor.description, '') || t('insightMileageDesc'),
         icon: direction === 'up' ? ArrowUp : ArrowDown,
-        color: direction === 'up' ? 'text-green-400' : 'text-amber-400',
+        color: direction === 'up' ? 'text-emerald-400' : 'text-amber-400',
       })
     }
 
-    // Location impact
-    const locationFactor = priceFactors.find(f =>
-      safeText(f.factor, '').toLowerCase().includes('location'))
+    const locationFactor = priceFactors.find((f) => safeText(f.factor, '').toLowerCase().includes('location'))
     if (locationFactor) {
       insights.push({
-        title: 'Location Impact',
-        value: 'Stable',
-        description: safeText(locationFactor.description, '') || 'Location prices are trending stable.',
+        title: t('insightLocation'),
+        value: formatPriceFactorImpactLabel(locationFactor),
+        description: safeText(locationFactor.description, '') || t('insightLocationDesc'),
         icon: MapPin,
-        color: 'text-blue-400',
+        color: 'text-sky-400',
       })
     } else {
-      // Default location insight
       insights.push({
-        title: 'Location Impact',
-        value: 'Stable',
-        description: 'Market prices in your area are stable.',
+        title: t('insightLocation'),
+        value: t('valueStable'),
+        description: t('insightLocationDefault'),
         icon: MapPin,
-        color: 'text-blue-400',
+        color: 'text-sky-400',
       })
     }
 
-    // Depreciation/Value retention
-    const depreciationFactor = priceFactors.find(f => {
+    const depreciationFactor = priceFactors.find((f) => {
       const name = safeText(f.factor, '').toLowerCase()
       return name.includes('year') || name.includes('age') || name.includes('depreciation')
     })
     if (depreciationFactor) {
       insights.push({
-        title: 'Value Retention',
-        value: 'Good',
-        description: safeText(depreciationFactor.description, '') || 'This model holds value well.',
+        title: t('insightValue'),
+        value: t('valueGood'),
+        description: safeText(depreciationFactor.description, '') || t('insightValueDesc'),
         icon: TrendingUp,
-        color: 'text-green-400',
+        color: 'text-emerald-400',
       })
     } else {
       insights.push({
-        title: 'Value Retention',
-        value: 'Good',
-        description: 'This model holds value well.',
+        title: t('insightValue'),
+        value: t('valueGood'),
+        description: t('insightValueDefault'),
         icon: TrendingUp,
-        color: 'text-green-400',
+        color: 'text-emerald-400',
       })
     }
 
-    // Add any other significant factors
-    const otherFactors = priceFactors.filter(f => {
+    const otherFactors = priceFactors.filter((f) => {
       const name = safeText(f.factor, '').toLowerCase()
       return (
         !name.includes('mileage') &&
@@ -194,30 +166,27 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
 
     if (otherFactors.length > 0 && insights.length < 4) {
       const factor = otherFactors[0]
+      const title = safeText(factor.factor, t('insightOther'))
       insights.push({
-        title: safeText(factor.factor, 'Factor'),
+        title,
         value: formatPriceFactorImpactLabel(factor),
-        description:
-          safeText(factor.description, '') ||
-          `Estimated vs. similar listings in our data (USD).`,
+        description: safeText(factor.description, '') || t('insightOtherDesc'),
         icon: factor.direction === 'up' ? ArrowUp : ArrowDown,
-        color: factor.direction === 'up' ? 'text-green-400' : 'text-amber-400',
+        color: factor.direction === 'up' ? 'text-emerald-400' : 'text-amber-400',
       })
     }
 
-    return insights.slice(0, 4) // Max 4 insights
+    return insights.slice(0, 4)
   }
 
   const insights = getInsights()
+  const gaugeLabels = { left: t('gaugeGreat'), mid: t('gaugeFair'), right: t('gaugeAbove') }
 
   return (
     <div className="space-y-6">
-      {/* Deal Analysis Gauge Card */}
       <div className="glassCard p-8 sm:p-10">
-        {/* Semi-Circle Gauge */}
-        <div className="mt-4">
+        <div className="mt-2">
           <div className="relative w-full max-w-md mx-auto">
-            {/* Gauge Track Background */}
             <svg className="w-full h-32" viewBox="0 0 200 100">
               <defs>
                 <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -226,8 +195,6 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
                   <stop offset="100%" stopColor="#f59e0b" />
                 </linearGradient>
               </defs>
-
-              {/* Background arc */}
               <path
                 d="M 20 80 A 80 80 0 0 1 180 80"
                 fill="none"
@@ -235,8 +202,6 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
                 strokeWidth="8"
                 strokeLinecap="round"
               />
-
-              {/* Filled arc based on position */}
               <path
                 d="M 20 80 A 80 80 0 0 1 180 80"
                 fill="none"
@@ -244,50 +209,32 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
                 strokeWidth="8"
                 strokeLinecap="round"
                 strokeDasharray={`${(gaugePosition / 100) * 251.2} 251.2`}
-                style={{
-                  transform: 'scaleX(-1)',
-                  transformOrigin: '100px 50px'
-                }}
+                style={{ transform: 'scaleX(-1)', transformOrigin: '100px 50px' }}
               />
-
-              {/* Indicator dot - positioned on arc */}
               {(() => {
-                // Convert position (0-100) to angle (0 to 180 degrees)
-                // Position 0% = left (angle 0), 50% = top (angle π/2), 100% = right (angle π)
-                const angle = (gaugePosition / 100) * Math.PI // 0 to π
+                const angle = (gaugePosition / 100) * Math.PI
                 const radius = 80
                 const centerX = 100
-                const centerY = 20 // Arc center is above the arc
-                // Calculate position on semicircle (left to right)
+                const centerY = 20
                 const dotX = centerX + radius * Math.cos(Math.PI - angle)
                 const dotY = centerY + radius * Math.sin(Math.PI - angle)
-                return (
-                  <circle
-                    cx={dotX}
-                    cy={dotY}
-                    r="6"
-                    fill="white"
-                    className="drop-shadow-lg"
-                  />
-                )
+                return <circle cx={dotX} cy={dotY} r="6" fill="white" className="drop-shadow-lg" />
               })()}
             </svg>
-
-            {/* Labels */}
             <div className="flex justify-between items-center mt-2 px-2">
-              <span className="text-xs sm:text-sm text-green-400 font-medium">Great Deal</span>
-              <span className="text-xs sm:text-sm text-blue-400 font-medium">Fair Price</span>
-              <span className="text-xs sm:text-sm text-amber-400 font-medium">Above Market</span>
+              <span className="text-xs sm:text-sm text-emerald-400 font-medium">{gaugeLabels.left}</span>
+              <span className="text-xs sm:text-sm text-sky-400 font-medium">{gaugeLabels.mid}</span>
+              <span className="text-xs sm:text-sm text-amber-400 font-medium">{gaugeLabels.right}</span>
             </div>
-
-            {/* Current Status Badge — label from API deal_score when available */}
             <div className="mt-4 text-center">
-              <span className={cn(
-                "inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium",
-                dealStatus === 'great' && "bg-green-500/20 text-green-400 border border-green-500/50",
-                dealStatus === 'fair' && "bg-blue-500/20 text-blue-400 border border-blue-500/50",
-                dealStatus === 'above' && "bg-amber-500/20 text-amber-400 border border-amber-500/50"
-              )}>
+              <span
+                className={cn(
+                  'inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium',
+                  dealStatus === 'great' && 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50',
+                  dealStatus === 'fair' && 'bg-sky-500/20 text-sky-300 border border-sky-500/50',
+                  dealStatus === 'above' && 'bg-amber-500/20 text-amber-300 border border-amber-500/50'
+                )}
+              >
                 {dealStatus === 'great' && '✓ '}
                 {dealStatus === 'fair' && '= '}
                 {dealStatus === 'above' && '⚠ '}
@@ -298,7 +245,6 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
         </div>
       </div>
 
-      {/* 2. Smart Insights Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {insights.map((insight, index) => {
           const Icon = insight.icon
@@ -311,21 +257,17 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
               className="glassCard p-5 hover-lift"
             >
               <div className="flex items-start gap-3">
-                <div className={cn("p-2 rounded-lg bg-white/5", insight.color)}>
+                <div className={cn('p-2 rounded-lg bg-white/5', insight.color)}>
                   <Icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center justify-between mb-1 gap-2">
                     <h4 className="text-sm font-semibold text-white">{insight.title}</h4>
                     {insight.value && (
-                      <span className={cn("text-xs font-bold", insight.color)}>
-                        {insight.value}
-                      </span>
+                      <span className={cn('text-xs font-bold shrink-0', insight.color)}>{insight.value}</span>
                     )}
                   </div>
-                  <p className="text-xs text-[#94a3b8] leading-relaxed">
-                    {safeText(insight.description, '')}
-                  </p>
+                  <p className="text-xs text-[#94a3b8] leading-relaxed">{safeText(insight.description, '')}</p>
                 </div>
               </div>
             </motion.div>
@@ -333,50 +275,36 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
         })}
       </div>
 
-      {/* 3. Negotiation Assistant */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
         className={cn(
-          "glassCard p-6 border-l-4",
-          negotiationTip.type === 'negotiate' && "border-amber-500/50 bg-amber-500/5",
-          negotiationTip.type === 'alert' && "border-green-500/50 bg-green-500/5",
-          negotiationTip.type === 'info' && "border-blue-500/50 bg-blue-500/5"
+          'glassCard p-6 border-l-4',
+          'border-sky-500/50 bg-sky-500/5',
+          dealStatus === 'above' && 'border-amber-500/50 bg-amber-500/5',
+          dealStatus === 'great' && 'border-emerald-500/50 bg-emerald-500/5'
         )}
       >
         <div className="flex items-start gap-4">
-          <div className={cn(
-            "p-2 rounded-lg",
-            negotiationTip.type === 'negotiate' && "bg-amber-500/20 text-amber-400",
-            negotiationTip.type === 'alert' && "bg-green-500/20 text-green-400",
-            negotiationTip.type === 'info' && "bg-blue-500/20 text-blue-400"
-          )}>
-            <Lightbulb className="h-5 w-5" />
+          <div
+            className={cn(
+              'p-2 rounded-lg flex items-center justify-center',
+              'bg-violet-500/20 text-violet-200',
+              dealStatus === 'above' && 'bg-amber-500/20 text-amber-200',
+              dealStatus === 'great' && 'bg-emerald-500/20 text-emerald-200'
+            )}
+          >
+            <span className="text-lg leading-none me-1" aria-hidden>
+              💡
+            </span>
+            <Lightbulb className="h-5 w-5 opacity-95" aria-hidden />
           </div>
-          <div className="flex-1">
-            <h4 className="text-base font-semibold text-white mb-2 flex items-center gap-2">
-              <span>Pro Tip</span>
-              {negotiationTip.type === 'negotiate' && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/50">
-                  Negotiation
-                </span>
-              )}
-              {negotiationTip.type === 'alert' && (
-                <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/50">
-                  Market Alert
-                </span>
-              )}
+          <div className="flex-1 min-w-0">
+            <h4 className="text-base font-semibold text-white mb-2 flex flex-wrap items-center gap-2">
+              {t('proTipTitle')}
             </h4>
-            <p className="text-sm text-[#94a3b8] leading-relaxed">
-              {negotiationTip.message.split('**').map((part, i) =>
-                i % 2 === 1 ? (
-                  <strong key={i} className="text-white font-semibold">{part}</strong>
-                ) : (
-                  part
-                )
-              )}
-            </p>
+            <p className="text-sm text-slate-200/95 leading-relaxed">{proTipText}</p>
           </div>
         </div>
       </motion.div>

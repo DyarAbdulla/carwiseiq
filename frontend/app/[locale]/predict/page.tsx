@@ -538,20 +538,20 @@ function PredictPageContent() {
                       ? null
                       : dailyUsage.unlimited_predictions || dailyUsage.unlimited
                         ? (
-                            <>{tUsage('unlimitedPredictionsToday')}</>
-                          )
+                          <>{tUsage('unlimitedPredictionsToday')}</>
+                        )
                         : dailyUsage.predict_remaining <= 0
                           ? (
-                              <>{tUsage('predictExhausted', { limit: dailyUsage.predict_limit })}</>
-                            )
+                            <>{tUsage('predictExhausted', { limit: dailyUsage.predict_limit })}</>
+                          )
                           : (
-                              <>
-                                {tUsage('predictRemaining', {
-                                  remaining: dailyUsage.predict_remaining,
-                                  limit: dailyUsage.predict_limit,
-                                })}
-                              </>
-                            )
+                            <>
+                              {tUsage('predictRemaining', {
+                                remaining: dailyUsage.predict_remaining,
+                                limit: dailyUsage.predict_limit,
+                              })}
+                            </>
+                          )
                   }
                   predictSubmitExtraDisabled={
                     !!dailyUsage &&

@@ -36,7 +36,7 @@ export function SimilarCarsDialog({ cars, open, onOpenChange }: SimilarCarsDialo
   const getFullImageUrl = (url: string): string => {
     if (url.startsWith('/api/car-images/') || url.startsWith('/car_images/')) {
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000'
-      return url.startsWith('/api/car-images/') 
+      return url.startsWith('/api/car-images/')
         ? `${apiBaseUrl}${url}`
         : `${apiBaseUrl}/api/car-images/${url.replace('/car_images/', '')}`
     }
@@ -68,20 +68,20 @@ export function SimilarCarsDialog({ cars, open, onOpenChange }: SimilarCarsDialo
               <TableBody>
                 {cars.map((car, index) => {
                   let imageSrc: string | null = null
-                  
+
                   if (car.image_url) {
                     imageSrc = car.image_url
                   } else if (car.image_id) {
                     imageSrc = `/api/car-images/${car.image_id}`
                   }
-                  
+
                   if (imageSrc) {
                     const fullImageUrl = getFullImageUrl(imageSrc)
-                    
+
                     return (
                       <TableRow key={index} className="border-[#2a2d3a]">
                         <TableCell className="whitespace-nowrap">
-                          <div 
+                          <div
                             className="relative w-[120px] h-[90px] sm:w-[160px] sm:h-[120px] rounded overflow-hidden bg-white/5 border border-white/10 cursor-pointer group transition-transform duration-200 hover:scale-105"
                             onClick={() => setLightboxImage({ url: fullImageUrl, alt: `${car.year} ${car.make} ${car.model}` })}
                           >

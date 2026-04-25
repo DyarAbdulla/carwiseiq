@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -9,29 +10,42 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Share2, Copy, Check, FileText, FileSpreadsheet, ChevronDown } from 'lucide-react'
+import { Share2, Copy, Check, FileText, FileSpreadsheet, ChevronDown, MessageCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import type { PredictionResponse, CarFeatures } from '@/lib/types'
 import { formatCurrency } from '@/lib/utils'
 import { apiClient } from '@/lib/api'
 import { generateValuationPDF } from '@/lib/pdfGenerator'
+import { cn } from '@/lib/utils'
 
 interface ShareExportMenuProps {
   result: PredictionResponse
   carFeatures: CarFeatures
   showPdfExport?: boolean
+  /** Compact trigger for bottom share bar */
+  variant?: 'default' | 'bar'
 }
 
-export function ShareExportMenu({ result, carFeatures, showPdfExport = true }: ShareExportMenuProps) {
+export function ShareExportMenu({
+  result,
+  carFeatures,
+  showPdfExport = true,
+  variant = 'default',
+}: ShareExportMenuProps) {
+  const t = useTranslations('predict.result')
   const { toast } = useToast()
   const [copied, setCopied] = useState(false)
   const [isProcessingPDF, setIsProcessingPDF] = useState(false)
   const [pdfProgress, setPdfProgress] = useState<string>('')
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carwiseiq.com'
+
+  const siteHost = siteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')
+
   const generateShareText = () => {
-    const carInfo = `${carFeatures.year} ${carFeatures.make} ${carFeatures.model}`
+    const carInfo = `${carFeatures.year} ${carFeatures.make} ${carFeatures.model}`.trim()
     const price = formatCurrency(result.predicted_price)
-    return `🚗 Car Price Prediction: ${carInfo}\n💰 Estimated Value: ${price}\n\nPredicted using CarWiseIQ`
+    return t('whatsappShareBody', { car: carInfo, price, site: siteHost })
   }
 
   const generateShareUrl = () => {
@@ -43,7 +57,16 @@ export function ShareExportMenu({ result, carFeatures, showPdfExport = true }: S
       condition: carFeatures.condition,
       price: result.predicted_price.toString(),
     })
-    return `${window.location.origin}/predict?${params.toString()}`
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/predict?${params.toString()}`
+    }
+    return `${siteUrl}/predict?${params.toString()}`
+  }
+
+  const openWhatsApp = () => {
+    const text = generateShareText()
+    const u = `https://wa.me/?text=${encodeURIComponent(text)}`
+    window.open(u, '_blank', 'noopener,noreferrer')
   }
 
   const handleCopy = async () => {
@@ -52,14 +75,14 @@ export function ShareExportMenu({ result, carFeatures, showPdfExport = true }: S
       await navigator.clipboard.writeText(text)
       setCopied(true)
       toast({
-        title: 'Copied!',
-        description: 'Prediction details copied to clipboard',
+        title: t('copiedTitle'),
+        description: t('copiedDescription'),
       })
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to copy to clipboard',
+        title: t('errorTitle'),
+        description: t('copyFailed'),
         variant: 'destructive',
       })
     }
@@ -67,7 +90,7 @@ export function ShareExportMenu({ result, carFeatures, showPdfExport = true }: S
 
   const handleShare = async () => {
     const shareData = {
-      title: 'Car Price Prediction',
+      title: t('shareMenuTitle'),
       text: generateShareText(),
       url: generateShareUrl(),
     }
@@ -76,43 +99,43 @@ export function ShareExportMenu({ result, carFeatures, showPdfExport = true }: S
       try {
         await navigator.share(shareData)
       } catch (error) {
-        // User cancelled or error
         console.log('Share cancelled')
       }
     } else {
-      // Fallback to copy
       handleCopy()
     }
   }
 
   const handleExportExcel = async () => {
     try {
-      const data = [{
-        'Make': carFeatures.make,
-        'Model': carFeatures.model,
-        'Year': carFeatures.year,
-        'Mileage (km)': carFeatures.mileage,
-        'Condition': carFeatures.condition,
-        'Fuel Type': carFeatures.fuel_type,
-        'Location': carFeatures.location,
-        'Predicted Price': result.predicted_price,
-        'Lower CI': result.confidence_interval?.lower || '',
-        'Upper CI': result.confidence_interval?.upper || '',
-        'Market Average': result.market_comparison?.market_average || '',
-        'Deal Score': result.deal_score?.label || '',
-      }]
+      const data = [
+        {
+          Make: carFeatures.make,
+          Model: carFeatures.model,
+          Year: carFeatures.year,
+          'Mileage (km)': carFeatures.mileage,
+          Condition: carFeatures.condition,
+          'Fuel Type': carFeatures.fuel_type,
+          Location: carFeatures.location,
+          'Predicted Price': result.predicted_price,
+          'Lower CI': result.confidence_interval?.lower || '',
+          'Upper CI': result.confidence_interval?.upper || '',
+          'Market Average': result.market_comparison?.market_average || '',
+          'Deal Score': result.deal_score?.label || '',
+        },
+      ]
 
       const blob = await apiClient.exportExcel(data)
       apiClient.downloadBlob(blob, `car-prediction-${carFeatures.make}-${carFeatures.model}-${Date.now()}.xlsx`)
 
       toast({
-        title: 'Success',
-        description: 'Excel file downloaded successfully',
+        title: t('excelSuccess'),
+        description: t('excelSuccessDesc'),
       })
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to export Excel file',
+        title: t('errorTitle'),
+        description: t('excelFailed'),
         variant: 'destructive',
       })
     }
@@ -120,7 +143,7 @@ export function ShareExportMenu({ result, carFeatures, showPdfExport = true }: S
 
   const handleExportPDF = async () => {
     setIsProcessingPDF(true)
-    setPdfProgress('Initializing...')
+    setPdfProgress(t('pdfInitializing'))
 
     try {
       await generateValuationPDF(result, carFeatures, (message) => {
@@ -129,14 +152,14 @@ export function ShareExportMenu({ result, carFeatures, showPdfExport = true }: S
       })
 
       toast({
-        title: 'Success',
-        description: 'Valuation certificate downloaded successfully',
+        title: t('pdfSuccess'),
+        description: t('pdfSuccessDesc'),
       })
     } catch (error) {
       console.error('PDF export error:', error)
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to export PDF file',
+        title: t('errorTitle'),
+        description: error instanceof Error ? error.message : t('pdfFailed'),
         variant: 'destructive',
       })
     } finally {
@@ -145,58 +168,66 @@ export function ShareExportMenu({ result, carFeatures, showPdfExport = true }: S
     }
   }
 
+  const triggerClass =
+    variant === 'bar'
+      ? 'h-9 px-3 border-violet-500/40 bg-violet-600/20 hover:bg-violet-500/30 text-white rounded-xl text-sm'
+      : 'w-full sm:w-auto border-[#2a2d3a] bg-transparent hover:bg-[#2a2d3a] text-white hover:text-white'
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full sm:w-auto border-[#2a2d3a] bg-transparent hover:bg-[#2a2d3a] text-white hover:text-white"
-        >
-          Share / Export
-          <ChevronDown className="ml-2 h-4 w-4" />
+        <Button variant="outline" size="sm" className={cn(triggerClass)}>
+          <span className="flex items-center gap-2">
+            <Share2 className="h-4 w-4 shrink-0" />
+            {t('shareExport')}
+            <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+          </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={handleCopy}>
+      <DropdownMenuContent align="end" className="w-56 bg-[#1a1d29] border-[#2a2d3a] text-white">
+        <DropdownMenuItem
+          onClick={openWhatsApp}
+          className="cursor-pointer focus:bg-violet-500/20"
+        >
+          <MessageCircle className="mr-2 h-4 w-4 text-emerald-400" />
+          {t('shareWhatsApp')}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleCopy} className="cursor-pointer focus:bg-violet-500/20">
           {copied ? (
             <>
               <Check className="mr-2 h-4 w-4" />
-              Copied!
+              {t('copiedAction')}
             </>
           ) : (
             <>
               <Copy className="mr-2 h-4 w-4" />
-              Copy Results
+              {t('copyResults')}
             </>
           )}
         </DropdownMenuItem>
         {typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function' && (
-          <DropdownMenuItem onClick={handleShare}>
+          <DropdownMenuItem onClick={handleShare} className="cursor-pointer focus:bg-violet-500/20">
             <Share2 className="mr-2 h-4 w-4" />
-            Share
+            {t('nativeShare')}
           </DropdownMenuItem>
         )}
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-white/10" />
         {showPdfExport && (
-          <DropdownMenuItem
-            onClick={handleExportPDF}
-            disabled={isProcessingPDF}
-          >
+          <DropdownMenuItem onClick={handleExportPDF} disabled={isProcessingPDF} className="focus:bg-violet-500/20">
             <FileText className="mr-2 h-4 w-4" />
             {isProcessingPDF ? (
               <span className="flex items-center">
                 <span className="animate-spin mr-2">⏳</span>
-                {pdfProgress || 'Processing Image...'}
+                {pdfProgress || t('pdfProcessing')}
               </span>
             ) : (
-              'Export PDF'
+              t('exportPdf')
             )}
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onClick={handleExportExcel}>
+        <DropdownMenuItem onClick={handleExportExcel} className="focus:bg-violet-500/20">
           <FileSpreadsheet className="mr-2 h-4 w-4" />
-          Export Excel
+          {t('exportExcel')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

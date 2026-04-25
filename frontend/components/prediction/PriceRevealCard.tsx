@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
+import { useTranslations, useLocale } from 'next-intl'
 import { safeText, safeNumber } from '@/lib/safeDisplay'
 import {
   formatCurrency,
@@ -11,24 +12,15 @@ import {
 } from '@/lib/utils'
 import type { PredictionResponse, CarFeatures } from '@/lib/types'
 import { Button } from '@/components/ui/button'
-import { Share2, Bookmark, Check } from 'lucide-react'
+import { Bookmark, Check, Copy } from 'lucide-react'
 import confetti from 'canvas-confetti'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
-import { apiClient } from '@/lib/api'
 import { activityHelpers } from '@/lib/activityLogger'
 
 const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min
 
-interface PriceRevealCardProps {
-  result: PredictionResponse
-  carFeatures: CarFeatures
-  predictionId?: number
-}
-
-// Count-up animation hook
 function useCountUp(endValue: number, duration: number = 1500) {
   const [displayValue, setDisplayValue] = useState(0)
   const [isAnimating, setIsAnimating] = useState(true)
@@ -36,23 +28,16 @@ function useCountUp(endValue: number, duration: number = 1500) {
   useEffect(() => {
     setIsAnimating(true)
     setDisplayValue(0)
-
     const startTime = Date.now()
     const startValue = 0
-
-    // EaseOutExpo function
-    const easeOutExpo = (t: number): number => {
-      return t === 1 ? 1 : 1 - Math.pow(2, -10 * t)
-    }
+    const easeOutExpo = (t: number): number => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t))
 
     const animate = () => {
       const elapsed = Date.now() - startTime
       const progress = Math.min(elapsed / duration, 1)
       const easedProgress = easeOutExpo(progress)
       const currentValue = Math.floor(startValue + (endValue - startValue) * easedProgress)
-
       setDisplayValue(currentValue)
-
       if (progress < 1) {
         requestAnimationFrame(animate)
       } else {
@@ -60,19 +45,26 @@ function useCountUp(endValue: number, duration: number = 1500) {
         setIsAnimating(false)
       }
     }
-
     requestAnimationFrame(animate)
   }, [endValue, duration])
 
   return { displayValue, isAnimating }
 }
 
+interface PriceRevealCardProps {
+  result: PredictionResponse
+  carFeatures: CarFeatures
+  predictionId?: number
+}
+
 export function PriceRevealCard({ result, carFeatures, predictionId }: PriceRevealCardProps) {
+  const t = useTranslations('predict.result')
   const predicted = safeNumber(result.predicted_price, 0)
   const { displayValue, isAnimating } = useCountUp(predicted, 1500)
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [confettiTriggered, setConfettiTriggered] = useState(false)
+  const [copied, setCopied] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
   const { isAuthenticated } = useAuth()
@@ -81,6 +73,8 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
 
   const low = result.confidence_interval?.lower ?? predicted * 0.85
   const high = result.confidence_interval?.upper ?? predicted * 1.15
+  const span = Math.max(high - low, 1)
+  const priceMarkerPct = Math.min(100, Math.max(0, ((predicted - low) / span) * 100))
 
   const confidencePercent = Math.min(
     100,
@@ -93,103 +87,58 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
   )
 
   const luxuryNote =
-    result.luxury_reference_note?.trim() ||
-    'Price estimated using market reference data'
+    result.luxury_reference_note?.trim() || t('defaultLuxuryNote')
 
-  // Trigger confetti when animation completes
   useEffect(() => {
     if (!isAnimating && !confettiTriggered && displayValue === predicted) {
       setConfettiTriggered(true)
-
-      // Trigger confetti burst from center
       const duration = 3000
       const animationEnd = Date.now() + duration
       const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }
-
       const interval = setInterval(() => {
         const timeLeft = animationEnd - Date.now()
-
         if (timeLeft <= 0) {
           return clearInterval(interval)
         }
-
         const particleCount = 50 * (timeLeft / duration)
-
         void confetti({
           ...defaults,
           particleCount,
           origin: { x: randomInRange(0.1, 0.9), y: Math.random() - 0.2 },
-          colors: ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'],
+          colors: ['#10b981', '#3b82f6', '#8b5cf6', '#a78bfa', '#f59e0b', '#ef4444'],
         })
       }, 250)
-
       return () => clearInterval(interval)
     }
   }, [isAnimating, confettiTriggered, displayValue, predicted])
 
-  // Shine effect animation
   const shineX = useMotionValue(-100)
-  const shineSpring = useSpring(shineX, {
-    stiffness: 50,
-    damping: 30,
-  })
-
+  const shineSpring = useSpring(shineX, { stiffness: 50, damping: 30 })
   useEffect(() => {
     const interval = setInterval(() => {
       shineX.set(100)
       setTimeout(() => shineX.set(-100), 2000)
     }, 4000)
-
     return () => clearInterval(interval)
   }, [shineX])
-
   const shineXPercent = useTransform(shineSpring, (value) => `${value}%`)
 
-  const handleShare = async () => {
-    const shareText = `🚗 ${safeText(carFeatures.year)} ${safeText(carFeatures.make)} ${safeText(carFeatures.model)}\n💰 Predicted Price: ${formatCurrency(predicted)}\n\nCheck out CarWiseIQ for accurate car price predictions!`
-    const shareUrl = typeof window !== 'undefined' ? window.location.href : ''
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Car Price Prediction',
-          text: shareText,
-          url: shareUrl,
-        })
-        toast({
-          title: 'Shared!',
-          description: 'Prediction shared successfully',
-        })
-      } catch (error: any) {
-        // User cancelled or error occurred
-        if (error.name !== 'AbortError') {
-          // Fallback to clipboard
-          if (navigator.clipboard) {
-            await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`)
-            toast({
-              title: 'Copied!',
-              description: 'Prediction link copied to clipboard',
-            })
-          }
-        }
-      }
-    } else {
-      // Fallback to clipboard
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`)
-        toast({
-          title: 'Copied!',
-          description: 'Prediction link copied to clipboard',
-        })
-      }
+  const copyMainPrice = async () => {
+    try {
+      await navigator.clipboard.writeText(formatCurrency(predicted))
+      setCopied(true)
+      toast({ title: t('copyPriceTitle'), description: t('copyPriceDescription') })
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast({ title: t('errorTitle'), description: t('copyFailed'), variant: 'destructive' })
     }
   }
 
   const handleSave = async () => {
     if (!isAuthenticated) {
       toast({
-        title: 'Login Required',
-        description: 'Please login to save predictions to your history',
+        title: t('loginRequired'),
+        description: t('loginToSave'),
         variant: 'destructive',
       })
       router.push(`/${locale}/login`)
@@ -198,18 +147,13 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
 
     setSaving(true)
     try {
-      // If predictionId exists, it's already saved
       if (predictionId) {
         setSaved(true)
-        toast({
-          title: 'Already Saved',
-          description: 'This prediction is already in your history',
-        })
+        toast({ title: t('alreadySavedTitle'), description: t('alreadySavedDescription') })
         setTimeout(() => setSaved(false), 3000)
         return
       }
 
-      // Save to localStorage as fallback
       const savedPredictions = JSON.parse(localStorage.getItem('saved_predictions') || '[]')
       const predictionData = {
         id: Date.now().toString(),
@@ -220,23 +164,12 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
       }
       savedPredictions.unshift(predictionData)
       localStorage.setItem('saved_predictions', JSON.stringify(savedPredictions.slice(0, 50)))
-
-      // Log activity
       activityHelpers.logPredictionSaved(predictionData.id)
-
       setSaved(true)
-      toast({
-        title: 'Saved!',
-        description: 'Prediction saved to your history',
-      })
-
+      toast({ title: t('savedTitle'), description: t('savedDescription') })
       setTimeout(() => setSaved(false), 3000)
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save prediction',
-        variant: 'destructive',
-      })
+    } catch {
+      toast({ title: t('errorTitle'), description: t('saveFailed'), variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -248,30 +181,26 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
       initial={{ opacity: 0, scale: 0.95, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="relative overflow-hidden"
+      className="relative overflow-hidden pb-4"
     >
-      {/* Glass Certificate Card */}
-      <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
-        {/* Shine Effect */}
+      <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden">
         <motion.div
-          style={{
-            x: shineXPercent,
-          }}
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 pointer-events-none z-10"
+          style={{ x: shineXPercent }}
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -skew-x-12 pointer-events-none z-10"
         />
 
-        {/* Top: Car Make/Model */}
-        <div className="text-center mb-8">
+        <div className="absolute inset-0 -z-0 bg-gradient-to-br from-violet-600/20 via-fuchsia-600/10 to-indigo-600/20 opacity-90" />
+        <div className="absolute inset-0 -z-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-900/30" />
+
+        <div className="text-center mb-6 relative z-[1]">
           <motion.h2
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-2xl md:text-3xl font-bold text-white mb-2"
+            className="text-2xl md:text-3xl font-bold text-white mb-1"
           >
             {safeText(carFeatures.year)} {safeText(carFeatures.make)} {safeText(carFeatures.model)}
-            {carFeatures.trim && carFeatures.trim !== '__none__'
-              ? ` ${safeText(carFeatures.trim)}`
-              : ''}
+            {carFeatures.trim && carFeatures.trim !== '__none__' ? ` ${safeText(carFeatures.trim)}` : ''}
           </motion.h2>
           <motion.p
             initial={{ opacity: 0 }}
@@ -279,107 +208,121 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
             transition={{ delay: 0.4, duration: 0.5 }}
             className="text-slate-400 text-sm"
           >
-            Predicted Market Value
+            {t('predictedMarketValue')}
           </motion.p>
         </div>
 
-        {/* Center: Big Predicted Price with Count-Up */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 relative z-[1]">
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="relative inline-block"
+            className="relative inline-flex flex-col items-center gap-1"
           >
-            <div
-              className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight"
-              style={{
-                background: 'linear-gradient(135deg, #10b981 0%, #3b82f6 50%, #8b5cf6 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                filter: 'drop-shadow(0 0 30px rgba(16, 185, 129, 0.5))',
-                textShadow: '0 0 40px rgba(59, 130, 246, 0.6)',
-              }}
-            >
-              {formatCurrency(displayValue)}
+            <div className="relative rounded-2xl px-4 py-3 md:px-6 md:py-4 overflow-hidden min-w-[min(100%,20rem)]">
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/30 via-violet-500/25 to-fuchsia-500/30 opacity-60 blur-2xl" />
+              <div
+                className="absolute inset-0 opacity-30"
+                style={{
+                  background:
+                    'radial-gradient(ellipse 80% 60% at 50% 50%, rgba(139, 92, 246, 0.45) 0%, transparent 60%)',
+                }}
+              />
+              <div className="relative flex items-center justify-center gap-2 flex-wrap">
+                <div
+                  className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight"
+                  style={{
+                    background: 'linear-gradient(135deg, #2dd4bf 0%, #3b82f6 40%, #a78bfa 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    filter: 'drop-shadow(0 0 24px rgba(34, 211, 238, 0.45))',
+                  }}
+                >
+                  {formatCurrency(displayValue)}
+                </div>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  onClick={copyMainPrice}
+                  className="h-9 w-9 text-white/80 hover:text-white hover:bg-white/10 shrink-0"
+                  aria-label={t('copyPriceAria')}
+                >
+                  {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
-            <p className="text-slate-400 text-base md:text-lg mt-3 font-medium tabular-nums">
-              ≈ {formatApproxIqdFromUsd(displayValue)} IQD
-            </p>
 
-            {/* Glow effect pulsing */}
+            <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-violet-100/95 tabular-nums mt-1 drop-shadow">
+              ≈ {formatApproxIqdFromUsd(displayValue)}
+            </p>
             {isAnimating && (
               <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-emerald-400/30 via-indigo-400/30 to-purple-400/30 blur-2xl -z-10"
-                animate={{
-                  opacity: [0.5, 0.8, 0.5],
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
+                className="absolute inset-0 -z-10 bg-gradient-to-r from-emerald-400/20 via-indigo-400/25 to-purple-400/20 blur-3xl"
+                animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.05, 1] }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'easeInOut' }}
               />
             )}
           </motion.div>
 
-          {/* Confidence Range */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.5 }}
-            className="text-slate-400 text-sm md:text-base mt-4"
-          >
-            Range: {formatCurrency(low)} - {formatCurrency(high)}
-          </motion.p>
+          <div className="mt-5 max-w-lg mx-auto text-left sm:text-center space-y-2">
+            <p className="text-xs text-slate-500 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+              <span className="text-slate-400">{t('rangeLow')}</span>
+              <span className="font-mono text-slate-300">{formatCurrency(low)}</span>
+              <span className="text-slate-600">←</span>
+              <span className="text-cyan-300/90 font-medium">{t('rangeEstimate')}</span>
+              <span className="text-slate-600">→</span>
+              <span className="text-slate-400">{t('rangeHigh')}</span>
+              <span className="font-mono text-slate-300">{formatCurrency(high)}</span>
+            </p>
+            <div
+              className="relative h-2.5 rounded-full bg-slate-800/80 border border-white/10 overflow-hidden"
+              role="img"
+              aria-label={t('rangeBarAria')}
+            >
+              <div
+                className="absolute top-0 bottom-0 start-0 bg-slate-600/20 rounded-full"
+                style={{ width: `${100}%` }}
+              />
+              <div
+                className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-cyan-300 to-violet-500 shadow-lg shadow-cyan-500/40 border-2 border-white/90"
+                style={{ left: `${priceMarkerPct}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-slate-500">{t('rangeBarCaption')}</p>
+          </div>
         </div>
 
-        {/* Bottom: Confidence Score Bar */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.4, duration: 0.5 }}
-          className="space-y-4"
+          className="space-y-4 relative z-[1]"
         >
-          {/* Confidence Bar */}
+          {result.luxury_adjusted ? (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/95 leading-snug">
+              {safeText(luxuryNote)}
+            </div>
+          ) : null}
           <div className="space-y-2">
-            {result.luxury_adjusted ? (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100/95 leading-snug">
-                {safeText(luxuryNote)}
-              </div>
-            ) : null}
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-400">Confidence Score</span>
-              <span className="text-emerald-400 font-semibold">{confidencePercent}% Accurate</span>
+              <span className="text-slate-400">{t('confidenceScore')}</span>
+              <span className="text-violet-300 font-semibold">
+                {t('confidenceAccurate', { n: Math.round(confidencePercent) })}
+              </span>
             </div>
             <div className="relative h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${confidencePercent}%` }}
                 transition={{ delay: 1.5, duration: 1, ease: 'easeOut' }}
-                className="h-full bg-gradient-to-r from-emerald-500 via-indigo-500 to-purple-500 rounded-full relative overflow-hidden"
-              >
-                {/* Shimmer on confidence bar */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                  animate={{
-                    x: ['-100%', '100%'],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: 'linear',
-                  }}
-                />
-              </motion.div>
+                className="h-full bg-gradient-to-r from-emerald-500 via-indigo-500 to-purple-500 rounded-full"
+              />
             </div>
           </div>
-
-          {/* Date */}
           <p className="text-center text-xs text-slate-500">
-            {new Date().toLocaleDateString('en-US', {
+            {new Date().toLocaleDateString(locale === 'ku' || locale === 'ar' ? 'ar-IQ' : 'en-US', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
@@ -388,30 +331,22 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
         </motion.div>
       </div>
 
-      {/* Share Actions */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.6, duration: 0.5 }}
-        className="flex flex-col sm:flex-row gap-3 mt-6"
+        className="mt-4"
       >
-        <Button
-          onClick={handleShare}
-          className="flex-1 h-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/30 font-semibold"
-        >
-          <Share2 className="h-5 w-5 mr-2" />
-          Share Result
-        </Button>
         <Button
           onClick={handleSave}
           disabled={saving || saved}
           variant="outline"
-          className="flex-1 h-12 border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold"
+          className="w-full h-12 border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold"
         >
           {saved ? (
             <>
               <Check className="h-5 w-5 mr-2" />
-              Saved!
+              {t('savedState')}
             </>
           ) : (
             <>
@@ -426,7 +361,7 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
               ) : (
                 <Bookmark className="h-5 w-5 mr-2" />
               )}
-              {saving ? 'Saving...' : 'Save to History'}
+              {saving ? t('saving') : t('saveToHistory')}
             </>
           )}
         </Button>

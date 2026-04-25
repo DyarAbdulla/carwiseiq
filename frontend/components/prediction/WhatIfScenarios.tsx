@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -11,20 +12,7 @@ import type { CarFeatures, PredictionResponse } from '@/lib/types'
 import { apiClient } from '@/lib/api'
 import { formatCurrency } from '@/lib/utils'
 import { useDebounce } from '@/hooks/use-debounce'
-import { CONDITIONS, getConditionPriceMultiplier } from '@/lib/constants'
-
-/** Quick mileage preview while the API runs (monotonic: lower km → higher price). */
-function previewPriceFromMileage(
-  baselinePrice: number,
-  baselineMileage: number,
-  newMileage: number
-): number {
-  if (!Number.isFinite(baselinePrice) || baselinePrice <= 0) return baselinePrice
-  const b = Math.max(baselineMileage, 1)
-  const m = Math.max(newMileage, 1)
-  const factor = Math.sqrt(b / m)
-  return Math.round(baselinePrice * Math.min(1.5, Math.max(0.55, factor)))
-}
+import { CONDITIONS } from '@/lib/constants'
 
 interface WhatIfScenariosProps {
   initialFeatures: CarFeatures
@@ -32,45 +20,62 @@ interface WhatIfScenariosProps {
   onUpdate?: (updates: Partial<CarFeatures>) => void
 }
 
+function scenarioKey(f: CarFeatures, predictedPrice: number) {
+  return [
+    f.make,
+    f.model,
+    String(f.year),
+    String(f.trim || ''),
+    String(predictedPrice),
+  ].join('|')
+}
+
 export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfScenariosProps) {
+  const t = useTranslations('predict.result')
   const [mileage, setMileage] = useState(initialFeatures.mileage)
   const [condition, setCondition] = useState(initialFeatures.condition)
   const [loading, setLoading] = useState(false)
   const [whatIfResult, setWhatIfResult] = useState<PredictionResponse | null>(null)
-  const [priceDiff, setPriceDiff] = useState(0)
 
   const featuresRef = useRef(initialFeatures)
   useEffect(() => {
     featuresRef.current = initialFeatures
   }, [initialFeatures])
 
-  const baselineRef = useRef({ mileage: initialFeatures.mileage, condition: initialFeatures.condition })
+  const baselineKeyRef = useRef(scenarioKey(initialFeatures, initialPrediction.predicted_price))
+  const baselineMileageRef = useRef(initialFeatures.mileage)
+  const baselineConditionRef = useRef(initialFeatures.condition)
+
+  const debouncedMileage = useDebounce(mileage, 500)
+  const debouncedCondition = useDebounce(condition, 500)
+
+  const sessionKey = useMemo(
+    () => scenarioKey(initialFeatures, initialPrediction.predicted_price),
+    [
+      initialFeatures.make,
+      initialFeatures.model,
+      initialFeatures.year,
+      initialFeatures.trim,
+      initialPrediction.predicted_price,
+    ]
+  )
+
+  // Reset only when this prediction session changes — not on unrelated parent re-renders
   useEffect(() => {
-    baselineRef.current = {
-      mileage: initialFeatures.mileage,
-      condition: initialFeatures.condition,
-    }
+    if (sessionKey === baselineKeyRef.current) return
+    baselineKeyRef.current = sessionKey
+    baselineMileageRef.current = initialFeatures.mileage
+    baselineConditionRef.current = initialFeatures.condition
     setMileage(initialFeatures.mileage)
     setCondition(initialFeatures.condition)
     setWhatIfResult(null)
-    setPriceDiff(0)
-  }, [
-    initialFeatures.make,
-    initialFeatures.model,
-    initialFeatures.year,
-    initialFeatures.mileage,
-    initialFeatures.condition,
-    initialPrediction.predicted_price,
-  ])
-
-  const debouncedMileage = useDebounce(mileage, 250)
-  const debouncedCondition = useDebounce(condition, 250)
+  }, [sessionKey, initialFeatures.mileage, initialFeatures.condition])
 
   useEffect(() => {
-    const base = baselineRef.current
-    if (debouncedMileage === base.mileage && debouncedCondition === base.condition) {
+    const baseM = baselineMileageRef.current
+    const baseC = baselineConditionRef.current
+    if (debouncedMileage === baseM && debouncedCondition === baseC) {
       setWhatIfResult(null)
-      setPriceDiff(0)
       setLoading(false)
       return
     }
@@ -88,21 +93,16 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
           trim: baseFeatures.trim?.trim() || '__none__',
           location: baseFeatures.location?.trim() || 'Erbil',
         }
+        // Model already encodes mileage + condition; use API result as-is (no double adjustment)
         const result = await apiClient.predictPrice(updatedFeatures, undefined, {
           usageSource: 'estimate',
         })
         if (cancelled) return
-        const multWhatIf = getConditionPriceMultiplier(debouncedCondition)
-        const multBaseline = getConditionPriceMultiplier(base.condition)
-        const ratio = multBaseline !== 0 ? multWhatIf / multBaseline : 1
-        const adjustedPrice = result.predicted_price * ratio
-        setWhatIfResult({ ...result, predicted_price: adjustedPrice })
-        setPriceDiff(adjustedPrice - initialPrediction.predicted_price)
+        setWhatIfResult(result)
       } catch (error) {
         if (!cancelled) {
           console.error('Failed to update prediction:', error)
           setWhatIfResult(null)
-          setPriceDiff(0)
         }
       } finally {
         if (!cancelled) {
@@ -115,41 +115,15 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
     return () => {
       cancelled = true
     }
-  }, [debouncedMileage, debouncedCondition, initialPrediction.predicted_price])
+  }, [debouncedMileage, debouncedCondition])
 
-  const baseMileage = baselineRef.current.mileage
-  const baseCondition = baselineRef.current.condition
+  const baseMileage = baselineMileageRef.current
+  const baseCondition = baselineConditionRef.current
   const atBaseline = mileage === baseMileage && condition === baseCondition
-
-  const mileagePreview =
-    !atBaseline &&
-    condition === baseCondition &&
-    mileage !== baseMileage
-      ? previewPriceFromMileage(
-          initialPrediction.predicted_price,
-          baseMileage,
-          mileage
-        )
-      : null
-
-  const conditionOnlyPreview =
-    !atBaseline &&
-    mileage === baseMileage &&
-    condition !== baseCondition
-      ? Math.round(
-          initialPrediction.predicted_price *
-            (getConditionPriceMultiplier(condition) /
-              Math.max(getConditionPriceMultiplier(baseCondition), 0.01))
-        )
-      : null
 
   const displayPrice = atBaseline
     ? initialPrediction.predicted_price
-    : whatIfResult
-      ? whatIfResult.predicted_price
-      : mileagePreview ??
-        conditionOnlyPreview ??
-        initialPrediction.predicted_price
+    : (whatIfResult?.predicted_price ?? initialPrediction.predicted_price)
 
   const conditionOptions = useMemo(() => {
     if (condition && !CONDITIONS.includes(condition)) {
@@ -161,17 +135,16 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
   return (
     <Card className="border-[#2a2d3a] bg-[#1a1d29]">
       <CardHeader>
-        <CardTitle className="text-white">What-If Scenarios</CardTitle>
+        <CardTitle className="text-white">{t('whatIfTitle')}</CardTitle>
         <CardDescription className="text-[#94a3b8]">
-          Adjust mileage and condition to see how they affect the predicted price
+          {t('whatIfDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Mileage Slider */}
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-2">
             <Label className="text-white">
-              Mileage: {mileage.toLocaleString()} km
+              {t('whatIfMileage', { km: mileage.toLocaleString() })}
             </Label>
           </div>
           <Slider
@@ -188,9 +161,8 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
           </div>
         </div>
 
-        {/* Condition Select */}
         <div className="space-y-2">
-          <Label className="text-white">Condition</Label>
+          <Label className="text-white">{t('whatIfCondition')}</Label>
           <Select value={condition} onValueChange={setCondition}>
             <SelectTrigger className="border-[#2a2d3a] bg-[#1a1d29]">
               <SelectValue />
@@ -205,7 +177,6 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
           </Select>
         </div>
 
-        {/* Updated Price Display — price updates live; model refines in background */}
         <div className="pt-4 border-t border-[#2a2d3a] relative min-h-[120px]">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -214,31 +185,36 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
           >
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 min-w-0">
-                <Label className="text-[#94a3b8] text-sm">Updated Predicted Price</Label>
+                <Label className="text-[#94a3b8] text-sm">{t('whatIfUpdatedPrice')}</Label>
                 {loading && (
-                  <Loader2 className="h-4 w-4 animate-spin text-[#5B7FFF] shrink-0" aria-hidden />
+                  <Loader2
+                    className="h-4 w-4 animate-spin text-violet-400 shrink-0"
+                    aria-label={t('whatIfRecalculating')}
+                  />
                 )}
               </div>
               {(() => {
                 const delta = displayPrice - initialPrediction.predicted_price
-                if (atBaseline || delta === 0) return null
+                if (atBaseline || Math.abs(delta) < 0.5) return null
                 return (
                   <motion.div
                     initial={{ opacity: 0, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className={`flex items-center gap-1 text-sm font-semibold shrink-0 ${
-                      delta > 0 ? 'text-green-400' : 'text-red-400'
+                      delta > 0 ? 'text-emerald-400' : 'text-red-400'
                     }`}
                     title="Change vs. your original prediction"
                   >
                     {delta > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                    {delta > 0 ? '+' : ''}
-                    {formatCurrency(delta)}
+                    {delta > 0 ? '+' : '−'}
+                    {formatCurrency(Math.abs(delta))}
                   </motion.div>
                 )
               })()}
             </div>
-            <div className="mt-2">
+            <div
+              className={`mt-2 transition-opacity ${loading ? 'opacity-80' : 'opacity-100'}`}
+            >
               <motion.div
                 key={Math.round(displayPrice)}
                 initial={{ opacity: 0.92 }}
@@ -246,10 +222,10 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
                 transition={{ duration: 0.15 }}
                 className="text-4xl sm:text-5xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 via-indigo-500 to-violet-500 bg-clip-text text-transparent"
               >
-                {formatCurrency(displayPrice)}
+                {formatCurrency(Math.round(displayPrice))}
               </motion.div>
-              {!atBaseline && loading && (mileagePreview != null || conditionOnlyPreview != null) && (
-                <p className="text-xs text-[#94a3b8] mt-2">Refining with full model…</p>
+              {!atBaseline && loading && (
+                <p className="text-xs text-[#94a3b8] mt-2">{t('whatIfRecalculating')}</p>
               )}
             </div>
           </motion.div>

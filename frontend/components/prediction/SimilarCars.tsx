@@ -89,7 +89,7 @@ export function SimilarCars({ cars }: SimilarCarsProps) {
 
                               return (
                                 <div
-                                  className="relative w-[120px] h-[90px] sm:w-[160px] sm:h-[120px] rounded overflow-hidden bg-white/5 border border-white/10 cursor-pointer group transition-transform duration-200 hover:scale-105"
+                                  className="relative w-[120px] h-[90px] sm:w-[160px] sm:h-[120px] rounded overflow-hidden bg-[rgba(255,255,255,0.05)] border border-white/10 cursor-pointer group transition-transform duration-200 hover:scale-105"
                                   onClick={() => setLightboxImage({ url: fullImageUrl, alt: `${car.year} ${car.make} ${car.model}` })}
                                 >
                                   <Image
@@ -118,7 +118,7 @@ export function SimilarCars({ cars }: SimilarCarsProps) {
                               )
                             } else {
                               return (
-                                <div className="w-[120px] h-[90px] sm:w-[160px] sm:h-[120px] rounded bg-white/5 flex items-center justify-center text-[#94a3b8] text-xs border border-white/10">
+                                <div className="w-[120px] h-[90px] sm:w-[160px] sm:h-[120px] rounded bg-[rgba(255,255,255,0.05)] flex items-center justify-center text-[#94a3b8] text-xs border border-white/10">
                                   No Image
                                 </div>
                               )

@@ -306,7 +306,7 @@ export default function ChatBot() {
                   className={cn(
                     'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5',
                     isLoading &&
-                      'shadow-[0_0_24px_rgba(168,85,247,0.55)] ring-2 ring-purple-500/40 animate-pulse'
+                    'shadow-[0_0_24px_rgba(168,85,247,0.55)] ring-2 ring-purple-500/40 animate-pulse'
                   )}
                 >
                   <Bot className="h-5 w-5 text-gray-200" />
@@ -368,13 +368,13 @@ export default function ChatBot() {
                       'max-w-[85%] rounded-2xl border p-3 leading-relaxed',
                       msg.role === 'user'
                         ? cn(
-                            'border-purple-500/20 bg-purple-500/10 text-gray-100',
-                            isRTL ? 'rounded-tl-sm' : 'rounded-tr-sm'
-                          )
+                          'border-purple-500/20 bg-purple-500/10 text-gray-100',
+                          isRTL ? 'rounded-tl-sm' : 'rounded-tr-sm'
+                        )
                         : cn(
-                            'border-white/10 bg-white/5 text-gray-100',
-                            isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'
-                          )
+                          'border-white/10 bg-white/5 text-gray-100',
+                          isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'
+                        )
                     )}
                   >
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">

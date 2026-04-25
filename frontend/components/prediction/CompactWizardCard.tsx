@@ -12,6 +12,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select'
 import { Button } from '@/components/ui/button'
 import { apiClient } from '@/lib/api'
 import { SAMPLE_CAR, CONDITIONS, FUEL_TYPES, IRAQ_LOCATIONS_FALLBACK, FALLBACK_ENGINE_DISPLACEMENTS, PREDICT_YEAR_MIN, PREDICT_YEAR_MAX } from '@/lib/constants'
+import { orderLocationsKurdistanFirst } from '@/lib/locationOrdering'
 import { getCylinderOptionsForDisplacement, getDefaultCylinderForDisplacement } from '@/lib/engineCylinderMapping'
 import type { CarFeatures } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
@@ -498,9 +499,9 @@ export function CompactWizardCard({
   const loadLocations = async (): Promise<string[]> => {
     try {
       const locationsList = await apiClient.getLocations()
-      const list = Array.isArray(locationsList) && locationsList.length > 0
-        ? [...locationsList].sort((a, b) => a.localeCompare(b))
-        : IRAQ_LOCATIONS_FALLBACK
+      const raw =
+        Array.isArray(locationsList) && locationsList.length > 0 ? locationsList : IRAQ_LOCATIONS_FALLBACK
+      const list = orderLocationsKurdistanFirst([...raw])
       setLocations(list)
       return list
     } catch {
@@ -642,21 +643,21 @@ export function CompactWizardCard({
                   aria-current={isActive ? 'step' : undefined}
                   aria-label={stepLabels[step - 1]}
                   className={cn(
-                    'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full sm:h-11 sm:w-11',
+                    'relative z-10 flex h-12 w-12 shrink-0 items-center justify-center rounded-full sm:h-14 sm:w-14',
                     'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400'
                   )}
                 >
                   <span
                     className={cn(
                       'flex items-center justify-center rounded-full border-2 transition-all duration-300',
-                      'h-2.5 w-2.5 sm:h-3.5 sm:w-3.5',
+                      'h-4 w-4 sm:h-5 sm:w-5',
                       isDone &&
-                        'border-emerald-400/90 bg-emerald-500/25 shadow-[0_0_8px_rgba(52,211,153,0.35)]',
+                      'border-emerald-400/90 bg-emerald-500/25 shadow-[0_0_8px_rgba(52,211,153,0.35)]',
                       isActive &&
-                        'border-indigo-300 bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-500/40 ring-2 ring-white/20 sm:ring-[3px]',
+                      'border-indigo-300 bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-500/40 ring-2 ring-white/20 sm:ring-[3px]',
                       !isDone &&
-                        !isActive &&
-                        'border-white/35 bg-transparent hover:border-white/50 hover:bg-white/[0.06]'
+                      !isActive &&
+                      'border-white/35 bg-transparent hover:border-white/50 hover:bg-white/[0.06]'
                     )}
                   >
                     {isDone && (
@@ -865,7 +866,7 @@ export function CompactWizardCard({
                   </div>
 
                   <div className="space-y-1.5">
-                    <FieldTooltip content={FIELD_TOOLTIPS.engine_size}>
+                    <FieldTooltip content={t('engineSizeHint')}>
                       <Label htmlFor="engine_size" className="text-white font-medium text-sm drop-shadow-sm">
                         {t('engineSize')} <span className="text-red-400 font-bold">*</span>
                       </Label>
