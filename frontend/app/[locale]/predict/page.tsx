@@ -547,6 +547,10 @@ function PredictPageContent() {
                           : (
                             <>
                               {tUsage('predictRemaining', {
+                                used: Math.max(
+                                  0,
+                                  (dailyUsage.predict_limit ?? 0) - (dailyUsage.predict_remaining ?? 0)
+                                ),
                                 remaining: dailyUsage.predict_remaining,
                                 limit: dailyUsage.predict_limit,
                               })}

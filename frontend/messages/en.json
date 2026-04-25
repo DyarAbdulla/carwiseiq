@@ -2070,7 +2070,7 @@
   "usageLimits": {
     "unlimitedPredictionsToday": "Unlimited predictions",
     "predictExhausted": "You've used all {limit} free predictions today. Try again tomorrow or use a voucher code for unlimited access.",
-    "predictRemaining": "{remaining}/{limit} predictions remaining today",
+    "predictRemaining": "You've used {used} of {limit} predictions today",
     "compareExhausted": "You've used your {limit} free comparisons today. Try again tomorrow or use a voucher code for more.",
     "compareRemaining": "{remaining}/{limit} comparisons remaining today"
   },

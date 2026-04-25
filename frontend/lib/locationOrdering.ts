@@ -1,7 +1,8 @@
 /**
  * Kurdistan cities first (user-facing order), then remaining Iraq cities A–Z.
  */
-const KURDISTAN_ORDER = ['Sulaymaniyah', 'Erbil', 'Duhok'] as const
+/** Match API/English names; order is Sulaymaniyah, Erbil, Duhok, Halabja, Kirkuk first */
+const KURDISTAN_ORDER = ['Sulaymaniyah', 'Erbil', 'Duhok', 'Halabja', 'Kirkuk'] as const
 
 export function orderLocationsKurdistanFirst(locations: string[]): string[] {
   if (!locations?.length) return []

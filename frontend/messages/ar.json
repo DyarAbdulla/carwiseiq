@@ -2064,7 +2064,7 @@
   "usageLimits": {
     "unlimitedPredictionsToday": "تنبؤات غير محدودة اليوم.",
     "predictExhausted": "لقد استخدمت جميع التنبؤات المجانية ({limit}) لهذا اليوم. حاول غداً أو استخدم رمز قسيمة للوصول غير المحدود.",
-    "predictRemaining": "{remaining}/{limit} تنبؤات متبقية اليوم",
+    "predictRemaining": "استخدمت {used} من {limit} تنبؤات اليوم",
     "compareExhausted": "لقد استخدمت مقارناتك المجانية ({limit}) لهذا اليوم. حاول غداً أو استخدم رمز قسيمة للمزيد.",
     "compareRemaining": "{remaining}/{limit} مقارنات متبقية اليوم"
   },
