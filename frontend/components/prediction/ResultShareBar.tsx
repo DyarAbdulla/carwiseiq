@@ -21,21 +21,27 @@ export function ResultShareBar({ result, carFeatures }: ResultShareBarProps) {
 
   return (
     <div
-      className="fixed bottom-0 inset-x-0 z-[5000] pointer-events-none"
-      style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 0.5rem)' }}
+      className="pointer-events-none fixed inset-x-0 z-[5000] max-md:bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-0 md:pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]"
     >
-      <div className="max-w-2xl mx-auto px-3 pb-2 pointer-events-auto">
-        <div className="flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-zinc-950/90 backdrop-blur-xl py-2.5 px-3 shadow-2xl shadow-violet-900/30">
-          <Share2 className="h-4 w-4 text-violet-300 shrink-0" aria-hidden />
-          <span className="text-xs text-slate-400 hidden sm:inline flex-1 truncate">{t('shareBarLabel')}</span>
-          <Suspense fallback={<Skeleton className="h-9 w-40 rounded-lg" />}>
-            <ShareExportMenu
-              result={result}
-              carFeatures={carFeatures}
-              showPdfExport={false}
-              variant="bar"
-            />
-          </Suspense>
+      <div className="max-w-2xl mx-auto px-3 pb-2 max-md:pb-1 pointer-events-auto">
+        <div className="flex items-center max-md:justify-stretch md:justify-center gap-0 md:gap-2 rounded-2xl border border-white/15 bg-zinc-950/90 backdrop-blur-xl max-md:py-2 max-md:px-2 md:py-2.5 md:px-3 shadow-2xl shadow-violet-900/30 min-w-0">
+          <Share2
+            className="h-4 w-4 text-violet-300 shrink-0 hidden md:block"
+            aria-hidden
+          />
+          <span className="text-xs text-slate-400 hidden md:inline flex-1 min-w-0 truncate">
+            {t('shareBarLabel')}
+          </span>
+          <div className="w-full min-w-0 md:w-auto shrink-0 [&_button]:w-full md:[&_button]:w-auto max-md:[&_button]:justify-center">
+            <Suspense fallback={<Skeleton className="h-9 w-full max-w-md md:w-40 md:shrink-0 rounded-lg mx-auto" />}>
+              <ShareExportMenu
+                result={result}
+                carFeatures={carFeatures}
+                showPdfExport={false}
+                variant="bar"
+              />
+            </Suspense>
+          </div>
         </div>
       </div>
     </div>

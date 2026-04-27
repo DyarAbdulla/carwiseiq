@@ -54,7 +54,7 @@ export function PredictionResult({ result, carFeatures, onUpdate, predictionId }
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-6 pb-28 md:pb-32"
+        className="space-y-6 max-md:pb-[11.5rem] md:pb-32"
         id="prediction-results"
       >
         <motion.div variants={itemVariants}>
