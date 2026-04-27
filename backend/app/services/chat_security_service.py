@@ -323,6 +323,50 @@ async def try_consume_chat_quota(
         return True, None, None
 
 
+async def peek_chat_rate_limit_blocked(
+    identity_key: str,
+    locale: str = "en",
+) -> Tuple[bool, Optional[datetime], Optional[str]]:
+    """
+    GET-only: returns (True, reset_at, phrase) if the identity is currently over the rolling
+    message cap (would block), without incrementing quota. Used beside ban checks in parallel.
+    """
+    if not chat_security_ready():
+        return False, None, None
+
+    base = _supabase_url()
+    read_url = (
+        f"{base}/rest/v1/ai_chat_rate_limits"
+        f"?identity_key=eq.{quote(identity_key, safe='')}"
+        f"&select=window_start,message_count"
+    )
+    now = datetime.now(timezone.utc)
+    try:
+        async with httpx.AsyncClient(timeout=12.0) as client:
+            r = await client.get(read_url, headers=_headers())
+        if r.status_code != 200:
+            return False, None, None
+
+        rows = r.json()
+        row = rows[0] if rows else None
+        if not row:
+            return False, None, None
+
+        ws_raw = row.get("window_start")
+        ws = datetime.fromisoformat(str(ws_raw).replace("Z", "+00:00"))
+        count = int(row.get("message_count") or 0)
+        if now >= ws + CHAT_WINDOW:
+            return False, None, None
+        if count >= CHAT_MAX_MESSAGES:
+            reset_at = ws + CHAT_WINDOW
+            phrase = format_remaining_phrase(reset_at - now, locale)
+            return True, reset_at, phrase
+        return False, None, None
+    except Exception as e:
+        logger.error("peek_chat_rate_limit_blocked error: %s", e, exc_info=True)
+        return False, None, None
+
+
 def rate_limit_identity_key(ip: str, supabase_user_id: Optional[str], legacy_user_id: Optional[int]) -> str:
     if supabase_user_id:
         return f"su:{supabase_user_id}"

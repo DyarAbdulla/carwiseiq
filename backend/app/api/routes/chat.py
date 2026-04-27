@@ -4,6 +4,7 @@ POST /api/chat: { messages, locale } -> { response, ... }
 Includes Supabase-backed rate limits, profanity handling, and IP bans.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -26,6 +27,7 @@ from app.services.chat_security_service import (
     get_active_ban_ends_at,
     get_profanity_strikes,
     insert_ip_ban,
+    peek_chat_rate_limit_blocked,
     rate_limit_identity_key,
     set_profanity_strikes,
     try_consume_chat_quota,
@@ -109,15 +111,14 @@ Iraq & Kurdistan cities: Erbil, Baghdad, Sulaymaniyah, Basra, Mosul, Kirkuk, Duh
 - Email: carwise15@gmail.com
 
 ## YOUR BEHAVIOR RULES
-1. **Language**: Respond in the same language as the user (Kurdish Sorani, Arabic, or English).
+1. **Language**: Always respond in the same language the user wrote in. If the user writes in English, respond in English. If Kurdish (Sorani), respond in Kurdish. If Arabic, respond in Arabic.
 2. **Tone**: Be natural, friendly, and conversational - like talking to a friend. NOT formal or robotic.
 3. **Length**: Keep responses SHORT - 1-3 sentences. Do NOT list everything at once. Ask what they need first.
-4. **Kurdish**: Use natural Kurdish Sorani, friendly tone. Example: "سلاو! چۆن دەتوانم یارمەتیت بدەم؟" - NOT Google Translate style.
-5. **NO MARKDOWN**: Never use ** or * or __ in your responses. Write plain text only.
-6. For CarWiseIQ questions, use ONLY the information above. Never invent features.
-7. If user asks something vague, ask a follow-up: "What would you like to know? Car value, selling, or buying?"
-8. Recommend features briefly: value → Predict page, sell → Sell button, buy → marketplace, compare → Compare.
-9. If unsure: suggest support (0777 447 2106 or carwise15@gmail.com).
+4. **NO MARKDOWN**: Never use ** or * or __ in your responses. Write plain text only.
+5. For CarWiseIQ questions, use ONLY the information above. Never invent features.
+6. If the user asks something vague, ask a short follow-up in the same language they used.
+7. Recommend features briefly: value → Predict page, sell → Sell button, buy → marketplace, compare → Compare.
+8. If unsure: suggest support (0777 447 2106 or carwise15@gmail.com).
 """
 
 
@@ -202,18 +203,6 @@ async def chat(
 
     ui_locale = chat_request.locale or "en"
 
-    if chat_security_ready():
-        ban_end = await get_active_ban_ends_at(ip)
-        if ban_end:
-            raise HTTPException(
-                status_code=403,
-                detail={
-                    "code": "ip_banned",
-                    "ends_at": ban_end.isoformat().replace("+00:00", "Z"),
-                    "message": chat_ip_ban_message(ui_locale, ban_end),
-                },
-            )
-
     supabase_uid = getattr(current_user, "supabase_user_id", None) if current_user else None
     legacy_id = current_user.id if current_user else None
     identity = rate_limit_identity_key(ip, supabase_uid, legacy_id)
@@ -222,7 +211,39 @@ async def chat(
     if not last_user:
         raise HTTPException(status_code=400, detail="No user message provided")
 
-    # Rate limit (10 msg / 5h) before profanity handling so quota matches "messages sent".
+    if chat_security_ready():
+        ban_end, rate_peek, profanity_strikes = await asyncio.gather(
+            get_active_ban_ends_at(ip),
+            peek_chat_rate_limit_blocked(identity, ui_locale),
+            get_profanity_strikes(ip),
+        )
+    else:
+        ban_end, rate_peek, profanity_strikes = None, (False, None, None), 0
+
+    if chat_security_ready() and ban_end:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "ip_banned",
+                "ends_at": ban_end.isoformat().replace("+00:00", "Z"),
+                "message": chat_ip_ban_message(ui_locale, ban_end),
+            },
+        )
+
+    blocked, reset_at_peek, phrase_peek = rate_peek
+    if chat_security_ready() and blocked and reset_at_peek is not None:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "code": "chat_limit",
+                "reset_at": reset_at_peek.isoformat().replace("+00:00", "Z"),
+                "message": chat_rate_limit_message(
+                    ui_locale, phrase_peek or ""
+                ),
+            },
+        )
+
+    # Rate limit (10 msg / 5h): persist increment after preflight GET ran in parallel above.
     if chat_security_ready():
         allowed, reset_at, remaining_phrase = await try_consume_chat_quota(identity, ui_locale)
         if not allowed and reset_at is not None:
@@ -238,7 +259,7 @@ async def chat(
 
     profane, _lang = profanity_match_details(last_user)
     if profane and chat_security_ready():
-        strikes = await get_profanity_strikes(ip)
+        strikes = profanity_strikes
         logger.info(
             "chat profanity ip=%s strikes=%s (ai_chat_profanity_strikes.strike_count)",
             ip[:24] + ("…" if len(ip) > 24 else ""),
