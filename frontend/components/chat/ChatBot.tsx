@@ -26,13 +26,13 @@ function stripMarkdown(text: string): string {
 }
 
 const GLASS_PANEL =
-  'bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] shadow-2xl overflow-hidden'
+  'bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-2xl overflow-hidden dark:bg-white/[0.03] dark:border-white/[0.08]'
 
-const TITLE_GRADIENT =
-  'bg-gradient-to-r from-gray-100 to-gray-400 bg-clip-text text-transparent'
+const TITLE_TEXT =
+  'text-slate-900 dark:bg-gradient-to-r dark:from-gray-100 dark:to-gray-400 dark:bg-clip-text dark:text-transparent'
 
 const SCROLL_AREA =
-  'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20'
+  'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-300/80 hover:scrollbar-thumb-slate-400/80 dark:scrollbar-thumb-white/10 dark:hover:scrollbar-thumb-white/20'
 
 export default function ChatBot() {
   const locale = useLocale();
@@ -281,7 +281,7 @@ export default function ChatBot() {
           </div>
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/60 to-[#0a0f1c] backdrop-blur-[2px]"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-200/55 via-slate-100/35 to-white/50 backdrop-blur-[2px] dark:from-slate-950/80 dark:via-slate-950/60 dark:to-[#0a0f1c]"
           />
 
           {/* Glass shell: full viewport on mobile; floating card on sm+ */}
@@ -297,30 +297,30 @@ export default function ChatBot() {
             {/* Transparent header — gradient title */}
             <div
               className={cn(
-                'flex flex-shrink-0 items-center justify-between border-b border-white/[0.08] bg-transparent px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]',
+                'flex flex-shrink-0 items-center justify-between border-b border-slate-200/90 bg-transparent px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.08]',
                 isRTL && 'flex-row-reverse'
               )}
             >
               <div className={cn('flex items-center gap-3', isRTL && 'flex-row-reverse')}>
                 <div
                   className={cn(
-                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5',
+                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-slate-100/90 dark:border-white/15 dark:bg-white/5',
                     isLoading &&
                     'shadow-[0_0_24px_rgba(168,85,247,0.55)] ring-2 ring-purple-500/40 animate-pulse'
                   )}
                 >
-                  <Bot className="h-5 w-5 text-gray-200" />
+                  <Bot className="h-5 w-5 text-slate-600 dark:text-gray-200" />
                 </div>
                 <div className={isRTL ? 'text-right' : 'text-left'}>
-                  <h3 className={cn('text-base font-semibold sm:text-lg', TITLE_GRADIENT)}>
+                  <h3 className={cn('text-base font-semibold sm:text-lg', TITLE_TEXT)}>
                     {t('title')}
                   </h3>
-                  <p className="text-sm text-gray-400">{t('subtitle')}</p>
+                  <p className="text-sm text-slate-600 dark:text-gray-400">{t('subtitle')}</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-full p-2 text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
+                className="rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-200/80 hover:text-slate-900 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
                 aria-label={t('closeChat')}
               >
                 <X className="h-5 w-5" />
@@ -338,14 +338,14 @@ export default function ChatBot() {
                 <div className={cn('mt-6 text-center', isRTL && 'text-right')}>
                   <div
                     className={cn(
-                      'mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5',
+                      'mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-slate-200/90 bg-slate-100/90 dark:border-white/10 dark:bg-white/5',
                       isLoading && 'shadow-[0_0_28px_rgba(168,85,247,0.45)] animate-pulse'
                     )}
                   >
-                    <Bot className="h-8 w-8 text-purple-300/90" />
+                    <Bot className="h-8 w-8 text-purple-600 dark:text-purple-300/90" />
                   </div>
-                  <p className="text-lg leading-relaxed text-gray-100">{t('welcome')}</p>
-                  <p className="mt-2 text-sm text-gray-400">{t('hint')}</p>
+                  <p className="text-lg leading-relaxed text-slate-900 dark:text-gray-100">{t('welcome')}</p>
+                  <p className="mt-2 text-sm text-slate-600 dark:text-gray-400">{t('hint')}</p>
                 </div>
               )}
 
@@ -368,16 +368,16 @@ export default function ChatBot() {
                       'max-w-[85%] rounded-2xl border p-3 leading-relaxed',
                       msg.role === 'user'
                         ? cn(
-                          'border-purple-500/20 bg-purple-500/10 text-gray-100',
+                          'border-purple-500/40 bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm shadow-purple-500/20',
                           isRTL ? 'rounded-tl-sm' : 'rounded-tr-sm'
                         )
                         : cn(
-                          'border-white/10 bg-white/5 text-gray-100',
+                          'border-slate-200/90 bg-slate-100/95 text-gray-900 dark:border-white/10 dark:bg-white/5 dark:text-white',
                           isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'
                         )
                     )}
                   >
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-inherit">
                       {msg.role === 'assistant' ? stripMarkdown(msg.content) : msg.content}
                     </p>
                   </div>
@@ -388,7 +388,7 @@ export default function ChatBot() {
                 <div className={cn('flex', isRTL ? 'justify-end' : 'justify-start')}>
                   <div
                     className={cn(
-                      'rounded-2xl border border-white/10 bg-white/5 px-4 py-3',
+                      'rounded-2xl border border-slate-200/90 bg-slate-100/95 px-4 py-3 dark:border-white/10 dark:bg-white/5',
                       isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'
                     )}
                   >
@@ -399,23 +399,23 @@ export default function ChatBot() {
                           'shadow-[0_0_20px_rgba(168,85,247,0.5)] animate-pulse'
                         )}
                       >
-                        <Bot className="h-4 w-4 text-purple-200" />
+                        <Bot className="h-4 w-4 text-purple-600 dark:text-purple-200" />
                       </div>
                       <div className="flex gap-1">
                         <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-purple-400"
+                          className="h-2 w-2 animate-bounce rounded-full bg-purple-500 dark:bg-purple-400"
                           style={{ animationDelay: '0ms' }}
                         />
                         <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-purple-400"
+                          className="h-2 w-2 animate-bounce rounded-full bg-purple-500 dark:bg-purple-400"
                           style={{ animationDelay: '150ms' }}
                         />
                         <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-purple-400"
+                          className="h-2 w-2 animate-bounce rounded-full bg-purple-500 dark:bg-purple-400"
                           style={{ animationDelay: '300ms' }}
                         />
                       </div>
-                      <span className="text-sm text-gray-400">{t('thinking')}</span>
+                      <span className="text-sm text-slate-600 dark:text-gray-400">{t('thinking')}</span>
                     </div>
                   </div>
                 </div>
@@ -425,11 +425,11 @@ export default function ChatBot() {
             </div>
 
             {/* Input */}
-            <div className="flex-shrink-0 border-t border-white/[0.08] bg-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+            <div className="flex-shrink-0 border-t border-slate-200/90 bg-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 dark:border-white/[0.08]">
               {isIpBanned && (
                 <div
                   className={cn(
-                    'mb-3 rounded-xl border border-red-500/35 bg-red-500/10 px-3 py-2.5 text-sm text-red-100/95',
+                    'mb-3 rounded-xl border border-red-300/50 bg-red-50 px-3 py-2.5 text-sm text-red-900 dark:border-red-500/35 dark:bg-red-500/10 dark:text-red-100/95',
                     isRTL && 'text-right'
                   )}
                   role="alert"
@@ -438,7 +438,7 @@ export default function ChatBot() {
                   {banRemainingLabel ? (
                     <p
                       className={cn(
-                        'mt-2 font-mono text-xs tabular-nums text-red-200/90',
+                        'mt-2 font-mono text-xs tabular-nums text-red-800 dark:text-red-200/90',
                         isRTL && 'text-right'
                       )}
                     >
@@ -448,13 +448,13 @@ export default function ChatBot() {
                   <div className={cn('mt-3 flex flex-wrap gap-2', isRTL && 'flex-row-reverse')}>
                     <a
                       href="mailto:carwise15@gmail.com"
-                      className="inline-flex items-center justify-center rounded-lg border border-red-400/40 bg-red-950/30 px-3 py-1.5 text-xs font-medium text-red-100 hover:bg-red-500/20"
+                      className="inline-flex items-center justify-center rounded-lg border border-red-300/60 bg-red-100/80 px-3 py-1.5 text-xs font-medium text-red-900 hover:bg-red-200/80 dark:border-red-400/40 dark:bg-red-950/30 dark:text-red-100 dark:hover:bg-red-500/20"
                     >
                       {t('supportEmail')}
                     </a>
                     <a
                       href="tel:+9647774472106"
-                      className="inline-flex items-center justify-center rounded-lg border border-red-400/40 bg-red-950/30 px-3 py-1.5 text-xs font-medium text-red-100 hover:bg-red-500/20 ltr-embed"
+                      className="inline-flex items-center justify-center rounded-lg border border-red-300/60 bg-red-100/80 px-3 py-1.5 text-xs font-medium text-red-900 hover:bg-red-200/80 ltr-embed dark:border-red-400/40 dark:bg-red-950/30 dark:text-red-100 dark:hover:bg-red-500/20"
                       dir="ltr"
                     >
                       0777 447 2106
@@ -465,7 +465,7 @@ export default function ChatBot() {
               {(limitMessage || isRateLimited) && (
                 <div
                   className={cn(
-                    'mb-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm text-amber-100/95',
+                    'mb-3 rounded-xl border border-amber-300/60 bg-amber-50 px-3 py-2.5 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100/95',
                     isRTL && 'text-right'
                   )}
                   role="alert"
@@ -476,7 +476,7 @@ export default function ChatBot() {
                   {isRateLimited && limitRemainingLabel ? (
                     <p
                       className={cn(
-                        'mt-2 font-mono text-xs tabular-nums text-amber-200',
+                        'mt-2 font-mono text-xs tabular-nums text-amber-800 dark:text-amber-200',
                         isRTL && 'text-right'
                       )}
                     >
@@ -486,13 +486,13 @@ export default function ChatBot() {
                   <div className={cn('mt-3 flex flex-wrap gap-2', isRTL && 'flex-row-reverse')}>
                     <a
                       href="mailto:carwise15@gmail.com"
-                      className="inline-flex items-center justify-center rounded-lg border border-amber-400/40 bg-amber-950/20 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-500/15"
+                      className="inline-flex items-center justify-center rounded-lg border border-amber-300/60 bg-amber-100/90 px-3 py-1.5 text-xs font-medium text-amber-950 hover:bg-amber-200/80 dark:border-amber-400/40 dark:bg-amber-950/20 dark:text-amber-100 dark:hover:bg-amber-500/15"
                     >
                       {t('supportEmail')}
                     </a>
                     <a
                       href="tel:+9647774472106"
-                      className="inline-flex items-center justify-center rounded-lg border border-amber-400/40 bg-amber-950/20 px-3 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-500/15 ltr-embed"
+                      className="inline-flex items-center justify-center rounded-lg border border-amber-300/60 bg-amber-100/90 px-3 py-1.5 text-xs font-medium text-amber-950 hover:bg-amber-200/80 ltr-embed dark:border-amber-400/40 dark:bg-amber-950/20 dark:text-amber-100 dark:hover:bg-amber-500/15"
                       dir="ltr"
                     >
                       0777 447 2106
@@ -509,8 +509,9 @@ export default function ChatBot() {
                       onClick={() => sendMessage(reply)}
                       disabled={isLoading || isRateLimited || isIpBanned}
                       className={cn(
-                        'rounded-xl border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-left text-sm font-medium text-gray-200 transition-colors',
-                        'hover:border-purple-500/30 hover:bg-purple-500/10 hover:text-white',
+                        'rounded-xl border border-slate-200/90 bg-slate-50/90 px-3 py-2 text-left text-sm font-medium text-slate-800 transition-colors',
+                        'hover:border-purple-500/40 hover:bg-purple-50 hover:text-slate-900',
+                        'dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-gray-200 dark:hover:border-purple-500/30 dark:hover:bg-purple-500/10 dark:hover:text-white',
                         'disabled:cursor-not-allowed disabled:opacity-50',
                         isRTL && 'text-right'
                       )}
@@ -528,8 +529,10 @@ export default function ChatBot() {
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && void sendMessage()}
                   placeholder={t('placeholder')}
                   className={cn(
-                    'min-h-[48px] flex-1 rounded-full border border-white/[0.12] bg-white/[0.06] px-4 py-3 text-[16px] text-gray-100 shadow-inner shadow-black/20',
-                    'placeholder:text-gray-500 focus:border-purple-500/40 focus:outline-none focus:ring-2 focus:ring-purple-500/25',
+                    'min-h-[48px] flex-1 rounded-full border border-slate-200/90 bg-white px-4 py-3 text-[16px] text-gray-900 shadow-inner shadow-slate-200/80',
+                    'placeholder:text-slate-500 focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/25',
+                    'dark:border-white/[0.12] dark:bg-white/[0.06] dark:text-gray-100 dark:shadow-black/20 dark:placeholder:text-gray-500',
+                    'dark:focus:border-purple-500/40',
                     isRTL && 'text-right'
                   )}
                   disabled={isLoading || isRateLimited || isIpBanned}
