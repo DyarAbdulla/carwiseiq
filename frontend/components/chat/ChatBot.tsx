@@ -389,7 +389,7 @@ export default function ChatBot() {
   return (
     <>
       {!isOpen && (
-        <div className="hidden md:flex fixed bottom-20 right-6 z-[60]">
+        <div className="hidden md:flex fixed bottom-6 right-6 z-[60]">
           <button
             onClick={() => setIsOpen(true)}
             className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-full shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 animate-pulse hover:animate-none"
