@@ -96,99 +96,158 @@ export function ImageGalleryLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95"
+      className="fixed inset-0 z-[100] flex flex-col bg-black"
       role="dialog"
       aria-modal="true"
       aria-label="Image gallery"
       onClick={onClose}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
     >
-      {images.length > 1 && (
-        <div
-          className="pointer-events-none absolute end-4 top-[max(1rem,env(safe-area-inset-top))] z-[60] text-sm font-medium tabular-nums text-white"
-          aria-live="polite"
-        >
-          {activeIndex + 1} / {images.length}
-        </div>
-      )}
-
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          onClose()
-        }}
-        className="absolute start-4 top-[max(0.75rem,env(safe-area-inset-top))] z-[60] inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-white/20 bg-white/15 text-white backdrop-blur-md transition-colors hover:bg-white/25"
-        aria-label="Close gallery"
-      >
-        <X className="h-6 w-6" />
-      </button>
-
-      {images.length > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              goPrev()
-            }}
-            className="absolute start-0 top-1/2 z-[60] flex h-full max-h-screen w-[18vw] max-w-[120px] min-w-[48px] -translate-y-1/2 items-center justify-center border-0 bg-gradient-to-r from-black/50 to-transparent text-white transition-opacity hover:from-black/65 touch-manipulation"
-            aria-label="Previous image"
-          >
-            <ChevronLeft className="h-10 w-10 shrink-0 opacity-90 drop-shadow-lg rtl:rotate-180" />
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              goNext()
-            }}
-            className="absolute end-0 top-1/2 z-[60] flex h-full max-h-screen w-[18vw] max-w-[120px] min-w-[48px] -translate-y-1/2 items-center justify-center border-0 bg-gradient-to-l from-black/50 to-transparent text-white transition-opacity hover:from-black/65 touch-manipulation"
-            aria-label="Next image"
-          >
-            <ChevronRight className="h-10 w-10 shrink-0 opacity-90 drop-shadow-lg rtl:rotate-180" />
-          </button>
-        </>
-      )}
-
+      {/* Top bar */}
       <div
-        className="flex h-full w-full items-center justify-center p-4 pt-14"
+        className="relative flex shrink-0 justify-end p-3 pt-[max(0.75rem,env(safe-area-inset-top))]"
         onClick={(e) => e.stopPropagation()}
       >
-        {imageUrl ? (
-          isVideo ? (
-            <video
-              src={imageUrl}
-              controls
-              playsInline
-              className="max-h-screen max-w-full object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
-          ) : imageError === activeIndex ? (
-            <div className="flex max-h-full flex-col items-center justify-center gap-4 p-6 text-center">
-              <ImageIcon className="h-16 w-16 text-gray-500" />
-              <p className="text-gray-400">Image failed to load</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/images/cars/default-car.jpg"
-                alt=""
-                className="max-h-screen max-w-full object-contain"
-              />
-            </div>
-          ) : (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={imageUrl}
-              alt=""
-              className="max-h-screen max-w-full object-contain"
-              onError={() => setImageError(activeIndex)}
-            />
-          )
-        ) : (
-          <div className="text-gray-400">No image</div>
+        {images.length > 1 && (
+          <div
+            className="pointer-events-none absolute right-14 top-3 text-sm text-white tabular-nums rtl:left-14 rtl:right-auto"
+            aria-live="polite"
+          >
+            {activeIndex + 1} / {images.length}
+          </div>
         )}
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+          aria-label="Close gallery"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
+
+      {/* Main stage */}
+      <div
+        className="relative flex min-h-0 flex-1 items-center justify-center px-12"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onClick={onClose}
+      >
+        {images.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                goPrev()
+              }}
+              className="absolute left-2 top-1/2 z-10 flex -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20 touch-manipulation rtl:left-auto rtl:right-2"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="h-6 w-6 rtl:rotate-180" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                goNext()
+              }}
+              className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20 touch-manipulation rtl:right-auto rtl:left-2"
+              aria-label="Next image"
+            >
+              <ChevronRight className="h-6 w-6 rtl:rotate-180" />
+            </button>
+          </>
+        )}
+
+        <div
+          className="flex max-h-full max-w-full items-center justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {imageUrl ? (
+            isVideo ? (
+              <video
+                src={imageUrl}
+                controls
+                playsInline
+                className="max-h-full max-w-full object-contain"
+              />
+            ) : imageError === activeIndex ? (
+              <div className="flex max-h-full flex-col items-center justify-center gap-4 p-6 text-center">
+                <ImageIcon className="h-16 w-16 text-gray-500" />
+                <p className="text-gray-400">Image failed to load</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/images/cars/default-car.jpg"
+                  alt=""
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={imageUrl}
+                alt=""
+                className="max-h-full max-w-full object-contain"
+                onError={() => setImageError(activeIndex)}
+              />
+            )
+          ) : (
+            <div className="text-gray-400">No image</div>
+          )}
+        </div>
+      </div>
+
+      {/* Thumbnails */}
+      {images.length > 1 && (
+        <div
+          className="flex shrink-0 justify-center gap-2 overflow-x-auto bg-black/50 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {images.map((img, idx) => {
+            const thumbUrl = img?.url ? getImageUrl(img.url) : ""
+            const isV = img?.url ? isVideoUrl(img.url) : false
+            const active = idx === activeIndex
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setActiveIndex(idx)
+                  onNavigate?.(idx)
+                }}
+                className={`h-12 w-16 shrink-0 cursor-pointer overflow-hidden rounded object-cover transition-opacity ${
+                  active
+                    ? "opacity-100 ring-2 ring-purple-500"
+                    : "opacity-50 hover:opacity-100"
+                }`}
+                aria-label={`Image ${idx + 1}`}
+              >
+                {thumbUrl ? (
+                  isV ? (
+                    <video
+                      src={thumbUrl}
+                      muted
+                      playsInline
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={thumbUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gray-800 text-xs text-gray-500">
+                    —
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

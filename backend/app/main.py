@@ -30,6 +30,7 @@ from fastapi import FastAPI, Request, HTTPException
 from starlette.middleware.gzip import GZipMiddleware
 from app.api.routes import health, predict, cars, budget, stats, auth, options, images, model_info, feedback, admin, marketplace, messaging, favorites, ai, chat, dataset, export, services, providers, notifications, security, usage, vouchers
 from app.config import settings
+from app.services.listing_image_processing import find_logo
 
 os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 # 0=all, 1=no INFO, 2=no WARNING, 3=ERROR only
@@ -206,6 +207,8 @@ async def startup_event():
         asyncio.get_running_loop().set_exception_handler(_asyncio_exception_handler)
     except Exception as e:
         logging.warning("Could not set asyncio exception handler: %s", e)
+
+    logging.info("WATERMARK logo resolved: %s", find_logo())
 
     # Initialize database
     try:
