@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { MessageCircle, X, Send, Bot } from 'lucide-react';
-import { vazirmatn, inter } from '@/lib/fonts';
+import { inter, notoSansArabic } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/context/AuthContext';
 import { getPublicApiOrigin } from '@/lib/api';
@@ -26,13 +26,27 @@ function stripMarkdown(text: string): string {
 }
 
 const GLASS_PANEL =
-  'bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-2xl overflow-hidden dark:bg-white/[0.03] dark:border-white/[0.08]'
+  'w-full overflow-hidden rounded-3xl border border-white/10 bg-gray-900/80 shadow-2xl shadow-black/40 backdrop-blur-xl sm:w-[360px]'
 
-const TITLE_TEXT =
-  'text-slate-900 dark:bg-gradient-to-r dark:from-gray-100 dark:to-gray-400 dark:bg-clip-text dark:text-transparent'
+/** Arabic / Arabic Presentation Forms-A block — Sorani, Arabic script */
+function containsArabicScript(text: string): boolean {
+  return /[\u0600-\u06FF]/.test(text)
+}
 
-const SCROLL_AREA =
-  'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-300/80 hover:scrollbar-thumb-slate-400/80 dark:scrollbar-thumb-white/10 dark:hover:scrollbar-thumb-white/20'
+function messageScriptStyle(
+  content: string,
+  options: { isThinkingPlaceholder: boolean; localeRtl: boolean }
+): { dir: 'rtl' | 'ltr'; align: string; font: string } {
+  if (options.isThinkingPlaceholder) {
+    return options.localeRtl
+      ? { dir: 'rtl', align: 'text-right', font: notoSansArabic.className }
+      : { dir: 'ltr', align: 'text-left', font: inter.className }
+  }
+  if (containsArabicScript(content)) {
+    return { dir: 'rtl', align: 'text-right', font: notoSansArabic.className }
+  }
+  return { dir: 'ltr', align: 'text-left', font: inter.className }
+}
 
 /** SSE events from POST /api/chat (text/event-stream). */
 interface SseText {
@@ -99,7 +113,7 @@ export default function ChatBot() {
 
   const quickReplies = (t.raw('quickReplies') as string[]) || [];
   const isRTL = locale === 'ku' || locale === 'ar';
-  const fontClass = isRTL ? vazirmatn.className : inter.className;
+  const shellFontClass = isRTL ? notoSansArabic.className : inter.className;
 
   const limitRemainingLabel = useMemo(() => {
     if (!limitResetAt || !Number.isFinite(Date.parse(limitResetAt))) return '';
@@ -222,161 +236,151 @@ export default function ChatBot() {
     const previousMessages = messages;
     const payloadMessages: Message[] = [...previousMessages, { role: 'user', content: userMessage }];
 
-    const maxRetries = 3;
     const chatUrl = `${getPublicApiOrigin()}/api/chat`;
     const streamTimeoutMs = 120000;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), streamTimeoutMs);
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), streamTimeoutMs);
+    try {
+      setMessages([...payloadMessages, { role: 'assistant', content: '' }]);
+      setIsLoading(true);
 
-      try {
-        setMessages([...payloadMessages, { role: 'assistant', content: '' }]);
-        setIsLoading(true);
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`;
+      }
 
-        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (session?.access_token) {
-          headers.Authorization = `Bearer ${session.access_token}`;
-        }
+      const response = await fetch(chatUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          messages: payloadMessages,
+          locale,
+          stream: true,
+        }),
+        signal: controller.signal,
+      });
 
-        const response = await fetch(chatUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            messages: payloadMessages,
-            locale,
-          }),
-          signal: controller.signal,
-        });
+      const contentType = response.headers.get('content-type') || '';
 
-        const contentType = response.headers.get('content-type') || '';
-
-        if (!response.ok) {
-          clearTimeout(timeout);
-          setMessages(previousMessages);
-          const data = (await response.json().catch(() => ({}))) as {
-            detail?: unknown;
-            error?: string;
-            response?: string;
-            banned?: boolean;
-            ban_ends_at?: string;
-            profanity_warning?: boolean;
-          };
-
-          const detail = data.detail;
-          if (
-            response.status === 429 &&
-            typeof detail === 'object' &&
-            detail !== null &&
-            'code' in detail &&
-            (detail as { code?: string }).code === 'chat_limit'
-          ) {
-            const d = detail as { reset_at?: string; message?: string };
-            setLimitResetAt(d.reset_at ?? null);
-            setLimitMessage(
-              typeof d.message === 'string' ? d.message : t('limitFallback')
-            );
-            setIsLoading(false);
-            return;
-          }
-          if (
-            response.status === 403 &&
-            typeof detail === 'object' &&
-            detail !== null &&
-            'code' in detail &&
-            (detail as { code?: string }).code === 'ip_banned'
-          ) {
-            const d = detail as { ends_at?: string; message?: string };
-            const banText =
-              typeof d.message === 'string' && d.message.trim()
-                ? d.message
-                : t('banFallback');
-            setMessages([...payloadMessages, { role: 'assistant', content: banText }]);
-            if (d.ends_at) setBanUntil(d.ends_at);
-            setIsLoading(false);
-            return;
-          }
-          const detailMsg =
-            typeof detail === 'string'
-              ? detail
-              : typeof data.error === 'string'
-                ? data.error
-                : `HTTP ${response.status}`;
-          throw new Error(detailMsg);
-        }
-
-        if (contentType.includes('text/event-stream')) {
-          setLimitResetAt(null);
-          setLimitMessage(null);
-          try {
-            await readSseStream(response.body, controller.signal);
-          } finally {
-            clearTimeout(timeout);
-          }
-          setMessages((prev) => {
-            const last = prev[prev.length - 1];
-            if (last?.role === 'assistant' && last.content === '') {
-              const next = [...prev];
-              next[next.length - 1] = { role: 'assistant', content: t('error') };
-              return next;
-            }
-            return prev;
-          });
-          setIsLoading(false);
-          return;
-        }
-
+      if (!response.ok) {
         clearTimeout(timeout);
+        setMessages(previousMessages);
         const data = (await response.json().catch(() => ({}))) as {
+          detail?: unknown;
           error?: string;
           response?: string;
           banned?: boolean;
           ban_ends_at?: string;
           profanity_warning?: boolean;
         };
-        if (data.error) {
-          throw new Error(data.error);
-        }
 
-        setLimitResetAt(null);
-        setLimitMessage(null);
-
-        const assistantText =
-          typeof data.response === 'string' ? data.response : t('error');
-        setMessages((prev) => {
-          const next = [...prev];
-          const last = next[next.length - 1];
-          if (last?.role === 'assistant') {
-            next[next.length - 1] = { role: 'assistant', content: assistantText };
-          } else {
-            next.push({ role: 'assistant', content: assistantText });
-          }
-          return next;
-        });
-
-        if (data.banned && data.ban_ends_at) {
-          setBanUntil(data.ban_ends_at);
-        }
-
-        setIsLoading(false);
-        return;
-      } catch (error) {
-        clearTimeout(timeout);
-        const aborted = error instanceof Error && error.name === 'AbortError';
-        if (aborted) {
+        const detail = data.detail;
+        if (
+          response.status === 429 &&
+          typeof detail === 'object' &&
+          detail !== null &&
+          'code' in detail &&
+          (detail as { code?: string }).code === 'chat_limit'
+        ) {
+          const d = detail as { reset_at?: string; message?: string };
+          setLimitResetAt(d.reset_at ?? null);
+          setLimitMessage(
+            typeof d.message === 'string' ? d.message : t('limitFallback')
+          );
           setIsLoading(false);
           return;
         }
-        console.error(`Chat attempt ${attempt} failed:`, error);
-        if (attempt < maxRetries) {
-          setMessages(payloadMessages);
-          await new Promise((r) => setTimeout(r, attempt * 1000));
-          continue;
+        if (
+          response.status === 403 &&
+          typeof detail === 'object' &&
+          detail !== null &&
+          'code' in detail &&
+          (detail as { code?: string }).code === 'ip_banned'
+        ) {
+          const d = detail as { ends_at?: string; message?: string };
+          const banText =
+            typeof d.message === 'string' && d.message.trim()
+              ? d.message
+              : t('banFallback');
+          setMessages([...payloadMessages, { role: 'assistant', content: banText }]);
+          if (d.ends_at) setBanUntil(d.ends_at);
+          setIsLoading(false);
+          return;
         }
-        setMessages([...payloadMessages, { role: 'assistant', content: t('connectError') }]);
+        const detailMsg =
+          typeof detail === 'string'
+            ? detail
+            : typeof data.error === 'string'
+              ? data.error
+              : `HTTP ${response.status}`;
+        throw new Error(detailMsg);
+      }
+
+      if (contentType.includes('text/event-stream')) {
+        setLimitResetAt(null);
+        setLimitMessage(null);
+        try {
+          await readSseStream(response.body, controller.signal);
+        } finally {
+          clearTimeout(timeout);
+        }
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === 'assistant' && last.content === '') {
+            const next = [...prev];
+            next[next.length - 1] = { role: 'assistant', content: t('error') };
+            return next;
+          }
+          return prev;
+        });
         setIsLoading(false);
         return;
       }
+
+      clearTimeout(timeout);
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        response?: string;
+        banned?: boolean;
+        ban_ends_at?: string;
+        profanity_warning?: boolean;
+      };
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setLimitResetAt(null);
+      setLimitMessage(null);
+
+      const assistantText =
+        typeof data.response === 'string' ? data.response : t('error');
+      setMessages((prev) => {
+        const next = [...prev];
+        const last = next[next.length - 1];
+        if (last?.role === 'assistant') {
+          next[next.length - 1] = { role: 'assistant', content: assistantText };
+        } else {
+          next.push({ role: 'assistant', content: assistantText });
+        }
+        return next;
+      });
+
+      if (data.banned && data.ban_ends_at) {
+        setBanUntil(data.ban_ends_at);
+      }
+
+      setIsLoading(false);
+    } catch (error) {
+      clearTimeout(timeout);
+      const aborted = error instanceof Error && error.name === 'AbortError';
+      if (aborted) {
+        setIsLoading(false);
+        return;
+      }
+      console.error('Chat failed:', error);
+      setMessages([...payloadMessages, { role: 'assistant', content: t('connectError') }]);
+      setIsLoading(false);
     }
   };
 
@@ -402,7 +406,7 @@ export default function ChatBot() {
 
       {isOpen && (
         <div
-          className={`${fontClass} fixed inset-0 z-[100] flex flex-col sm:items-end sm:justify-end sm:p-4 md:p-6`}
+          className={`${shellFontClass} fixed inset-0 z-[100] flex flex-col sm:items-end sm:justify-end sm:p-4 md:p-6`}
           dir={isRTL ? 'rtl' : 'ltr'}
         >
           {/* Layer 1–2: same treatment as About (static img + gradient; no CSS bg-fixed) */}
@@ -421,40 +425,52 @@ export default function ChatBot() {
           {/* Glass shell: full viewport on mobile; floating card on sm+ */}
           <div
             className={cn(
-              'relative z-10 flex min-h-0 w-full flex-col sm:max-h-[600px] sm:w-[400px] sm:flex-none sm:rounded-3xl',
+              'relative z-10 flex h-[calc(100dvh-80px)] max-h-[100dvh] min-h-0 w-full flex-col sm:h-[min(600px,calc(100vh-5rem))] sm:max-h-[600px] sm:flex-none',
               GLASS_PANEL,
-              /* Mobile: ~80px for app header/chrome; desktop: floating card */
-              'h-[calc(100dvh-80px)] max-h-[100dvh] sm:h-[min(600px,calc(100vh-5rem))]',
               isRTL ? 'sm:ml-6 sm:mr-auto' : 'sm:mr-0'
             )}
           >
-            {/* Transparent header — gradient title */}
             <div
               className={cn(
-                'flex flex-shrink-0 items-center justify-between border-b border-slate-200/90 bg-transparent px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] dark:border-white/[0.08]',
+                'flex flex-shrink-0 items-center justify-between border-b border-white/10 bg-transparent px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]',
                 isRTL && 'flex-row-reverse'
               )}
             >
-              <div className={cn('flex items-center gap-3', isRTL && 'flex-row-reverse')}>
+              <div className={cn('flex min-w-0 flex-1 items-center gap-3', isRTL && 'flex-row-reverse')}>
                 <div
                   className={cn(
-                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200/90 bg-slate-100/90 dark:border-white/15 dark:bg-white/5',
+                    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5',
                     isLoading &&
-                    'shadow-[0_0_24px_rgba(168,85,247,0.55)] ring-2 ring-purple-500/40 animate-pulse'
+                      'shadow-[0_0_24px_rgba(168,85,247,0.55)] ring-2 ring-purple-500/40 animate-pulse'
                   )}
                 >
-                  <Bot className="h-5 w-5 text-slate-600 dark:text-gray-200" />
+                  <Bot className="h-5 w-5 text-gray-200" />
                 </div>
-                <div className={isRTL ? 'text-right' : 'text-left'}>
-                  <h3 className={cn('text-base font-semibold sm:text-lg', TITLE_TEXT)}>
-                    {t('title')}
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-gray-400">{t('subtitle')}</p>
+                <div className={cn(isRTL ? 'text-right' : 'text-left')}>
+                  <div
+                    className={cn(
+                      'inline-flex max-w-full flex-wrap items-center gap-2',
+                      isRTL && 'flex-row-reverse'
+                    )}
+                  >
+                    <h3 className="text-base font-semibold text-white sm:text-lg">{t('title')}</h3>
+                    <span
+                      className="inline-flex h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-500/35"
+                      aria-hidden
+                    />
+                  </div>
+                  <div
+                    className={cn(
+                      'pointer-events-none mt-1.5 h-px max-w-[220px] bg-gradient-to-r from-transparent via-purple-400/55 to-transparent',
+                      isRTL ? 'ms-auto bg-gradient-to-l' : ''
+                    )}
+                  />
+                  <p className="mt-1 text-sm text-gray-400">{t('subtitle')}</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-200/80 hover:text-slate-900 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+                className="rounded-full p-2 text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
                 aria-label={t('closeChat')}
               >
                 <X className="h-5 w-5" />
@@ -464,26 +480,35 @@ export default function ChatBot() {
             {/* Messages */}
             <div
               className={cn(
-                'min-h-0 flex-1 space-y-4 overflow-y-auto bg-transparent p-4',
-                SCROLL_AREA
+                'scrollbar-hide min-h-0 flex-1 space-y-4 overflow-y-auto bg-transparent p-4'
               )}
             >
               {messages.length === 0 && (
                 <div className={cn('mt-6 text-center', isRTL && 'text-right')}>
                   <div
                     className={cn(
-                      'mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-slate-200/90 bg-slate-100/90 dark:border-white/10 dark:bg-white/5',
+                      'mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5',
                       isLoading && 'shadow-[0_0_28px_rgba(168,85,247,0.45)] animate-pulse'
                     )}
                   >
-                    <Bot className="h-8 w-8 text-purple-600 dark:text-purple-300/90" />
+                    <Bot className="h-8 w-8 text-purple-300" />
                   </div>
-                  <p className="text-lg leading-relaxed text-slate-900 dark:text-gray-100">{t('welcome')}</p>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-gray-400">{t('hint')}</p>
+                  <p className="text-lg leading-relaxed text-gray-100">{t('welcome')}</p>
+                  <p className="mt-2 text-sm text-gray-400">{t('hint')}</p>
                 </div>
               )}
 
-              {messages.map((msg, i) => (
+              {messages.map((msg, i) => {
+                const isThinkingBubble =
+                  msg.role === 'assistant' &&
+                  msg.content === '' &&
+                  isLoading &&
+                  i === messages.length - 1;
+                const scr = messageScriptStyle(msg.content, {
+                  isThinkingPlaceholder: isThinkingBubble,
+                  localeRtl: isRTL,
+                });
+                return (
                 <div
                   key={i}
                   className={cn(
@@ -498,82 +523,67 @@ export default function ChatBot() {
                   )}
                 >
                   <div
+                    dir={scr.dir}
                     className={cn(
-                      'max-w-[85%] rounded-2xl border p-3 leading-relaxed',
+                      'max-w-[85%] rounded-2xl border p-3 leading-relaxed shadow-lg',
+                      scr.font,
+                      scr.align,
                       msg.role === 'user'
                         ? cn(
-                          'border-purple-500/40 bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-sm shadow-purple-500/20',
+                          'border-transparent bg-gradient-to-br from-violet-600 to-purple-700 text-white shadow-black/25',
                           isRTL ? 'rounded-tl-sm' : 'rounded-tr-sm'
                         )
                         : cn(
-                          'border-slate-200/90 bg-slate-100/95 text-gray-900 dark:border-white/10 dark:bg-white/5 dark:text-white',
+                          'border-white/10 bg-white/5 text-gray-100 shadow-black/30 backdrop-blur-md',
                           isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'
                         )
                     )}
                   >
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-inherit">
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed text-inherit">
                       {msg.role === 'assistant' ? (
-                        <>
-                          {stripMarkdown(msg.content)}
-                          {isLoading && i === messages.length - 1 && (
-                            <span
-                              className="ms-0.5 inline-block h-[1.1em] w-0.5 translate-y-px animate-pulse rounded-sm bg-violet-600 dark:bg-violet-300"
-                              aria-hidden
-                            />
-                          )}
-                        </>
+                        isThinkingBubble ? (
+                          <span className="inline-flex flex-wrap items-center gap-2 text-gray-300">
+                            <span className="inline-flex items-center gap-1" aria-hidden>
+                              <span
+                                className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-chat-dots"
+                                style={{ animationDelay: '0ms' }}
+                              />
+                              <span
+                                className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-chat-dots"
+                                style={{ animationDelay: '160ms' }}
+                              />
+                              <span
+                                className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-chat-dots"
+                                style={{ animationDelay: '320ms' }}
+                              />
+                            </span>
+                            <span>{t('thinking')}</span>
+                          </span>
+                        ) : (
+                          <>
+                            {stripMarkdown(msg.content)}
+                            {isLoading && i === messages.length - 1 && (
+                              <span
+                                className="ms-0.5 inline-block h-[1.1em] w-0.5 translate-y-px animate-pulse rounded-sm bg-violet-400"
+                                aria-hidden
+                              />
+                            )}
+                          </>
+                        )
                       ) : (
                         msg.content
                       )}
-                    </p>
-                  </div>
-                </div>
-              ))}
-
-              {isLoading &&
-                messages.length > 0 &&
-                messages[messages.length - 1]?.role === 'user' && (
-                <div className={cn('flex', isRTL ? 'justify-end' : 'justify-start')}>
-                  <div
-                    className={cn(
-                      'rounded-2xl border border-slate-200/90 bg-slate-100/95 px-4 py-3 dark:border-white/10 dark:bg-white/5',
-                      isRTL ? 'rounded-tr-sm' : 'rounded-tl-sm'
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={cn(
-                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-purple-500/30 bg-purple-500/10',
-                          'shadow-[0_0_20px_rgba(168,85,247,0.5)] animate-pulse'
-                        )}
-                      >
-                        <Bot className="h-4 w-4 text-purple-600 dark:text-purple-200" />
-                      </div>
-                      <div className="flex gap-1">
-                        <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-purple-500 dark:bg-purple-400"
-                          style={{ animationDelay: '0ms' }}
-                        />
-                        <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-purple-500 dark:bg-purple-400"
-                          style={{ animationDelay: '150ms' }}
-                        />
-                        <span
-                          className="h-2 w-2 animate-bounce rounded-full bg-purple-500 dark:bg-purple-400"
-                          style={{ animationDelay: '300ms' }}
-                        />
-                      </div>
-                      <span className="text-sm text-slate-600 dark:text-gray-400">{t('thinking')}</span>
                     </div>
                   </div>
                 </div>
-              )}
+              );
+              })}
 
               <div ref={messagesEndRef} />
             </div>
 
             {/* Input */}
-            <div className="flex-shrink-0 border-t border-slate-200/90 bg-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 dark:border-white/[0.08]">
+            <div className="flex-shrink-0 border-t border-white/10 bg-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
               {isIpBanned && (
                 <div
                   className={cn(
@@ -649,7 +659,7 @@ export default function ChatBot() {
                 </div>
               )}
               {messages.length === 0 && quickReplies.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-2">
+                <div className={cn('mb-3 flex flex-wrap gap-2', isRTL && 'flex-row-reverse')}>
                   {quickReplies.map((reply: string, idx: number) => (
                     <button
                       key={idx}
@@ -657,11 +667,10 @@ export default function ChatBot() {
                       onClick={() => sendMessage(reply)}
                       disabled={isLoading || isRateLimited || isIpBanned}
                       className={cn(
-                        'rounded-xl border border-slate-200/90 bg-slate-50/90 px-3 py-2 text-left text-sm font-medium text-slate-800 transition-colors',
-                        'hover:border-purple-500/40 hover:bg-purple-50 hover:text-slate-900',
-                        'dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-gray-200 dark:hover:border-purple-500/30 dark:hover:bg-purple-500/10 dark:hover:text-white',
+                        'rounded-full border border-purple-500/40 bg-transparent px-4 py-2 text-sm text-gray-200 transition-all duration-200',
+                        'hover:bg-purple-500/20 hover:text-white',
                         'disabled:cursor-not-allowed disabled:opacity-50',
-                        isRTL && 'text-right'
+                        isRTL ? 'text-right' : 'text-left'
                       )}
                     >
                       {reply}
@@ -677,10 +686,8 @@ export default function ChatBot() {
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && void sendMessage()}
                   placeholder={t('placeholder')}
                   className={cn(
-                    'min-h-[48px] flex-1 rounded-full border border-slate-200/90 bg-white px-4 py-3 text-[16px] text-gray-900 shadow-inner shadow-slate-200/80',
-                    'placeholder:text-slate-500 focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/25',
-                    'dark:border-white/[0.12] dark:bg-white/[0.06] dark:text-gray-100 dark:shadow-black/20 dark:placeholder:text-gray-500',
-                    'dark:focus:border-purple-500/40',
+                    'min-h-[48px] flex-1 rounded-full border border-white/15 bg-white/[0.08] px-4 py-3 text-[16px] text-gray-100',
+                    'placeholder:text-gray-500/90 focus:border-purple-500/40 focus:outline-none focus:ring-2 focus:ring-purple-500/25',
                     isRTL && 'text-right'
                   )}
                   disabled={isLoading || isRateLimited || isIpBanned}

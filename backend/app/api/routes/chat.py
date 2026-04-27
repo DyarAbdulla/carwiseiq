@@ -4,7 +4,6 @@ POST /api/chat: { messages, locale } -> { response, ... }
 Includes Supabase-backed rate limits, profanity handling, and IP bans.
 """
 
-import asyncio
 import json
 import logging
 import os
@@ -130,6 +129,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
     locale: str = "en"
+    stream: bool = True
 
 
 def _last_user_text(messages: List[ChatMessage]) -> Optional[str]:
@@ -155,16 +155,14 @@ async def _stream_claude(
     try:
         async with client.messages.stream(
             model="claude-sonnet-4-20250514",
-            max_tokens=512,
+            max_tokens=600,
             system=SYSTEM_PROMPT,
             messages=[{"role": m.role, "content": m.content} for m in messages],
         ) as stream:
             async for text in stream.text_stream:
                 if text:
                     yield _sse_event({"type": "text", "value": text})
-                    await asyncio.sleep(0)
         yield _sse_event({"type": "done"})
-        await asyncio.sleep(0)
     except anthropic_lib.APIConnectionError:
         yield _sse_event({"type": "error", "message": "AI service temporarily unavailable"})
     except anthropic_lib.RateLimitError:

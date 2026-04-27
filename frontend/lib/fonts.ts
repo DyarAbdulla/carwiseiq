@@ -1,8 +1,14 @@
-import { Inter, Vazirmatn } from 'next/font/google'
+import { Inter, Noto_Sans_Arabic, Vazirmatn } from 'next/font/google'
 
 /** Shared font instances so root layout and locale BodyFontSwitcher use the same class names. */
 export const inter = Inter({
   subsets: ['latin'],
+  display: 'swap',
+  preload: true,
+})
+
+export const notoSansArabic = Noto_Sans_Arabic({
+  subsets: ['arabic'],
   display: 'swap',
   preload: true,
 })
