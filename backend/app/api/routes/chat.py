@@ -4,11 +4,13 @@ POST /api/chat: { messages, locale } -> { response, ... }
 Includes Supabase-backed rate limits, profanity handling, and IP bans.
 """
 
+import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from app.api.routes.auth import UserResponse, get_current_user
@@ -136,25 +138,39 @@ def _last_user_text(messages: List[ChatMessage]) -> Optional[str]:
     return None
 
 
-async def _claude_chat(api_key: str, messages: List[ChatMessage]) -> str:
-    from anthropic import Anthropic
+def _ndjson_line(obj: dict) -> bytes:
+    return (json.dumps(obj, ensure_ascii=False) + "\n").encode("utf-8")
 
-    client = Anthropic(api_key=api_key)
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=512,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": m.role, "content": m.content} for m in messages],
-    )
-    text_content = next(
-        (b for b in response.content if getattr(b, "type", None) == "text"),
-        None,
-    )
-    return (
-        getattr(text_content, "text", None)
-        if text_content
-        else "Sorry, I could not generate a response."
-    )
+
+async def _stream_claude(
+    api_key: str, messages: List[ChatMessage]
+) -> AsyncIterator[bytes]:
+    """NDJSON stream: {type:text,value}, then {type:done}, or {type:error,message}."""
+    from anthropic import AsyncAnthropic
+
+    import anthropic as anthropic_lib
+
+    client = AsyncAnthropic(api_key=api_key)
+    try:
+        async with client.messages.stream(
+            model="claude-sonnet-4-20250514",
+            max_tokens=512,
+            system=SYSTEM_PROMPT,
+            messages=[{"role": m.role, "content": m.content} for m in messages],
+        ) as stream:
+            async for text in stream.text_stream:
+                if text:
+                    yield _ndjson_line({"type": "text", "value": text})
+        yield _ndjson_line({"type": "done"})
+    except anthropic_lib.APIConnectionError:
+        yield _ndjson_line({"type": "error", "message": "AI service temporarily unavailable"})
+    except anthropic_lib.RateLimitError:
+        yield _ndjson_line({"type": "error", "message": "Too many requests, please wait"})
+    except anthropic_lib.APIStatusError as e:
+        yield _ndjson_line({"type": "error", "message": f"AI service error: {str(e)}"})
+    except Exception as e:
+        logger.error("Chat stream error: %s", e, exc_info=True)
+        yield _ndjson_line({"type": "error", "message": "Chat service error"})
 
 
 @router.get("/chat/ban-status")
@@ -170,7 +186,7 @@ async def chat(
     request: Request,
     chat_request: ChatRequest,
     current_user: Optional[UserResponse] = Depends(get_current_user),
-) -> Dict[str, Any]:
+) -> Any:
     """Handle chat messages via Anthropic Claude API with moderation and quotas."""
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -250,27 +266,12 @@ async def chat(
         logger.error("anthropic package not installed")
         raise HTTPException(status_code=500, detail="Chat service not available")
 
-    try:
-        response_text = await _claude_chat(api_key, chat_request.messages)
-        return {"response": response_text}
-    except anthropic.APIConnectionError:
-        raise HTTPException(
-            status_code=503,
-            detail="AI service temporarily unavailable",
-        )
-    except anthropic.RateLimitError:
-        raise HTTPException(
-            status_code=429,
-            detail="Too many requests, please wait",
-        )
-    except anthropic.APIStatusError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"AI service error: {str(e)}",
-        )
-    except Exception as e:
-        logger.error("Chat API error: %s", e, exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail="Chat service error",
-        )
+    return StreamingResponse(
+        _stream_claude(api_key, chat_request.messages),
+        media_type="application/x-ndjson",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )

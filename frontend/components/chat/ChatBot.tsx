@@ -34,6 +34,30 @@ const TITLE_TEXT =
 const SCROLL_AREA =
   'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-300/80 hover:scrollbar-thumb-slate-400/80 dark:scrollbar-thumb-white/10 dark:hover:scrollbar-thumb-white/20'
 
+/** NDJSON events from POST /api/chat (streaming). */
+interface NdjsonText {
+  type: 'text'
+  value: string
+}
+interface NdjsonDone {
+  type: 'done'
+}
+interface NdjsonError {
+  type: 'error'
+  message?: string
+}
+type NdjsonEvent = NdjsonText | NdjsonDone | NdjsonError
+
+function parseNdjsonLine(line: string): NdjsonEvent | null {
+  const s = line.trim()
+  if (!s) return null
+  try {
+    return JSON.parse(s) as NdjsonEvent
+  } catch {
+    return null
+  }
+}
+
 export default function ChatBot() {
   const locale = useLocale();
   const t = useTranslations('chat');
@@ -115,6 +139,73 @@ export default function ChatBot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
+  const readNdjsonStream = async (
+    body: ReadableStream<Uint8Array> | null,
+    signal: AbortSignal
+  ) => {
+    if (!body) throw new Error('No response body');
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    let lineBuffer = '';
+
+    const appendAssistant = (chunk: string) => {
+      setMessages((prev) => {
+        if (prev.length === 0) return prev;
+        const next = [...prev];
+        const last = next[next.length - 1];
+        if (last?.role === 'assistant') {
+          next[next.length - 1] = { ...last, content: (last.content || '') + chunk };
+        }
+        return next;
+      });
+    };
+
+    while (true) {
+      if (signal.aborted) {
+        try {
+          await reader.cancel();
+        } catch {
+          /* ignore */
+        }
+        break;
+      }
+      const { done, value } = await reader.read();
+      if (done) break;
+      lineBuffer += decoder.decode(value, { stream: true });
+      const lines = lineBuffer.split('\n');
+      lineBuffer = lines.pop() ?? '';
+      for (const line of lines) {
+        const ev = parseNdjsonLine(line);
+        if (!ev) continue;
+        if (ev.type === 'text' && 'value' in ev && ev.value) {
+          appendAssistant(ev.value);
+        } else if (ev.type === 'done') {
+          return;
+        } else if (ev.type === 'error') {
+          const msg =
+            typeof (ev as NdjsonError).message === 'string' && (ev as NdjsonError).message!.trim()
+              ? (ev as NdjsonError).message!
+              : t('error');
+          setMessages((prev) => {
+            if (prev.length === 0) return prev;
+            const next = [...prev];
+            const last = next[next.length - 1];
+            if (last?.role === 'assistant') {
+              const base = last.content && last.content.trim() ? last.content + '\n\n' : '';
+              next[next.length - 1] = { ...last, content: base + msg };
+            }
+            return next;
+          });
+          return;
+        }
+      }
+    }
+    if (lineBuffer.trim()) {
+      const ev = parseNdjsonLine(lineBuffer);
+      if (ev?.type === 'text' && 'value' in ev && ev.value) appendAssistant(ev.value);
+    }
+  };
+
   const sendMessage = async (text?: string) => {
     const messageToSend = (text ?? input.trim()).trim();
     if (!messageToSend || isLoading || isRateLimited || isIpBanned) return;
@@ -123,18 +214,18 @@ export default function ChatBot() {
     if (!text) setInput('');
     const previousMessages = messages;
     const payloadMessages: Message[] = [...previousMessages, { role: 'user', content: userMessage }];
-    setMessages(payloadMessages);
-    setIsLoading(true);
 
     const maxRetries = 3;
-    let lastError: unknown = null;
-
     const chatUrl = `${getPublicApiOrigin()}/api/chat`;
+    const streamTimeoutMs = 120000;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), streamTimeoutMs);
+
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        setMessages([...payloadMessages, { role: 'assistant', content: '' }]);
+        setIsLoading(true);
 
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (session?.access_token) {
@@ -151,18 +242,20 @@ export default function ChatBot() {
           signal: controller.signal,
         });
 
-        clearTimeout(timeout);
-
-        const data = (await response.json().catch(() => ({}))) as {
-          detail?: unknown;
-          error?: string;
-          response?: string;
-          banned?: boolean;
-          ban_ends_at?: string;
-          profanity_warning?: boolean;
-        };
+        const contentType = response.headers.get('content-type') || '';
 
         if (!response.ok) {
+          clearTimeout(timeout);
+          setMessages(previousMessages);
+          const data = (await response.json().catch(() => ({}))) as {
+            detail?: unknown;
+            error?: string;
+            response?: string;
+            banned?: boolean;
+            ban_ends_at?: string;
+            profanity_warning?: boolean;
+          };
+
           const detail = data.detail;
           if (
             response.status === 429 &&
@@ -172,7 +265,6 @@ export default function ChatBot() {
             (detail as { code?: string }).code === 'chat_limit'
           ) {
             const d = detail as { reset_at?: string; message?: string };
-            setMessages(previousMessages);
             setLimitResetAt(d.reset_at ?? null);
             setLimitMessage(
               typeof d.message === 'string' ? d.message : t('limitFallback')
@@ -192,10 +284,7 @@ export default function ChatBot() {
               typeof d.message === 'string' && d.message.trim()
                 ? d.message
                 : t('banFallback');
-            setMessages([
-              ...payloadMessages,
-              { role: 'assistant', content: banText },
-            ]);
+            setMessages([...payloadMessages, { role: 'assistant', content: banText }]);
             if (d.ends_at) setBanUntil(d.ends_at);
             setIsLoading(false);
             return;
@@ -209,6 +298,35 @@ export default function ChatBot() {
           throw new Error(detailMsg);
         }
 
+        if (contentType.includes('x-ndjson') || contentType.includes('ndjson')) {
+          setLimitResetAt(null);
+          setLimitMessage(null);
+          try {
+            await readNdjsonStream(response.body, controller.signal);
+          } finally {
+            clearTimeout(timeout);
+          }
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            if (last?.role === 'assistant' && last.content === '') {
+              const next = [...prev];
+              next[next.length - 1] = { role: 'assistant', content: t('error') };
+              return next;
+            }
+            return prev;
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        clearTimeout(timeout);
+        const data = (await response.json().catch(() => ({}))) as {
+          error?: string;
+          response?: string;
+          banned?: boolean;
+          ban_ends_at?: string;
+          profanity_warning?: boolean;
+        };
         if (data.error) {
           throw new Error(data.error);
         }
@@ -218,7 +336,16 @@ export default function ChatBot() {
 
         const assistantText =
           typeof data.response === 'string' ? data.response : t('error');
-        setMessages((prev) => [...prev, { role: 'assistant', content: assistantText }]);
+        setMessages((prev) => {
+          const next = [...prev];
+          const last = next[next.length - 1];
+          if (last?.role === 'assistant') {
+            next[next.length - 1] = { role: 'assistant', content: assistantText };
+          } else {
+            next.push({ role: 'assistant', content: assistantText });
+          }
+          return next;
+        });
 
         if (data.banned && data.ban_ends_at) {
           setBanUntil(data.ban_ends_at);
@@ -227,23 +354,23 @@ export default function ChatBot() {
         setIsLoading(false);
         return;
       } catch (error) {
-        lastError = error;
-        console.error(`Chat attempt ${attempt} failed:`, error);
-
-        if (attempt < maxRetries) {
-          await new Promise((r) => setTimeout(r, attempt * 1000));
+        clearTimeout(timeout);
+        const aborted = error instanceof Error && error.name === 'AbortError';
+        if (aborted) {
+          setIsLoading(false);
+          return;
         }
+        console.error(`Chat attempt ${attempt} failed:`, error);
+        if (attempt < maxRetries) {
+          setMessages(payloadMessages);
+          await new Promise((r) => setTimeout(r, attempt * 1000));
+          continue;
+        }
+        setMessages([...payloadMessages, { role: 'assistant', content: t('connectError') }]);
+        setIsLoading(false);
+        return;
       }
     }
-
-    setMessages([
-      ...previousMessages,
-      {
-        role: 'assistant',
-        content: t('connectError'),
-      },
-    ]);
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -378,13 +505,27 @@ export default function ChatBot() {
                     )}
                   >
                     <p className="whitespace-pre-wrap text-sm leading-relaxed text-inherit">
-                      {msg.role === 'assistant' ? stripMarkdown(msg.content) : msg.content}
+                      {msg.role === 'assistant' ? (
+                        <>
+                          {stripMarkdown(msg.content)}
+                          {isLoading && i === messages.length - 1 && (
+                            <span
+                              className="ms-0.5 inline-block h-[1.1em] w-0.5 translate-y-px animate-pulse rounded-sm bg-violet-600 dark:bg-violet-300"
+                              aria-hidden
+                            />
+                          )}
+                        </>
+                      ) : (
+                        msg.content
+                      )}
                     </p>
                   </div>
                 </div>
               ))}
 
-              {isLoading && (
+              {isLoading &&
+                messages.length > 0 &&
+                messages[messages.length - 1]?.role === 'user' && (
                 <div className={cn('flex', isRTL ? 'justify-end' : 'justify-start')}>
                   <div
                     className={cn(
