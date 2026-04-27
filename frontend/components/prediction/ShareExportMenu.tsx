@@ -49,6 +49,9 @@ export function ShareExportMenu({
   }
 
   const generateShareUrl = () => {
+    if (typeof window !== 'undefined') {
+      return window.location.href
+    }
     const params = new URLSearchParams({
       make: carFeatures.make,
       model: carFeatures.model,
@@ -57,9 +60,6 @@ export function ShareExportMenu({
       condition: carFeatures.condition,
       price: result.predicted_price.toString(),
     })
-    if (typeof window !== 'undefined') {
-      return `${window.location.origin}/predict?${params.toString()}`
-    }
     return `${siteUrl}/predict?${params.toString()}`
   }
 

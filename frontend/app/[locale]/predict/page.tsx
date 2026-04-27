@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,11 +32,56 @@ import { usePredictLoading } from '@/components/PredictLoadingProvider'
 import { activityHelpers } from '@/lib/activityLogger'
 import { safeText, sanitizeCarFeaturesFromUnknown } from '@/lib/safeDisplay'
 import { VoucherApplyModal } from '@/components/vouchers/VoucherApplyModal'
+import { CONDITIONS } from '@/lib/constants'
 
 // Image upload constants (kept for image analysis functionality)
 const MAX_IMAGES = 10
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+
+function buildPredictShareQuery(features: CarFeatures, predictedPrice: number) {
+  return new URLSearchParams({
+    make: features.make,
+    model: features.model,
+    year: String(features.year),
+    mileage: String(features.mileage),
+    condition: features.condition,
+    price: String(predictedPrice),
+  }).toString()
+}
+
+function parseSharedResultFromUrl(get: (k: string) => string): { features: CarFeatures; predicted_price: number } | null {
+  const make = get('make')
+  const model = get('model')
+  const yearStr = get('year')
+  const mileageStr = get('mileage')
+  const conditionRaw = get('condition')
+  const priceStr = get('price')
+  if (!make || !model || !yearStr || !mileageStr || !conditionRaw || !priceStr) return null
+  const predicted_price = parseFloat(priceStr)
+  if (!Number.isFinite(predicted_price) || predicted_price <= 0) return null
+  const y = parseInt(yearStr, 10)
+  const m = parseInt(mileageStr, 10)
+  const year = Number.isFinite(y) ? y : new Date().getFullYear()
+  const mileage = Number.isFinite(m) ? Math.max(0, m) : 50000
+  const condition = CONDITIONS.includes(conditionRaw) ? conditionRaw : 'Good'
+  return {
+    predicted_price,
+    features: {
+      make,
+      model,
+      year,
+      mileage,
+      trim: '',
+      engine_size: 2.0,
+      cylinders: 4,
+      condition,
+      fuel_type: 'Gasoline',
+      location: '',
+      color: '',
+    },
+  }
+}
 
 function PredictPageContent() {
   // All hooks must be called before any conditional returns
@@ -55,6 +100,8 @@ function PredictPageContent() {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
   const [dailyUsage, setDailyUsage] = useState<DailyUsageStatus | null>(null)
   const [voucherOpen, setVoucherOpen] = useState(false)
+  /** Direct open from a shared /en/predict?...&price=... link — hide the wizard, show result only */
+  const [hydratedFromShare, setHydratedFromShare] = useState(false)
 
   const refreshDailyUsage = useCallback(async () => {
     try {
@@ -96,8 +143,10 @@ function PredictPageContent() {
   }, [mounted, refreshDailyUsage])
 
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname() || '/predict'
 
-  // Prefill from URL params first, else sessionStorage (budget finder, etc.)
+  // Restore result from share URL, prefill from URL, or sessionStorage
   useEffect(() => {
     const raw = (k: string) => {
       const v = searchParams?.get(k)
@@ -108,6 +157,23 @@ function PredictPageContent() {
         return v.trim()
       }
     }
+    if (loading) return
+
+    // Shared result link: all params + price — show result without API
+    if (!prediction) {
+      const shared = parseSharedResultFromUrl(raw)
+      if (shared) {
+        setCarFeatures(shared.features)
+        setFormFeatures(shared.features)
+        setPrediction({ predicted_price: shared.predicted_price })
+        setPredictionId(undefined)
+        setHydratedFromShare(true)
+        return
+      }
+    }
+
+    if (prediction) return
+
     const make = raw('make')
     const model = raw('model')
     const yearStr = raw('year')
@@ -159,8 +225,8 @@ function PredictPageContent() {
     } catch (error) {
       console.error('SessionStorage access error:', error)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- toast/tCommon stable enough; avoid re-running sessionStorage branch
-  }, [searchParams])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- avoid re-running sessionStorage; prediction/loading drive share restore
+  }, [searchParams, prediction, loading])
 
   // Clear images when form is cleared (formFeatures becomes null/empty)
   useEffect(() => {
@@ -340,6 +406,12 @@ function PredictPageContent() {
       setPrediction(result)
       markPredictEngaged()
 
+      try {
+        router.replace(`${pathname}?${buildPredictShareQuery(features, result.predicted_price)}`, { scroll: false })
+      } catch (e) {
+        console.error('Failed to update share URL:', e)
+      }
+
       // Log prediction activity (for Activity History)
       activityHelpers.logPrediction({
         make: features.make,
@@ -454,6 +526,13 @@ function PredictPageContent() {
     setImagePreviews([])
     setImageAnalysis(null)
     setSelectedImageIndex(0)
+    setHydratedFromShare(false)
+    setPredictionId(undefined)
+    try {
+      router.replace(pathname, { scroll: false })
+    } catch (e) {
+      console.error('Failed to clear URL:', e)
+    }
   }
 
 
@@ -519,7 +598,7 @@ function PredictPageContent() {
       <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 md:py-10 overflow-visible">
         {/* Main Content Grid - Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6">
-          {/* Left Column: Form (Glassmorphism Card) */}
+          {!hydratedFromShare && (
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -575,9 +654,10 @@ function PredictPageContent() {
               </div>
             </div>
           </motion.div>
+          )}
 
           {/* Right Column: Smart Tips & Results */}
-          <div className="lg:col-span-7 order-2 space-y-6">
+          <div className={`order-2 space-y-6 ${hydratedFromShare ? 'lg:col-span-12' : 'lg:col-span-7'}`}>
 
             {/* Loading State - System Analysis Overlay */}
             <AnimatePresence>
