@@ -95,6 +95,13 @@ function formatPhoneDisplay(phone: string | null | undefined): string {
   return `+964 ${ten.slice(0, 3)} ${ten.slice(3, 6)} ${ten.slice(6)}`
 }
 
+const toTitle = (s: string) =>
+  (s || '')
+    .split(' ')
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
+    .join(' ')
+    .trim()
+
 /** Extract first phone-like string for tel: link. Fallback when listing.phone is missing. */
 function extractPhoneFromText(text: string | null | undefined): string | null {
   if (!text || typeof text !== 'string') return null
@@ -310,7 +317,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
     const timeoutId = setTimeout(() => {
       console.error('⏰ Timeout after 10s - listing fetch too slow')
       abortController.abort()
-      setLoadError('Request timeout - please refresh')
+      setLoadError(t('requestTimeout'))
       setLoading(false)
     }, 10000)
 
@@ -492,7 +499,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                 }}
                 className="bg-indigo-600 hover:bg-indigo-500 h-11 px-6 font-medium shadow-lg shadow-indigo-500/20"
               >
-                Retry
+                {tCommon('retry')}
               </Button>
             )}
             <Button
@@ -587,11 +594,20 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
 
   const conditionClass = (raw: string) => {
     const c = (raw || '').toLowerCase()
-    if (c === 'excellent') return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-    if (c === 'good') return 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-    if (c === 'fair') return 'bg-amber-500/25 text-amber-200 border-amber-500/40'
-    if (c === 'poor') return 'bg-red-500/20 text-red-300 border-red-500/40'
-    return 'bg-slate-500/20 text-slate-300 border-white/15'
+    if (c === 'excellent') return 'bg-green-500/20 text-green-400 border border-green-500/40'
+    if (c === 'good') return 'bg-blue-500/20 text-blue-400 border border-blue-500/40'
+    if (c === 'fair') return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40'
+    if (c === 'poor') return 'bg-red-500/20 text-red-400 border border-red-500/40'
+    return 'bg-slate-500/20 text-slate-300 border border-white/15'
+  }
+
+  const conditionValueLabel = (raw: string | null | undefined) => {
+    const s = String(raw ?? '').trim()
+    const key = s.toLowerCase()
+    if (key === 'excellent' || key === 'good' || key === 'fair' || key === 'poor') {
+      return t(`condition.${key}` as 'condition.excellent')
+    }
+    return toTitle(s)
   }
 
   const onMobileCarouselScroll = () => {
@@ -636,7 +652,9 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
           <div className="space-y-2">
             {isSamePhone ? (
               <div>
-                <p className="text-gray-400 dark:text-gray-500 text-xs mb-1 font-medium uppercase tracking-wide">{t('phone')} / WhatsApp</p>
+                <p className="text-gray-400 dark:text-gray-500 text-xs mb-1 font-medium uppercase tracking-wide">
+                  {t('phone')} / {t('whatsApp')}
+                </p>
                 <p className="text-slate-900 dark:text-white font-semibold text-base">
                   <LtrEmbed className="tabular-nums">{formatPhoneDisplay(contactPhone)}</LtrEmbed>
                 </p>
@@ -658,7 +676,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                 )}
                 {contactWhatsApp && (
                   <div>
-                    <p className="text-gray-400 dark:text-gray-500 text-xs mb-1 font-medium uppercase tracking-wide">WhatsApp</p>
+                    <p className="text-gray-400 dark:text-gray-500 text-xs mb-1 font-medium uppercase tracking-wide">{t('whatsApp')}</p>
                     <LtrA href={waLink} target="_blank" rel="noopener noreferrer" className="hidden lg:flex items-center gap-2 text-slate-900 dark:text-white font-semibold text-base hover:text-emerald-600 dark:hover:text-emerald-400 focus:outline-none focus:underline transition-colors">
                       <MessageCircle className="h-5 w-5 shrink-0 text-emerald-400" />
                       <span className="tabular-nums">{formatPhoneDisplay(contactWhatsApp)}</span>
@@ -682,7 +700,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
         </p>
         <button className="text-slate-500 dark:text-gray-400 hover:text-slate-700 dark:hover:text-gray-300 text-sm font-medium flex items-center gap-1.5 transition-colors">
           <Flag className="h-3.5 w-3.5 shrink-0" />
-          {t('reportListing')}
+          {t('report')}
         </button>
       </div>
     </div>
@@ -724,7 +742,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
               <span className="flex items-center gap-2 bg-slate-900/85 backdrop-blur-md hover:bg-slate-950/95 border border-white/25 rounded-full px-3 py-2.5 shadow-lg active:scale-95 min-w-[44px] min-h-[44px]">
                 <ChevronLeft className="w-5 h-5 text-white shrink-0 rtl:rotate-180" />
                 <span className="hidden min-[400px]:inline text-white font-medium text-sm whitespace-nowrap">
-                  {t('backToMarketplace') || 'Back'}
+                  {t('backToMarketplace')}
                 </span>
               </span>
             </Link>
@@ -791,7 +809,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                         )}
                         {isSold && idx === 0 && (
                           <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] bg-red-600/95 py-2 text-center text-sm font-bold text-white">
-                            SOLD
+                            {t('soldBadge')}
                           </div>
                         )}
                       </div>
@@ -823,7 +841,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
             )}
             <div className="space-y-2 px-3 pt-2">
               <h1 className="text-[1.35rem] font-bold leading-snug text-white sm:text-2xl">
-                {listing.year} {listing.make} {listing.model}{listing.trim ? ` ${listing.trim}` : ''}
+                {listing.year} {toTitle(listing.make)} {toTitle(listing.model)}{listing.trim ? ` ${toTitle(String(listing.trim))}` : ''}
               </h1>
               {isSold && listing.sold_at && (
                 <p className="text-sm text-red-400">{t('soldOn')}: {new Date(listing.sold_at).toLocaleDateString()}</p>
@@ -836,7 +854,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                   <SocialShareButtons
                     listing={{ id: listing.id, make: listing.make, model: listing.model, year: listing.year, price: listing.price }}
                     url={typeof window !== 'undefined' ? window.location.href : ''}
-                    shareLabel={t('shareListing')}
+                    shareLabel={t('share')}
                     iconOnly
                   />
                 </div>
@@ -864,13 +882,13 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                 <span className="flex items-center gap-2 bg-slate-900/85 backdrop-blur-md hover:bg-slate-950/95 border border-white/25 rounded-full px-3 py-2 shadow-lg min-h-[44px]">
                   <ChevronLeft className="w-5 h-5 text-white shrink-0 rtl:rotate-180" />
                   <span className="text-white font-medium text-sm whitespace-nowrap">
-                    {t('backToMarketplace') || 'Back'}
+                    {t('backToMarketplace')}
                   </span>
                 </span>
               </Link>
               {isSold && (
                 <div className="absolute top-0 left-0 right-0 z-30 py-3 bg-red-600/95 text-white text-center font-bold text-lg shadow-lg backdrop-blur-sm" aria-hidden>
-                  SOLD
+                  {t('soldBadge')}
                 </div>
               )}
               {heroResolved ? (
@@ -893,7 +911,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                       <Image
                         key={`${listingId}-${heroResolved}`}
                         src={heroResolved}
-                        alt={`${listing.year} ${listing.make} ${listing.model}`}
+                        alt={`${listing.year} ${toTitle(listing.make)} ${toTitle(listing.model)}`}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -952,7 +970,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                 <div className="flex items-start justify-between gap-2 md:gap-3">
                   <div className="flex-1 min-w-0">
                     <h1 className="text-lg md:text-2xl font-bold text-white tracking-tight leading-tight">
-                      {listing.year} {listing.make} {listing.model}{listing.trim ? ` ${listing.trim}` : ''}
+                      {listing.year} {toTitle(listing.make)} {toTitle(listing.model)}{listing.trim ? ` ${toTitle(String(listing.trim))}` : ''}
                     </h1>
                     {isSold && listing.sold_at && (
                       <p className="text-red-400 text-xs md:text-sm mt-1">{t('soldOn')}: {new Date(listing.sold_at).toLocaleDateString()}</p>
@@ -982,7 +1000,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                       <SocialShareButtons
                         listing={{ id: listing.id, make: listing.make, model: listing.model, year: listing.year, price: listing.price }}
                         url={typeof window !== 'undefined' ? window.location.href : ''}
-                        shareLabel={t('shareListing')}
+                        shareLabel={t('share')}
                       />
                     </div>
                   </div>
@@ -1024,7 +1042,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
             <div className="space-y-4 md:space-y-6">
               {/* Key facts */}
               <div className="mb-6 rounded-xl border border-white/10 bg-slate-900/50 p-3 shadow-xl backdrop-blur-md sm:p-5 md:p-6 lg:mb-0">
-                <h2 className="mb-3 text-lg font-bold text-white md:mb-5 md:text-xl">{t('carDetails') || 'Car Details'}</h2>
+                <h2 className="mb-3 text-lg font-bold text-white md:mb-5 md:text-xl">{t('carDetails')}</h2>
                 <div className="grid auto-rows-fr grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4">
                   <div className="flex h-full min-h-[132px] flex-col rounded-xl border border-white/10 bg-slate-950/40 p-3 shadow-sm transition-colors hover:border-violet-500/30 md:p-5">
                     <div className="flex items-center gap-3 mb-2">
@@ -1068,8 +1086,12 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                         <Award className="h-4 w-4 md:h-5 md:w-5 text-indigo-400" />
                       </div>
                     </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('condition')}</p>
-                    <span className={`inline-block rounded-lg border px-2.5 py-1.5 text-base font-semibold md:px-3 ${conditionClass(String(listing.condition || ''))}`}>{listing.condition}</span>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1.5 uppercase tracking-wide">{t('condition.label')}</p>
+                    <span
+                      className={`inline-block rounded-full border px-3 py-1 text-sm font-medium ${conditionClass(String(listing.condition || ''))}`}
+                    >
+                      {conditionValueLabel(listing.condition)}
+                    </span>
                   </div>
                   {listing.color && (
                     <div className="flex h-full min-h-[132px] flex-col rounded-xl border border-white/10 bg-slate-950/40 p-3 shadow-sm transition-colors hover:border-violet-500/30 md:p-5">
@@ -1112,7 +1134,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                 {/* Description - stripped, no contact; label indicates original seller text */}
                 {displayDescription && (
                   <div className="mb-6 rounded-xl border border-white/10 bg-slate-900/50 p-4 shadow-xl backdrop-blur-md sm:p-6">
-                    <h3 className="mb-3 text-lg font-semibold text-white">{t('sellerNotesLabel')}</h3>
+                    <h3 className="mb-3 text-lg font-semibold text-white">{t('sellerNotes')}</h3>
                     <p dir="auto" className="break-words whitespace-pre-wrap text-base leading-relaxed text-slate-200">
                       {displayDescription}
                     </p>
@@ -1194,7 +1216,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
                 <Button asChild className="h-[52px] min-h-[52px] flex-1 min-w-0 touch-manipulation rounded-xl border border-emerald-500/40 bg-gradient-to-r from-emerald-700 to-emerald-600 text-base font-semibold text-white shadow-lg hover:from-emerald-600 hover:to-emerald-500">
                   <LtrA href={waLink} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2">
                     <MessageCircle className="h-5 w-5 shrink-0" />
-                    WhatsApp
+                    {t('whatsApp')}
                   </LtrA>
                 </Button>
               )}
@@ -1211,7 +1233,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
             <DialogDescription>{t('confirmMarkSold')}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" className="border-gray-600 text-gray-300" onClick={() => setMarkSoldOpen(false)} disabled={togglingSold}>Cancel</Button>
+            <Button variant="outline" className="border-gray-600 text-gray-300" onClick={() => setMarkSoldOpen(false)} disabled={togglingSold}>{tCommon('cancel')}</Button>
             <Button className="bg-amber-600 hover:bg-amber-500" onClick={handleMarkSold} disabled={togglingSold}>
               {togglingSold ? t('updating') : t('markAsSold')}
             </Button>
@@ -1227,7 +1249,7 @@ export default function ListingDetailPage(props: ListingDetailClientProps = {}) 
             <DialogDescription>{t('confirmMarkAvailable')}</DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" className="border-gray-600 text-gray-300" onClick={() => setMarkAvailableOpen(false)} disabled={togglingSold}>Cancel</Button>
+            <Button variant="outline" className="border-gray-600 text-gray-300" onClick={() => setMarkAvailableOpen(false)} disabled={togglingSold}>{tCommon('cancel')}</Button>
             <Button className="bg-emerald-600 hover:bg-emerald-500" onClick={handleMarkAvailable} disabled={togglingSold}>
               {togglingSold ? t('updating') : t('markAsAvailable')}
             </Button>

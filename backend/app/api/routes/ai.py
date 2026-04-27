@@ -28,6 +28,7 @@ from app.services.car_detection_service import (
     get_image_hash,
     get_labels_version,
 )
+from app.services.listing_image_processing import process_upload_image
 
 logger = logging.getLogger(__name__)
 
@@ -202,10 +203,16 @@ async def detect_car(
         delete_listing_images(listing_id)
         uploaded = []
         for idx, im in enumerate(files):
-            ext = os.path.splitext(im.filename or "")[1] or ".jpg"
-            fname = f"{listing_id}_{uuid.uuid4()}{ext}"
+            raw = await im.read()
+            try:
+                content = process_upload_image(raw)
+                fname = f"{listing_id}_{uuid.uuid4()}.jpg"
+            except Exception:
+                logger.warning("detect-car image process failed, using raw", exc_info=True)
+                content = raw
+                ext = os.path.splitext(im.filename or "")[1] or ".jpg"
+                fname = f"{listing_id}_{uuid.uuid4()}{ext}"
             fpath = os.path.join(UPLOAD_DIR, fname)
-            content = await im.read()
             with open(fpath, "wb") as f:
                 f.write(content)
             url = f"/uploads/listings/{fname}"

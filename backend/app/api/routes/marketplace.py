@@ -4,7 +4,7 @@ Marketplace API routes for Buy & Sell car listings
 from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile, File, Form
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 from pathlib import Path
 import logging
 import os
@@ -29,8 +29,28 @@ from app.services.marketplace_service import (
 from app.services.car_detection_service import detect_car_from_images, get_image_hash, get_labels_version
 from app.api.routes.auth import get_current_user, UserResponse
 from app.services.feedback_service import save_prediction  # For auto-save to training
+from app.services.listing_image_processing import process_upload_image
 
 logger = logging.getLogger(__name__)
+
+_VIDEO_EXT = {".mp4", ".mov", ".avi", ".webm", ".mkv"}
+
+
+def _is_video_filename(name: Optional[str]) -> bool:
+    ext = (os.path.splitext(name or "")[1] or "").lower()
+    return ext in _VIDEO_EXT
+
+
+def _processed_listing_file_bytes(raw: bytes, filename: Optional[str]) -> Tuple[bytes, str]:
+    """Return (bytes, filename_with_extension). Videos are left unchanged."""
+    ext = (os.path.splitext(filename or "")[1] or ".jpg").lower()
+    if _is_video_filename(filename):
+        return raw, f"{uuid.uuid4().hex}{ext}"
+    try:
+        return process_upload_image(raw), f"{uuid.uuid4().hex}.jpg"
+    except Exception:
+        logger.warning("listing image process failed, storing original", exc_info=True)
+        return raw, f"{uuid.uuid4().hex}{ext or '.jpg'}"
 
 router = APIRouter()
 security = HTTPBearer(auto_error=False)
@@ -226,11 +246,11 @@ async def create_listing_with_images(
             os.makedirs(listing_dir, exist_ok=True)
             uploaded = []
             for idx, img in enumerate(files):
-                ext = os.path.splitext(img.filename or "x")[1] or ".jpg"
-                fn = f"{uuid.uuid4().hex}{ext}"
+                raw = await img.read()
+                data, fn = _processed_listing_file_bytes(raw, img.filename)
                 abs_path = os.path.join(listing_dir, fn)
                 with open(abs_path, "wb") as f:
-                    f.write(await img.read())
+                    f.write(data)
                 url = f"/uploads/listings/{listing_id}/{fn}"
                 fp_rel = f"listings/{listing_id}/{fn}"
                 image_urls.append(url)
@@ -268,12 +288,11 @@ async def upload_listing_images(
 
         uploaded_images = []
         for idx, image in enumerate(images):
-            file_ext = os.path.splitext(image.filename or "x")[1] or ".jpg"
-            filename = f"{uuid.uuid4().hex}{file_ext}"
+            raw = await image.read()
+            content, filename = _processed_listing_file_bytes(raw, image.filename)
             abs_path = os.path.join(listing_dir, filename)
 
             with open(abs_path, "wb") as f:
-                content = await image.read()
                 f.write(content)
 
             # URL for browser; file_path in DB is relative for portability
