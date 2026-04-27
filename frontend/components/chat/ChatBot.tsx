@@ -34,29 +34,19 @@ const TITLE_TEXT =
 const SCROLL_AREA =
   'scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-300/80 hover:scrollbar-thumb-slate-400/80 dark:scrollbar-thumb-white/10 dark:hover:scrollbar-thumb-white/20'
 
-/** NDJSON events from POST /api/chat (streaming). */
-interface NdjsonText {
+/** SSE events from POST /api/chat (text/event-stream). */
+interface SseText {
   type: 'text'
   value: string
 }
-interface NdjsonDone {
+interface SseDone {
   type: 'done'
 }
-interface NdjsonError {
+interface SseError {
   type: 'error'
   message?: string
 }
-type NdjsonEvent = NdjsonText | NdjsonDone | NdjsonError
-
-function parseNdjsonLine(line: string): NdjsonEvent | null {
-  const s = line.trim()
-  if (!s) return null
-  try {
-    return JSON.parse(s) as NdjsonEvent
-  } catch {
-    return null
-  }
-}
+type SseEvent = SseText | SseDone | SseError
 
 export default function ChatBot() {
   const locale = useLocale();
@@ -139,14 +129,14 @@ export default function ChatBot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  const readNdjsonStream = async (
+  const readSseStream = async (
     body: ReadableStream<Uint8Array> | null,
     signal: AbortSignal
   ) => {
     if (!body) throw new Error('No response body');
     const reader = body.getReader();
     const decoder = new TextDecoder();
-    let lineBuffer = '';
+    let buffer = '';
 
     const appendAssistant = (chunk: string) => {
       setMessages((prev) => {
@@ -160,31 +150,25 @@ export default function ChatBot() {
       });
     };
 
-    while (true) {
-      if (signal.aborted) {
+    const processSseEventBlock = (block: string) => {
+      for (const line of block.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith(':')) continue;
+        if (!trimmed.startsWith('data: ')) continue;
+        let json: SseEvent;
         try {
-          await reader.cancel();
+          json = JSON.parse(trimmed.slice(6)) as SseEvent;
         } catch {
-          /* ignore */
+          continue;
         }
-        break;
-      }
-      const { done, value } = await reader.read();
-      if (done) break;
-      lineBuffer += decoder.decode(value, { stream: true });
-      const lines = lineBuffer.split('\n');
-      lineBuffer = lines.pop() ?? '';
-      for (const line of lines) {
-        const ev = parseNdjsonLine(line);
-        if (!ev) continue;
-        if (ev.type === 'text' && 'value' in ev && ev.value) {
-          appendAssistant(ev.value);
-        } else if (ev.type === 'done') {
-          return;
-        } else if (ev.type === 'error') {
+        if (json.type === 'text' && 'value' in json && json.value) {
+          appendAssistant(json.value);
+        } else if (json.type === 'done') {
+          return true;
+        } else if (json.type === 'error') {
           const msg =
-            typeof (ev as NdjsonError).message === 'string' && (ev as NdjsonError).message!.trim()
-              ? (ev as NdjsonError).message!
+            typeof (json as SseError).message === 'string' && (json as SseError).message!.trim()
+              ? (json as SseError).message!
               : t('error');
           setMessages((prev) => {
             if (prev.length === 0) return prev;
@@ -196,13 +180,36 @@ export default function ChatBot() {
             }
             return next;
           });
-          return;
+          return true;
         }
       }
+      return false;
+    };
+
+    while (true) {
+      if (signal.aborted) {
+        try {
+          await reader.cancel();
+        } catch {
+          /* ignore */
+        }
+        break;
+      }
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const normalized = buffer.replace(/\r\n/g, '\n');
+      const parts = normalized.split('\n\n');
+      buffer = parts.pop() || '';
+      for (const block of parts) {
+        if (processSseEventBlock(block)) return;
+      }
     }
-    if (lineBuffer.trim()) {
-      const ev = parseNdjsonLine(lineBuffer);
-      if (ev?.type === 'text' && 'value' in ev && ev.value) appendAssistant(ev.value);
+    if (buffer.trim()) {
+      const normalized = buffer.replace(/\r\n/g, '\n');
+      for (const block of normalized.split('\n\n')) {
+        if (block.trim() && processSseEventBlock(block)) return;
+      }
     }
   };
 
@@ -298,11 +305,11 @@ export default function ChatBot() {
           throw new Error(detailMsg);
         }
 
-        if (contentType.includes('x-ndjson') || contentType.includes('ndjson')) {
+        if (contentType.includes('text/event-stream')) {
           setLimitResetAt(null);
           setLimitMessage(null);
           try {
-            await readNdjsonStream(response.body, controller.signal);
+            await readSseStream(response.body, controller.signal);
           } finally {
             clearTimeout(timeout);
           }

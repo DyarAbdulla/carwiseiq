@@ -4,6 +4,7 @@ POST /api/chat: { messages, locale } -> { response, ... }
 Includes Supabase-backed rate limits, profanity handling, and IP bans.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -138,14 +139,14 @@ def _last_user_text(messages: List[ChatMessage]) -> Optional[str]:
     return None
 
 
-def _ndjson_line(obj: dict) -> bytes:
-    return (json.dumps(obj, ensure_ascii=False) + "\n").encode("utf-8")
+def _sse_event(obj: dict) -> bytes:
+    return f"data: {json.dumps(obj, ensure_ascii=False)}\n\n".encode("utf-8")
 
 
 async def _stream_claude(
     api_key: str, messages: List[ChatMessage]
 ) -> AsyncIterator[bytes]:
-    """NDJSON stream: {type:text,value}, then {type:done}, or {type:error,message}."""
+    """SSE stream: data: {\"type\":\"text\",\"value\":...}\\n\\n, then data: {\"type\":\"done\"}\\n\\n."""
     from anthropic import AsyncAnthropic
 
     import anthropic as anthropic_lib
@@ -160,17 +161,19 @@ async def _stream_claude(
         ) as stream:
             async for text in stream.text_stream:
                 if text:
-                    yield _ndjson_line({"type": "text", "value": text})
-        yield _ndjson_line({"type": "done"})
+                    yield _sse_event({"type": "text", "value": text})
+                    await asyncio.sleep(0)
+        yield _sse_event({"type": "done"})
+        await asyncio.sleep(0)
     except anthropic_lib.APIConnectionError:
-        yield _ndjson_line({"type": "error", "message": "AI service temporarily unavailable"})
+        yield _sse_event({"type": "error", "message": "AI service temporarily unavailable"})
     except anthropic_lib.RateLimitError:
-        yield _ndjson_line({"type": "error", "message": "Too many requests, please wait"})
+        yield _sse_event({"type": "error", "message": "Too many requests, please wait"})
     except anthropic_lib.APIStatusError as e:
-        yield _ndjson_line({"type": "error", "message": f"AI service error: {str(e)}"})
+        yield _sse_event({"type": "error", "message": f"AI service error: {str(e)}"})
     except Exception as e:
         logger.error("Chat stream error: %s", e, exc_info=True)
-        yield _ndjson_line({"type": "error", "message": "Chat service error"})
+        yield _sse_event({"type": "error", "message": "Chat service error"})
 
 
 @router.get("/chat/ban-status")
@@ -266,12 +269,14 @@ async def chat(
         logger.error("anthropic package not installed")
         raise HTTPException(status_code=500, detail="Chat service not available")
 
+    stream_headers = {
+        "X-Accel-Buffering": "no",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Connection": "keep-alive",
+        "Transfer-Encoding": "chunked",
+        "Content-Type": "text/event-stream",
+    }
     return StreamingResponse(
         _stream_claude(api_key, chat_request.messages),
-        media_type="application/x-ndjson",
-        headers={
-            "Cache-Control": "no-cache, no-transform",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
+        headers=stream_headers,
     )
