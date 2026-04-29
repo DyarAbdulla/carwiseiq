@@ -400,6 +400,21 @@ def extract_image_features(car_data, feature_dim=2048, image_path=None):
     return np.zeros((n_samples, feature_dim), dtype=np.float32)
 
 # ============================================================================
+# Categorical helpers (supports sklearn LabelEncoder + retrain.CategoryEncoder)
+# ============================================================================
+
+def encoder_transform_series(encoder_obj, vals):
+    """Apply fitted encoder row-wise; avoids sklearn unknown-label crashes when possible."""
+    s = vals if isinstance(vals, pd.Series) else pd.Series(vals)
+    # CategoryEncoder from core/retrain_iqcars exposes .class_to_idx
+    if hasattr(encoder_obj, 'class_to_idx'):
+        return np.asarray(encoder_obj.transform(s), dtype=np.float64).ravel()
+    return np.asarray(
+        encoder_obj.transform(s.astype(str)), dtype=np.float64
+    ).ravel()
+
+
+# ============================================================================
 # Prepare Input Data
 # ============================================================================
 
@@ -447,15 +462,30 @@ def prepare_features(car_data, features, make_encoder=None, model_encoder=None,
         # Ensure age is never negative (for future years)
         df['age_of_car'] = np.maximum(0, current_year - df['year'])
 
-    # Encode categorical variables
+    # Encode categorical variables — prefer training encoders (same space as IQCars pipeline)
     if 'condition' in df.columns:
-        # Map condition to encoded value
-        df['condition_encoded'] = df['condition'].map(
-            config.CONDITION_MAP).fillna(3)
+        if encoders and 'condition' in encoders:
+            try:
+                df['condition_encoded'] = encoder_transform_series(
+                    encoders['condition'], df['condition'])
+            except Exception:
+                df['condition_encoded'] = df['condition'].map(
+                    config.CONDITION_MAP).fillna(3)
+        else:
+            df['condition_encoded'] = df['condition'].map(
+                config.CONDITION_MAP).fillna(3)
 
     if 'fuel_type' in df.columns:
-        df['fuel_type_encoded'] = df['fuel_type'].map(
-            config.FUEL_TYPE_MAP).fillna(0)
+        if encoders and 'fuel_type' in encoders:
+            try:
+                df['fuel_type_encoded'] = encoder_transform_series(
+                    encoders['fuel_type'], df['fuel_type'])
+            except Exception:
+                df['fuel_type_encoded'] = df['fuel_type'].map(
+                    config.FUEL_TYPE_MAP).fillna(0)
+        else:
+            df['fuel_type_encoded'] = df['fuel_type'].map(
+                config.FUEL_TYPE_MAP).fillna(0)
 
     if 'location' in df.columns:
         # Use a simple hash-based encoding if encoder not available
@@ -467,9 +497,9 @@ def prepare_features(car_data, features, make_encoder=None, model_encoder=None,
     if 'make' in df.columns:
         if encoders and 'make' in encoders:
             try:
-                df['make_encoded'] = encoders['make'].transform(
-                    df['make'].astype(str))
-            except:
+                df['make_encoded'] = encoder_transform_series(
+                    encoders['make'], df['make'])
+            except Exception:
                 df['make_encoded'] = 0
         elif make_encoder is not None:
             try:
@@ -483,9 +513,9 @@ def prepare_features(car_data, features, make_encoder=None, model_encoder=None,
     if 'model' in df.columns:
         if encoders and 'model' in encoders:
             try:
-                df['model_encoded'] = encoders['model'].transform(
-                    df['model'].astype(str))
-            except:
+                df['model_encoded'] = encoder_transform_series(
+                    encoders['model'], df['model'])
+            except Exception:
                 df['model_encoded'] = 0
         elif model_encoder is not None:
             try:
@@ -496,12 +526,25 @@ def prepare_features(car_data, features, make_encoder=None, model_encoder=None,
         else:
             df['model_encoded'] = df['model'].astype(str).apply(hash) % 1000
 
+    # Trim (IQCars production model)
+    if 'trim' not in df.columns:
+        df['trim'] = 'Standard'
+    df['trim'] = df['trim'].fillna('').astype(str)
+    df['trim'] = df['trim'].apply(
+        lambda t: t.strip().title() if t.strip() else 'Standard')
+
+    if encoders and 'trim' in encoders:
+        try:
+            df['trim_encoded'] = encoder_transform_series(encoders['trim'], df['trim'])
+        except Exception:
+            df['trim_encoded'] = 0
+
     # Encode location if encoder available
     if 'location' in df.columns:
         if encoders and 'location' in encoders:
             try:
-                df['location_encoded'] = encoders['location'].transform(
-                    df['location'].astype(str))
+                df['location_encoded'] = encoder_transform_series(
+                    encoders['location'], df['location'])
             except:
                 df['location_encoded'] = df['location'].astype(
                     str).apply(hash) % 1000
@@ -519,9 +562,12 @@ def prepare_features(car_data, features, make_encoder=None, model_encoder=None,
     else:
         df['new_car_penalty'] = 0.65
 
-    # 2. Mileage per year (v4 feature)
+    # 2. Mileage per year (aligned with IQCars production training)
     if 'mileage' in df.columns and 'age_of_car' in df.columns:
-        df['mileage_per_year'] = df['mileage'] / (df['age_of_car'] + 1)
+        df['mileage_per_year'] = (
+            pd.to_numeric(df['mileage'], errors='coerce').fillna(50000).astype(float)
+            / (pd.to_numeric(df['age_of_car'], errors='coerce').fillna(5).astype(float) + 1.0)
+        ).clip(0.0, 125000.0)
         df['high_mileage_flag'] = (df['mileage_per_year'] > 15000).astype(int)
     else:
         df['mileage_per_year'] = 0
