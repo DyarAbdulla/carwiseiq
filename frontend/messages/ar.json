@@ -858,7 +858,22 @@
       "vehicleDetails": "تفاصيل المركبة",
       "vehicleDetailsDesc": "لنبدأ بالأساسيات.",
       "selectMakeModelFirst": "اختر الصانع والموديل أولاً",
-      "loadingTrims": "جاري تحميل الفئات..."
+      "loadingTrims": "جاري تحميل الفئات...",
+      "trimRequired": "يرجى اختيار الفئة.",
+      "selectedCarPreviewLabel": "السيارة المختارة",
+      "selectModelPlaceholder": "اختر الموديل",
+      "selectTrimPlaceholder": "اختر الفئة",
+      "selectMakeFirst": "اختر الصانع أولاً",
+      "noModelsAvailable": "لا توجد موديلات متاحة",
+      "yearAccuracyHint": "اختر سنة الموديل بدقة لمزيد من الدقة.",
+      "trimRequiredHint": "اختر الفئة الأقرب إلى سيارتك عند ظهور الخيارات.",
+      "mileageFormatHint": "أدخل المسافة بالكيلومتر؛ نحن ننسّق العرض.",
+      "mileageNegativeError": "لا يمكن أن تكون المسافة سالبة.",
+      "engineExamplePlaceholder": "مثال: 2.5",
+      "engineLoadingPlaceholder": "جارٍ التحميل…",
+      "engineLitersHint": "سعة المحرك بالليتر، مثل 1.6 أو 2.0 أو 2.5.",
+      "engineUnknownLink": "لا أعرف سعة المحرك",
+      "engineDefaultApplied": "نستخدم سعة متوسطة لهذا الطراز — يمكنك تغييرها لاحقاً."
     },
     "loading": {
       "predicting": "جاري التنبؤ بالسعر...",
@@ -965,6 +980,31 @@
       "valueStable": "مستقر",
       "valueGood": "جيد",
       "noSimilarCarsFound": "لم يتم العثور على سيارات مماثلة",
+      "confidencePercentLabel": "ثقة {n}%",
+      "marketAverageInCard": "متوسط السوق",
+      "estimateNotGuarantee": "هذا تقدير وليس ضمانًا لسعر بيع أو شراء.",
+      "lastUpdated": "التقدير بتاريخ",
+      "marketStatusCol": "الحالة",
+      "marketAverageExplainer": "يتم حساب متوسط السوق من سيارات مماثلة في السنة والمسافة والحالة تقريباً.",
+      "whatIfComparisonLabel": "مقارنة السعر",
+      "whatIfOldLabel": "القديم:",
+      "whatIfNewLabel": "الجديد:",
+      "whatIfChangeLabel": "التغيير:",
+      "whatIfHeroCaption": "التنبؤ المحدَّث (نفس النموذج)",
+      "gaugeExplainAbovePct": "سيارتك أعلى من متوسط السوق بحوالي {pct}%. جرّب التفاوض أو قارن مع سيارات مماثلة.",
+      "gaugeExplainBelowPct": "سيارتك دون متوسط السوق بحوالي {pct}% — غالبًا صفقة أفضل بعد التحقق من الحالة.",
+      "gaugeExplainFair": "التقدير قريب من متوسط السوق للقوائم المماثلة.",
+      "gaugeExplainGreatNoPct": "التقدير يبدو أفضل من القوائم النموذجية — ما زِل بحاجة للتحقق من الحالة وسجل الخدمة.",
+      "gaugeExplainAboveGeneric": "التقدير أعلى من المستوى النموذجي — قارن القوائم وتفاوض إن كنت تشتري.",
+      "priceHistoryTitle": "سجل الأسعار",
+      "historySummaryStable": "ظل السعر أكثر ثباتًا في آخر ست نقاط بيانات.",
+      "historySummaryUp": "النافذة الأخيرة تميل للصعود قليلًا — قد تكون القوائم ارتفعت.",
+      "historySummaryDown": "النقاط الأخيرة أنعوشًا نسبياً مقارنة بالأشهر السابقة.",
+      "historySummaryVolatile": "الحركة شهرًا بشهر غير منتظمة — قارِن القوائم قبل القرار.",
+      "historySixMonthNote": "يستخدم الرسم حتى ست نقاط شهرية الأخيرة من نتيجتك.",
+      "rangeBarCaption": "أدنى / تقدير / أعلى يوضّح نطاق ثقة النموذج؛ العلامة = تقديرك.",
+      "exportDescription": "انسخ أو صدّر PDF أو Excel أو شارك عبر واتساب أو مشاركة الجهاز.",
+      "exportHintBar": "على الهواتف توجد أيضًا اختصارات مشاركة في أسفل النتائج.",
       "noHistoricalData": "لا توجد بيانات تاريخية متاحة"
     },
     "loader": {
@@ -979,7 +1019,12 @@
       "msg3": "مقارنة ٦٢,٠٠٠+ قائمة في مجموعة التدريب...",
       "msg4": "حساب التقدير...",
       "footerModel": "النموذج نشط",
-      "footerData": "البيانات متصلة"
+      "footerData": "البيانات متصلة",
+      "step1": "جارٍ مقارنة سيارات مشابهة…",
+      "step2": "جارٍ تحليل أثر المسافة…",
+      "step3": "جارٍ مقارنة السوق المحلي…",
+      "step4": "جارٍ حساب التقدير النهائي…",
+      "skeletonCaption": "معاينة تخطيط التقييم"
     }
   },
   "batch": {
@@ -1212,8 +1257,11 @@
       "correctYear": "السنة الصحيحة",
       "correctPrice": "السعر الصحيح",
       "otherDetails": "تفاصيل أخرى",
-      "otherDetailsHint": "50-500 حرف",
+      "otherDetailsHint": "(10–500 حرفًا عند اختيار «أخرى»)",
       "otherDetailsPlaceholder": "يرجى وصف الخطأ...",
+      "realMarketPriceLabel": "أخبرنا بالسعر السوقي الفعلي إن كنت تعرفه",
+      "realMarketPricePlaceholder": "اختياري — بالدولار تقريبًا",
+      "realMarketPriceHint": "يساعدنا الرقم بتقوية النموذج — يمكن تركه فارغًا.",
       "characters": "حرف",
       "cancel": "إلغاء",
       "submit": "إرسال الملاحظات",
@@ -1228,10 +1276,11 @@
       },
       "errors": {
         "selectReason": "يرجى اختيار سبب واحد على الأقل",
-        "otherDetailsMin": "يرجى تقديم 50 حرفاً على الأقل",
+        "otherDetailsMin": "عند «أخرى» أضف عشرة أحرف على الأقل.",
         "otherDetailsMax": "الحد الأقصى 500 حرف",
         "correctMakeRequired": "يرجى تقديم الصانع الصحيح",
-        "correctModelRequired": "يرجى تقديم النموذج الصحيح"
+        "correctModelRequired": "يرجى تقديم النموذج الصحيح",
+        "invalidPrice": "أدخل رقمًا صالحًا موجبًا بالدولار."
       }
     },
     "history": {

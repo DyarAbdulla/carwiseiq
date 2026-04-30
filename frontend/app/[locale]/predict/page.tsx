@@ -555,15 +555,14 @@ function PredictPageContent() {
           muted
           playsInline
           preload="metadata"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: 'blur(4px)' }}
+          className="absolute inset-0 w-full h-full object-cover blur-sm md:blur-md"
         >
           <source src="/assets/predict-background.mp4" type="video/mp4" />
         </video>
         {/* Dark Overlay (35% opacity) */}
         <div className="absolute inset-0 bg-black/35"></div>
         {/* Additional blur overlay for better readability */}
-        <div className="absolute inset-0 backdrop-blur-[2px]"></div>
+        <div className="absolute inset-0 backdrop-blur-[1px] md:backdrop-blur-[2px]" />
       </div>
 
       {/* Two subtle fixed radial glows (indigo/violet at ~10% opacity, blur-3xl) - pulse during loading */}
@@ -595,9 +594,9 @@ function PredictPageContent() {
         ></motion.div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 md:py-10 overflow-visible">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 md:py-10 overflow-visible">
         {/* Main Content Grid - Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6">
+        <div className="grid grid-cols-1 w-full lg:grid-cols-12 gap-3 sm:gap-6">
           {!hydratedFromShare && (
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -606,7 +605,7 @@ function PredictPageContent() {
             className="lg:col-span-5 order-1"
           >
             <div className="sticky top-6 h-fit">
-              <div className="backdrop-blur-xl bg-black/40 border border-white/30 rounded-2xl shadow-2xl p-3 sm:p-6 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:border-white/40">
+              <div className="w-full max-md:backdrop-blur-md md:backdrop-blur-xl bg-black/40 border border-white/30 rounded-2xl shadow-2xl p-3 sm:p-6 transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:border-white/40">
                 <CompactWizardCard
                   onSubmit={handlePredict}
                   loading={loading}
@@ -801,7 +800,7 @@ function PredictPageContent() {
               >
                 {/* Smart Tips - Always visible when no prediction */}
                 <ErrorBoundary fallback={null}>
-                  <div className="backdrop-blur-xl bg-black/40 border border-white/30 rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:border-white/40">
+                  <div className="w-full max-md:backdrop-blur-md md:backdrop-blur-xl bg-black/40 border border-white/30 rounded-2xl shadow-2xl transition-all duration-300 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:border-white/40">
                     <SmartTips />
                   </div>
                 </ErrorBoundary>

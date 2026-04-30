@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { useTranslations, useLocale } from 'next-intl'
 import { safeText, safeNumber } from '@/lib/safeDisplay'
@@ -55,9 +56,11 @@ interface PriceRevealCardProps {
   result: PredictionResponse
   carFeatures: CarFeatures
   predictionId?: number
+  /** Desktop share/export actions (mobile uses floating bar) */
+  shareActions?: React.ReactNode
 }
 
-export function PriceRevealCard({ result, carFeatures, predictionId }: PriceRevealCardProps) {
+export function PriceRevealCard({ result, carFeatures, predictionId, shareActions }: PriceRevealCardProps) {
   const t = useTranslations('predict.result')
   const predicted = safeNumber(result.predicted_price, 0)
   const { displayValue, isAnimating } = useCountUp(predicted, 1500)
@@ -88,6 +91,8 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
 
   const luxuryNote =
     result.luxury_reference_note?.trim() || t('defaultLuxuryNote')
+
+  const marketAvg = result.market_comparison?.market_average
 
   useEffect(() => {
     if (!isAnimating && !confettiTriggered && displayValue === predicted) {
@@ -266,7 +271,7 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
             )}
           </motion.div>
 
-          <div className="mt-5 max-w-lg mx-auto text-left sm:text-center space-y-2">
+          <div className="mt-5 max-w-lg mx-auto text-left sm:text-center space-y-3">
             <p className="text-xs text-slate-500 flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
               <span className="text-slate-400">{t('rangeLow')}</span>
               <span className="font-mono text-slate-300">{formatCurrency(low)}</span>
@@ -291,6 +296,17 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
               />
             </div>
             <p className="text-[11px] text-slate-500">{t('rangeBarCaption')}</p>
+            {marketAvg != null && Number.isFinite(marketAvg) ? (
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-start sm:text-center">
+                <p className="text-xs text-slate-400">{t('marketAverageInCard')}</p>
+                <p className="text-lg font-semibold text-white tabular-nums mt-1">
+                  {formatCurrency(Math.round(marketAvg))}
+                </p>
+                <p className="text-[11px] text-slate-500 mt-2 leading-snug">{t('estimateNotGuarantee')}</p>
+              </div>
+            ) : (
+              <p className="text-[11px] text-slate-500 leading-snug">{t('estimateNotGuarantee')}</p>
+            )}
           </div>
         </div>
 
@@ -309,7 +325,7 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400">{t('confidenceScore')}</span>
               <span className="text-violet-300 font-semibold">
-                {t('confidenceAccurate', { n: Math.round(confidencePercent) })}
+                {t('confidencePercentLabel', { n: Math.round(confidencePercent) })}
               </span>
             </div>
             <div className="relative h-3 bg-white/5 rounded-full overflow-hidden border border-white/10">
@@ -322,6 +338,7 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
             </div>
           </div>
           <p className="text-center text-xs text-slate-500">
+            {t('lastUpdated')}{' '}
             {new Date().toLocaleDateString(locale === 'ku' || locale === 'ar' ? 'ar-IQ' : 'en-US', {
               year: 'numeric',
               month: 'long',
@@ -330,6 +347,12 @@ export function PriceRevealCard({ result, carFeatures, predictionId }: PriceReve
           </p>
         </motion.div>
       </div>
+
+      {shareActions ? (
+        <div className="mt-4 hidden md:flex md:flex-wrap md:items-center md:justify-center md:gap-3">
+          {shareActions}
+        </div>
+      ) : null}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

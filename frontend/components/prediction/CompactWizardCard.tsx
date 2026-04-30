@@ -54,9 +54,11 @@ const step1Schema = z.object({
   year: z.number().min(PREDICT_YEAR_MIN).max(PREDICT_YEAR_MAX),
 })
 
+const ENGINE_SIZE_MAX = 8.0
+
 const step2Schema = z.object({
   mileage: z.number().min(0).max(1000000),
-  engine_size: z.number({ required_error: "Engine size is required" }).min(0.5).max(16.0),
+  engine_size: z.number({ required_error: "Engine size is required" }).min(0.5).max(ENGINE_SIZE_MAX),
   cylinders: z.number().min(2).max(12),
   fuel_type: z.string().min(1),
 })
@@ -70,7 +72,7 @@ const step3Schema = z.object({
 const carFormSchema = z.object({
   year: z.number().min(PREDICT_YEAR_MIN).max(PREDICT_YEAR_MAX),
   mileage: z.number().min(0).max(1000000),
-  engine_size: z.number({ required_error: "Engine size is required" }).min(0.5).max(16.0),
+  engine_size: z.number({ required_error: "Engine size is required" }).min(0.5).max(ENGINE_SIZE_MAX),
   cylinders: z.number().min(2).max(12),
   make: z.string().min(1),
   model: z.string().min(1),
@@ -128,6 +130,8 @@ export function CompactWizardCard({
   const [loadingMetadata, setLoadingMetadata] = useState(false)
   const [loadingEngines, setLoadingEngines] = useState(false)
   const [loadingFuelTypes, setLoadingFuelTypes] = useState(false)
+  const [mileageFocused, setMileageFocused] = useState(false)
+  const [engineDefaultNote, setEngineDefaultNote] = useState(false)
 
   const yearOptions = useMemo(() => {
     const years: number[] = []
@@ -172,7 +176,15 @@ export function CompactWizardCard({
   const makeValue = form.watch('make')
   const modelValue = form.watch('model')
   const yearValue = form.watch('year')
+  const trimValue = form.watch('trim')
   const engineSizeValue = form.watch('engine_size')
+
+  const step1Preview = useMemo(() => {
+    if (!yearValue || !makeValue?.trim() || !modelValue?.trim()) return ''
+    const trimPart =
+      trimValue?.trim() && trims.length > 0 ? ` ${trimValue.trim()}` : ''
+    return `${yearValue} ${makeValue.trim()} ${modelValue.trim()}${trimPart}`.trim()
+  }, [yearValue, makeValue, modelValue, trimValue, trims.length])
 
   const debouncedMake = useDebounce(makeValue, 1000)
   const debouncedModel = useDebounce(modelValue, 1000)
@@ -481,7 +493,8 @@ export function CompactWizardCard({
         setAvailableEngines(deduped)
         setAllEngineSizes(deduped)
         if (deduped.length === 1 && deduped[0].size) {
-          form.setValue('engine_size', deduped[0].size, { shouldValidate: true })
+          const sz = Math.min(ENGINE_SIZE_MAX, Math.max(0.5, deduped[0].size))
+          form.setValue('engine_size', sz, { shouldValidate: true })
         }
       } else {
         setAvailableEngines(fallback)
@@ -512,17 +525,29 @@ export function CompactWizardCard({
   }
 
   const validateStep = async (step: number): Promise<boolean> => {
-    let schema
     const values = form.getValues()
 
     if (step === 1) {
-      schema = step1Schema
-    } else if (step === 2) {
-      schema = step2Schema
-    } else {
-      schema = step3Schema
+      try {
+        await step1Schema.parseAsync(values)
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          error.errors.forEach((err) => {
+            const field = err.path[0] as keyof CarFormValues
+            form.setError(field, { message: err.message })
+          })
+        }
+        return false
+      }
+      if (trims.length > 0 && (!values.trim || String(values.trim).trim() === '')) {
+        form.setError('trim', { message: t('trimRequired') })
+        return false
+      }
+      form.clearErrors('trim')
+      return true
     }
 
+    const schema = step === 2 ? step2Schema : step3Schema
     try {
       await schema.parseAsync(values)
       return true
@@ -585,11 +610,18 @@ export function CompactWizardCard({
   const isStepValid = () => {
     const values = form.getValues()
     if (currentStep === 1) {
-      return !!(values.make && values.model && values.year)
+      const trimOk = trims.length === 0 ? true : !!(values.trim && String(values.trim).trim() !== '')
+      return !!(values.make && values.model && values.year && trimOk)
     }
     if (currentStep === 2) {
       const mileageValid = typeof values.mileage === 'number' && !isNaN(values.mileage) && values.mileage >= 0
-      return !!(mileageValid && values.engine_size && values.cylinders && values.fuel_type)
+      const eng = values.engine_size
+      const engineValid =
+        typeof eng === 'number' &&
+        !isNaN(eng) &&
+        eng >= 0.5 &&
+        eng <= ENGINE_SIZE_MAX
+      return !!(mileageValid && engineValid && values.cylinders && values.fuel_type)
     }
     if (currentStep === 3) {
       return !!(values.condition && values.location)
@@ -717,6 +749,18 @@ export function CompactWizardCard({
                     updateModelsForMake(make, { resetModel: true })
                   }}
                 />
+                {step1Preview ? (
+                  <div
+                    className="rounded-xl border border-violet-500/30 bg-white/[0.06] px-3 py-2.5 text-center backdrop-blur-sm"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-violet-200/85">
+                      {t('selectedCarPreviewLabel')}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-white">{step1Preview}</p>
+                  </div>
+                ) : null}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <FieldTooltip content={FIELD_TOOLTIPS.make}>
@@ -754,7 +798,13 @@ export function CompactWizardCard({
                         setTrims([])
                       }}
                       options={models}
-                      placeholder={!selectedMake ? "Select make first" : models.length > 0 ? "Type to search models..." : "No models available"}
+                      placeholder={
+                        !selectedMake
+                          ? t('selectMakeFirst')
+                          : models.length > 0
+                            ? t('selectModelPlaceholder')
+                            : t('noModelsAvailable')
+                      }
                       disabled={!selectedMake || initialLoading}
                       emptyMessage={selectedMake ? `No models found for ${selectedMake}` : "Select a make first"}
                       searchPlaceholder="Type to search..."
@@ -775,8 +825,18 @@ export function CompactWizardCard({
                       }}
                       disabled={!selectedMake || !selectedModel || loadingTrims}
                     >
-                      <SelectTrigger className={`${form.formState.errors.trim ? 'border-red-500' : 'border-white/20'} bg-black/30 backdrop-blur-sm h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300`}>
-                        <SelectValue placeholder={loadingTrims ? t('loadingTrims') : selectedMake && selectedModel ? (trims.length > 0 ? t('selectTrim') : t('noTrimsAvailable')) : t('selectMakeModelFirst')} />
+                      <SelectTrigger className={`${form.formState.errors.trim ? 'border-red-500' : 'border-white/20'} bg-black/30 backdrop-blur-sm h-11 min-h-11 sm:h-10 sm:min-h-10 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300`}>
+                        <SelectValue
+                          placeholder={
+                            loadingTrims
+                              ? t('loadingTrims')
+                              : selectedMake && selectedModel
+                                ? trims.length > 0
+                                  ? t('selectTrimPlaceholder')
+                                  : t('noTrimsAvailable')
+                                : t('selectMakeModelFirst')
+                          }
+                        />
                       </SelectTrigger>
                       <SelectContent className="max-h-[300px] bg-[#1a1d29] border-[#2a2d3a]">
                         {loadingTrims ? (
@@ -799,6 +859,9 @@ export function CompactWizardCard({
                     {form.formState.errors.trim && (
                       <p className="text-sm text-red-400 mt-1">{form.formState.errors.trim.message}</p>
                     )}
+                    {trims.length > 0 ? (
+                      <p className="text-[11px] text-white/55">{t('trimRequiredHint')}</p>
+                    ) : null}
                   </div>
 
                   <div className="space-y-1.5 sm:col-span-2">
@@ -814,7 +877,7 @@ export function CompactWizardCard({
                     >
                       <SelectTrigger
                         id="year"
-                        className="border-white/20 bg-black/30 backdrop-blur-sm h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300"
+                        className="border-white/20 bg-black/30 backdrop-blur-sm h-11 min-h-11 sm:h-10 sm:min-h-10 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300"
                       >
                         <SelectValue placeholder={t('year')} />
                       </SelectTrigger>
@@ -826,6 +889,7 @@ export function CompactWizardCard({
                         ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-[11px] text-white/55 leading-snug">{t('yearAccuracyHint')}</p>
                   </div>
                 </div>
               </motion.div>
@@ -848,32 +912,63 @@ export function CompactWizardCard({
                     <Controller
                       name="mileage"
                       control={form.control}
-                      render={({ field }) => (
-                        <Input
-                          id="mileage"
-                          type="number"
-                          min={0}
-                          max={1000000}
-                          className="border-white/20 bg-black/30 backdrop-blur-sm text-white h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300"
-                          value={field.value === undefined || field.value === null ? '' : field.value}
-                          onChange={(e) => {
-                            const raw = e.target.value
-                            if (raw === '') {
-                              field.onChange(0)
-                              return
-                            }
-                            let n = parseFloat(raw)
-                            if (isNaN(n)) return
-                            if (n > 1000000) n = 1000000
-                            if (n < 0) n = 0
-                            field.onChange(Math.round(n))
-                          }}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
-                        />
-                      )}
+                      render={({ field }) => {
+                        const raw =
+                          typeof field.value === 'number' && !Number.isNaN(field.value)
+                            ? field.value
+                            : 0
+                        const display = mileageFocused
+                          ? raw === 0
+                            ? ''
+                            : String(raw)
+                          : `${raw.toLocaleString()} km`
+                        return (
+                          <Input
+                            id="mileage"
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="off"
+                            className="border-white/20 bg-black/30 backdrop-blur-sm text-white h-11 min-h-11 sm:h-10 sm:min-h-10 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300"
+                            aria-describedby="mileage-format-hint"
+                            value={display}
+                            onFocus={() => setMileageFocused(true)}
+                            onBlur={(e) => {
+                              setMileageFocused(false)
+                              field.onBlur()
+                              const digits = e.target.value.replace(/\D/g, '')
+                              const n =
+                                digits === ''
+                                  ? 0
+                                  : Math.min(1000000, Math.max(0, parseInt(digits, 10)))
+                              field.onChange(n)
+                              form.clearErrors('mileage')
+                            }}
+                            onChange={(e) => {
+                              const digits = e.target.value.replace(/\D/g, '')
+                              if (digits === '') {
+                                field.onChange(0)
+                                return
+                              }
+                              const n = Math.min(1000000, Math.max(0, parseInt(digits, 10)))
+                              field.onChange(n)
+                              if (n < 0) {
+                                form.setError('mileage', { message: t('mileageNegativeError') })
+                              } else {
+                                form.clearErrors('mileage')
+                              }
+                            }}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        )
+                      }}
                     />
+                    <p id="mileage-format-hint" className="text-[10px] text-white/45">
+                      {t('mileageFormatHint')}
+                    </p>
+                    {form.formState.errors.mileage && (
+                      <p className="text-sm text-red-400">{form.formState.errors.mileage.message}</p>
+                    )}
                   </div>
 
                   <div className="space-y-1.5">
@@ -892,18 +987,26 @@ export function CompactWizardCard({
                             type="number"
                             step={0.1}
                             min={0.5}
-                            max={16}
+                            max={ENGINE_SIZE_MAX}
                             list={engineDatalistId}
                             disabled={loadingEngines}
-                            placeholder={loadingEngines ? 'Loading…' : 'e.g. 2.0 or choose below'}
-                            className={`${form.formState.errors.engine_size ? 'border-red-500' : 'border-white/20'} bg-black/30 backdrop-blur-sm text-white h-9 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300`}
-                            value={field.value === undefined || field.value === null || isNaN(field.value) ? '' : field.value}
+                            placeholder={loadingEngines ? t('engineLoadingPlaceholder') : t('engineExamplePlaceholder')}
+                            className={`${form.formState.errors.engine_size ? 'border-red-500' : 'border-white/20'} bg-black/30 backdrop-blur-sm text-white h-11 min-h-11 sm:h-10 sm:min-h-10 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/50 focus:shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300`}
+                            value={
+                              field.value === undefined || field.value === null || Number.isNaN(field.value)
+                                ? ''
+                                : field.value
+                            }
                             onChange={(e) => {
                               const raw = e.target.value
+                              setEngineDefaultNote(false)
                               if (raw === '') return
                               const n = parseFloat(raw)
-                              if (isNaN(n)) return
-                              const clamped = Math.min(16, Math.max(0.5, Math.round(n * 10) / 10))
+                              if (Number.isNaN(n)) return
+                              const clamped = Math.min(
+                                ENGINE_SIZE_MAX,
+                                Math.max(0.5, Math.round(n * 10) / 10)
+                              )
                               field.onChange(clamped)
                               form.clearErrors('engine_size')
                             }}
@@ -912,16 +1015,36 @@ export function CompactWizardCard({
                             ref={field.ref}
                           />
                           <datalist id={engineDatalistId}>
-                            {(availableEngines.length > 0 ? availableEngines : allEngineSizes).map((eng) => (
+                            {(availableEngines.length > 0 ? availableEngines : allEngineSizes)
+                              .filter((eng) => eng.size <= ENGINE_SIZE_MAX)
+                              .map((eng) => (
                               <option key={`${eng.size}-${eng.display}`} value={eng.size} label={eng.display} />
                             ))}
                           </datalist>
                         </>
                       )}
                     />
-                    <p className="text-[10px] text-white/50 leading-tight">
-                      Choose a dataset size from suggestions or type any displacement in liters.
-                    </p>
+                    <p className="text-[10px] text-white/50 leading-tight">{t('engineLitersHint')}</p>
+                    <button
+                      type="button"
+                      className="text-[11px] font-medium text-violet-300/95 underline underline-offset-2 hover:text-violet-200"
+                      onClick={() => {
+                        const list =
+                          availableEngines.length > 0 ? availableEngines : allEngineSizes
+                        const capped = list.filter((e) => e.size <= ENGINE_SIZE_MAX && e.size >= 0.5)
+                        const pick =
+                          capped[Math.floor(capped.length / 2)] ??
+                          capped[0] ?? { size: 2 }
+                        form.setValue('engine_size', pick.size, { shouldValidate: true, shouldDirty: true })
+                        form.clearErrors('engine_size')
+                        setEngineDefaultNote(true)
+                      }}
+                    >
+                      {t('engineUnknownLink')}
+                    </button>
+                    {engineDefaultNote && (
+                      <p className="text-[10px] text-emerald-200/85">{t('engineDefaultApplied')}</p>
+                    )}
                     {form.formState.errors.engine_size && (
                       <p className="text-sm text-red-400 mt-1">{form.formState.errors.engine_size.message}</p>
                     )}
@@ -1052,7 +1175,13 @@ export function CompactWizardCard({
         </div>
 
         {/* Navigation Buttons */}
-        <div className="mt-4 pt-3 border-t border-white/10">
+        <div
+          className={cn(
+            'mt-4 pt-3 border-t border-white/10',
+            currentStep === 3 &&
+              'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-50 max-md:mt-0 max-md:border-t max-md:border-white/15 max-md:bg-zinc-950/95 max-md:px-4 max-md:pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] max-md:pt-3 max-md:backdrop-blur-md max-md:shadow-[0_-8px_32px_rgba(0,0,0,0.45)]'
+          )}
+        >
           {currentStep === 1 ? (
             <Button
               type="button"
@@ -1113,6 +1242,7 @@ export function CompactWizardCard({
             </div>
           )}
         </div>
+        {currentStep === 3 ? <div className="max-md:h-[5.75rem] max-md:shrink-0 md:hidden" aria-hidden /> : null}
       </form>
     </div>
   )

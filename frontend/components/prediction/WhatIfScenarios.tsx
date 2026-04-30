@@ -125,6 +125,10 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
     ? initialPrediction.predicted_price
     : (whatIfResult?.predicted_price ?? initialPrediction.predicted_price)
 
+  const baselinePriceRounded = Math.round(initialPrediction.predicted_price)
+  const updatedPriceRounded = Math.round(displayPrice)
+  const deltaRounded = updatedPriceRounded - baselinePriceRounded
+
   const conditionOptions = useMemo(() => {
     if (condition && !CONDITIONS.includes(condition)) {
       return [condition, ...CONDITIONS]
@@ -177,57 +181,72 @@ export function WhatIfScenarios({ initialFeatures, initialPrediction }: WhatIfSc
           </Select>
         </div>
 
-        <div className="pt-4 border-t border-[#2a2d3a] relative min-h-[120px]">
+        <div className="pt-4 border-t border-[#2a2d3a] relative min-h-[140px]">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
+            className="space-y-3"
           >
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <div className="flex items-center gap-2 min-w-0">
-                <Label className="text-[#94a3b8] text-sm">{t('whatIfUpdatedPrice')}</Label>
-                {loading && (
-                  <Loader2
-                    className="h-4 w-4 animate-spin text-violet-400 shrink-0"
-                    aria-label={t('whatIfRecalculating')}
-                  />
-                )}
-              </div>
-              {(() => {
-                const delta = displayPrice - initialPrediction.predicted_price
-                if (atBaseline || Math.abs(delta) < 0.5) return null
-                return (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={`flex items-center gap-1 text-sm font-semibold shrink-0 ${
-                      delta > 0 ? 'text-emerald-400' : 'text-red-400'
-                    }`}
-                    title="Change vs. your original prediction"
-                  >
-                    {delta > 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                    {delta > 0 ? '+' : '−'}
-                    {formatCurrency(Math.abs(delta))}
-                  </motion.div>
-                )
-              })()}
-            </div>
-            <div
-              className={`mt-2 transition-opacity ${loading ? 'opacity-80' : 'opacity-100'}`}
-            >
-              <motion.div
-                key={Math.round(displayPrice)}
-                initial={{ opacity: 0.92 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.15 }}
-                className="text-4xl sm:text-5xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 via-indigo-500 to-violet-500 bg-clip-text text-transparent"
-              >
-                {formatCurrency(Math.round(displayPrice))}
-              </motion.div>
-              {!atBaseline && loading && (
-                <p className="text-xs text-[#94a3b8] mt-2">{t('whatIfRecalculating')}</p>
+            <div className="flex items-center gap-2">
+              <Label className="text-[#94a3b8] text-sm">{t('whatIfComparisonLabel')}</Label>
+              {loading && !atBaseline && (
+                <Loader2
+                  className="h-4 w-4 animate-spin text-violet-400 shrink-0"
+                  aria-label={t('whatIfRecalculating')}
+                />
               )}
             </div>
+
+            <p className="text-base sm:text-lg text-white font-medium">
+              <span className="text-[#94a3b8] font-normal">{t('whatIfOldLabel')} </span>
+              <span className="tabular-nums">{formatCurrency(baselinePriceRounded)}</span>
+              <span className="text-[#94a3b8] mx-1.5">→</span>
+              <span className="text-[#94a3b8] font-normal">{t('whatIfNewLabel')} </span>
+              <motion.span
+                key={`${updatedPriceRounded}-${loading ? 'l' : 'i'}`}
+                initial={{ opacity: 0.85, y: 2 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className="tabular-nums bg-gradient-to-r from-indigo-300 to-violet-300 bg-clip-text text-transparent"
+              >
+                {formatCurrency(updatedPriceRounded)}
+              </motion.span>
+            </p>
+
+            {!atBaseline && (
+              <p
+                className={`text-sm font-semibold tabular-nums ${
+                  deltaRounded > 0 ? 'text-emerald-400' : deltaRounded < 0 ? 'text-red-400' : 'text-slate-400'
+                }`}
+              >
+                {t('whatIfChangeLabel')}{' '}
+                {deltaRounded > 0 ? '+' : deltaRounded < 0 ? '−' : ''}
+                {deltaRounded !== 0 ? formatCurrency(Math.abs(deltaRounded)) : formatCurrency(0)}
+                {deltaRounded > 0 ? (
+                  <TrendingUp className="inline h-4 w-4 ms-1 align-text-bottom" />
+                ) : deltaRounded < 0 ? (
+                  <TrendingDown className="inline h-4 w-4 ms-1 align-text-bottom" />
+                ) : null}
+              </p>
+            )}
+
+            <div className={`transition-opacity ${loading && !atBaseline ? 'opacity-75' : 'opacity-100'}`}>
+              <motion.div
+                key={updatedPriceRounded}
+                initial={{ opacity: 0.88, scale: 0.99 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.22 }}
+                className="text-3xl sm:text-4xl font-bold tracking-tight bg-gradient-to-r from-indigo-400 via-indigo-500 to-violet-500 bg-clip-text text-transparent"
+              >
+                {formatCurrency(updatedPriceRounded)}
+              </motion.div>
+              <p className="text-[11px] text-[#94a3b8] mt-1">{t('whatIfHeroCaption')}</p>
+            </div>
+
+            {!atBaseline && loading && (
+              <p className="text-xs text-violet-300/90">{t('whatIfRecalculating')}</p>
+            )}
           </motion.div>
         </div>
       </CardContent>

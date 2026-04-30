@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Star, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { ThumbsUp, ThumbsDown } from 'lucide-react'
 import {
   cn,
   normalizeConfidencePercentForDisplay,
@@ -74,23 +74,6 @@ export function FeedbackPrompt({
     }
   }
 
-  const handleStarClick = async (starRating: number) => {
-    setRating(starRating)
-    setIsAccurate(starRating >= 4)
-
-    if (starRating < 4) {
-      // Show detailed modal for low ratings
-      setShowDetailedModal(true)
-    } else {
-      // Submit quick positive feedback
-      await submitFeedback({
-        rating: starRating,
-        is_accurate: true,
-        feedback_type: 'accurate'
-      })
-    }
-  }
-
   const submitFeedback = async (feedback: {
     rating?: number
     is_accurate?: boolean
@@ -105,29 +88,30 @@ export function FeedbackPrompt({
     try {
       setSubmitting(true)
       setError(null)
-      
-      console.log('Submitting feedback:', { prediction_id: predictionId, ...feedback })
-      
-      const result = await apiClient.submitFeedback({
+
+      await apiClient.submitFeedback({
         prediction_id: predictionId,
         ...feedback,
-        feedback_type: (feedback.feedback_type === 'accurate' || feedback.feedback_type === 'inaccurate' || feedback.feedback_type === 'partial' ? feedback.feedback_type : undefined),
+        feedback_type:
+          feedback.feedback_type === 'accurate' ||
+          feedback.feedback_type === 'inaccurate' ||
+          feedback.feedback_type === 'partial'
+            ? feedback.feedback_type
+            : undefined,
       })
 
-      console.log('Feedback submitted successfully:', result)
-      
       setFeedbackSubmitted(true)
-      
+
       toast({ title: 'Thank you!', description: 'Your feedback helps us improve.', variant: 'default' })
-      
+
       if (onFeedbackSubmitted) {
         onFeedbackSubmitted()
       }
-    } catch (error: any) {
-      console.error('Error submitting feedback:', error)
-      const errorMessage = error?.message || 'Sorry, couldn\'t save feedback. Please try again.'
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Sorry, couldn't save feedback. Please try again."
       setError(errorMessage)
-      
+
       toast({ title: 'Error', description: errorMessage, variant: 'destructive' })
     } finally {
       setSubmitting(false)
@@ -180,33 +164,6 @@ export function FeedbackPrompt({
             <span className="text-lg font-semibold text-[#5B7FFF]">
               {confidenceScore}%
             </span>
-          </div>
-
-          {/* Star Rating */}
-          <div className="space-y-2">
-            <p className="text-sm text-[#94a3b8]">{t('starRating')}</p>
-            <div className="flex gap-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onClick={() => handleStarClick(star)}
-                  disabled={submitting}
-                  className={cn(
-                    "transition-all duration-200 hover:scale-110",
-                    rating && rating >= star
-                      ? "text-yellow-400"
-                      : "text-[#2a2d3a] hover:text-yellow-400/50"
-                  )}
-                >
-                  <Star
-                    className={cn(
-                      "h-8 w-8",
-                      rating && rating >= star ? "fill-current" : ""
-                    )}
-                  />
-                </button>
-              ))}
-            </div>
           </div>
 
           {/* Quick Feedback Buttons */}

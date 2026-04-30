@@ -858,7 +858,22 @@
       "selectMakeModelFirst": "پێش هەموو شتێک دروستکەر و مۆدێل هەڵبژێرە",
       "loadingTrims": "بارکردنی قەبارەکان...",
       "vehicleDetails": "وردەکارییەکانی ئۆتۆمبێل",
-      "vehicleDetailsDesc": "با بە بنەڕەتەکان دەستپێبکەین."
+      "vehicleDetailsDesc": "با بە بنەڕەتەکان دەستپێبکەین.",
+      "trimRequired": "تکایە قەبارە هەڵبژێرە.",
+      "selectedCarPreviewLabel": "ئۆتۆمبێلی هەڵبژێردراو",
+      "selectModelPlaceholder": "مۆدێل هەڵبژێرە",
+      "selectTrimPlaceholder": "قەبارە هەڵبژێرە",
+      "selectMakeFirst": "پێش هەموو شتێک دروستکەر هەڵبژێرە",
+      "noModelsAvailable": "هیچ مۆدێلێک نییە",
+      "yearAccuracyHint": "ساڵەکەی مۆدێل بە وردەکاری هەڵبژێرە بۆ وردی زیاتر.",
+      "trimRequiredHint": "کاتێک قەبارەکان هەن، بە نزیکیترین بۆ ئۆتۆمبێلەکەت دیاریان بکە.",
+      "mileageFormatHint": "دوور وخە بە کیلۆمەتر؛ شێوەپێدان خۆکارە.",
+      "mileageNegativeError": "مەودا منفی نابێت.",
+      "engineExamplePlaceholder": "نموونە: 2.5",
+      "engineLoadingPlaceholder": "بارکردن...",
+      "engineLitersHint": "قەبارەی بزوێنەر واتا لیت، وەک 1.6 یان 2.0 یان 2.5.",
+      "engineUnknownLink": "زانیاریم نییە لە قەبارەی بزوێنەر",
+      "engineDefaultApplied": "قەبارەیەکی بۆچوونی بۆ ئەم مۆدێلە بەکارهێنرا — دەتوانیت بگۆڕیت."
     },
     "loading": {
       "predicting": "پێشبینی نرخ...",
@@ -965,6 +980,31 @@
       "valueStable": "جێگیر",
       "valueGood": "باش",
       "noSimilarCarsFound": "هیچ ئۆتۆمبێلی هاوشێوە نەدۆزرایەوە",
+      "confidencePercentLabel": "{n}% دڵنیا بوون",
+      "marketAverageInCard": "ناوەندی بازاڕ",
+      "estimateNotGuarantee": "ئەمە تەنها تێزینەکانە، ڕێشنە نرخی دڵنیای کڕین/فرۆشتن.",
+      "lastUpdated": "تێزین بۆ بەرواری",
+      "marketStatusCol": "دۆخ",
+      "marketAverageExplainer": "ناوەندی بازاڕ لە ئۆتۆمبێلە هاوشێوەکان وەردەگیرێت (ساڵ، مەودا، دۆخی نزیک).",
+      "whatIfComparisonLabel": "بەراوردی نرخ",
+      "whatIfOldLabel": "پێشتر:",
+      "whatIfNewLabel": "نوێ:",
+      "whatIfChangeLabel": "گۆڕانکاری:",
+      "whatIfHeroCaption": "تێزی نوێکراوەتەوە (هەمان مۆدێل)",
+      "gaugeExplainAbovePct": "نزیکەی {pct}% لەناوەندی بازاڕ بەرزترە، ڕێککەوتن بکە یان بەرامبەر بەراورد بدەیت.",
+      "gaugeExplainBelowPct": "نزیکەی {pct}% لەژێر ناوەند، زۆرجار دەستخۆش دەبێت بەڵام دڵنیابەوە لە ڕاستیەکانی ماشێن.",
+      "gaugeExplainFair": "نزیک بە ناوەندی بازایە بۆ هاوتا.",
+      "gaugeExplainGreatNoPct": "لە بازاڕ خۆڕاتەر دەردەکەوێت؛ هەر دۆخ و مێژووش بپشکنە.",
+      "gaugeExplainAboveGeneric": "لەسەر ئاستی بازاڕی زۆرەکانە؛ بەراوەربیگرە بۆ کڕین.",
+      "priceHistoryTitle": "مێژووی نرخ",
+      "historySummaryStable": "لە شەش خاڵەی کۆتا نزیکەکان، نرخ زۆرجار جێگیر بوو.",
+      "historySummaryUp": "هەدووای نزیکەکان بەرەوە، لەوانەیە نرخ بەرزی بێت.",
+      "historySummaryDown": "دوایین خانەکان نەرمترن، کەمکردنەوە بچووکیان هەیە.",
+      "historySummaryVolatile": "هە مانگ بۆ مانگ ڕێڕەو نایاساییە — دەست بسوڕێنەوە پێش بڕیار.",
+      "historySixMonthNote": "نەخشە تا شەش مانگی داتای کەمتر دەکات بۆ ئەم ئەنجامە.",
+      "rangeBarCaption": "کەم/تێزین/زۆر مەودای دڵنیايی پیشان دەدات؛ تاگ نرخی تۆیە.",
+      "exportDescription": "لەبەرگرتەوە، PDF، Excel یان بە واتسئاپ یان کارپێکردنی دەزگەکەت هاوبەشی بکە.",
+      "exportHintBar": "لە تەلەفۆنیشدا، خوارەوە کورتکردنەوەکان هەن.",
       "noHistoricalData": "هیچ داتای مێژوویی بەردەست نییە"
     },
     "loader": {
@@ -979,7 +1019,12 @@
       "msg3": "بەراوردکردن لەگەڵ ٦٢،٠٠٠+ لیستی ڕاهێنان...",
       "msg4": "خەمڵاندن...",
       "footerModel": "مۆدێل چالاکە",
-      "footerData": "داتاسێت پەیوەندیدارە"
+      "footerData": "داتاسێت پەیوەندیدارە",
+      "step1": "پشکنینی ئۆتۆمبێلە هاوشێوەکان...",
+      "step2": "شیکاری کاریگەری مەودا...",
+      "step3": "بەراوردی بازاڕی هەرێمە...",
+      "step4": "حیسابکردنی ئەخرەین تێزین...",
+      "skeletonCaption": "پێشبینی دیزاینی نەتەوە"
     }
   },
   "batch": {
@@ -1212,8 +1257,11 @@
       "correctYear": "ساڵی دروست",
       "correctPrice": "نرخی دروست",
       "otherDetails": "وردەکارییەکانی تر",
-      "otherDetailsHint": "50-500 پیت",
+      "otherDetailsHint": "(١٠–٥٠٠ پیت ئەگەر «هەڵەی تر» دیاری کرد)",
       "otherDetailsPlaceholder": "تکایە باسی هەڵەکە بکە...",
+      "realMarketPriceLabel": "ئەگەر دەزنیت نرخی ڕاستی بازاڕ چەندە بنووسە",
+      "realMarketPricePlaceholder": "(ئارەزوومەندانە — بە USD)",
+      "realMarketPriceHint": "USD یارمەتی مۆدێڵ دەدات؛ بەتاڵ بنێرە ئەگەر نازانیت.",
       "characters": "پیت",
       "cancel": "هەڵوەشاندنەوە",
       "submit": "ناردنی هەڵسەنگاندن",
@@ -1228,10 +1276,11 @@
       },
       "errors": {
         "selectReason": "تکایە لانیکەم یەک هۆکار هەڵبژێرە",
-        "otherDetailsMin": "تکایە لانیکەم 50 پیت بنووسە",
+        "otherDetailsMin": "«هەڵەی تر»: لانیکەم ١٠ پیت.",
         "otherDetailsMax": "زۆرترین 500 پیت ڕێگەپێدراوە",
         "correctMakeRequired": "تکایە دروستکەری دروست بنووسە",
-        "correctModelRequired": "تکایە مۆدێلی دروست بنووسە"
+        "correctModelRequired": "تکایە مۆدێلی دروست بنووسە",
+        "invalidPrice": "ژمارەیەکی ڕاست و ئەرێنی بنووسە."
       }
     },
     "history": {

@@ -23,7 +23,7 @@ interface ShareExportMenuProps {
   carFeatures: CarFeatures
   showPdfExport?: boolean
   /** Compact trigger for bottom share bar */
-  variant?: 'default' | 'bar'
+  variant?: 'default' | 'bar' | 'embedded'
 }
 
 export function ShareExportMenu({
@@ -171,6 +171,8 @@ export function ShareExportMenu({
   const triggerClass =
     variant === 'bar'
       ? 'h-9 px-3 border-violet-500/40 bg-violet-600/20 hover:bg-violet-500/30 text-white rounded-xl text-sm'
+      : variant === 'embedded'
+        ? 'h-10 px-4 border-violet-500/40 bg-gradient-to-r from-indigo-600/25 to-violet-600/25 hover:from-indigo-500/35 hover:to-violet-500/35 text-white rounded-xl text-sm shadow-md shadow-violet-900/20'
       : 'w-full sm:w-auto border-[#2a2d3a] bg-transparent hover:bg-[#2a2d3a] text-white hover:text-white'
 
   return (

@@ -11,6 +11,7 @@ const SmartDealAnalyst = lazy(() => import('./SmartDealAnalyst').then((m) => ({ 
 const InsightsTabs = lazy(() => import('./InsightsTabs').then((m) => ({ default: m.InsightsTabs })))
 const FeedbackPrompt = lazy(() => import('./FeedbackPrompt').then((m) => ({ default: m.FeedbackPrompt })))
 const AIImprovementBanner = lazy(() => import('./AIImprovementBanner').then((m) => ({ default: m.AIImprovementBanner })))
+const ShareExportMenu = lazy(() => import('./ShareExportMenu').then((m) => ({ default: m.ShareExportMenu })))
 
 interface PredictionResultProps {
   result: PredictionResponse
@@ -54,7 +55,7 @@ export function PredictionResult({ result, carFeatures, onUpdate, predictionId }
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-6 max-md:pb-[11.5rem] md:pb-32"
+        className="space-y-6 max-md:pb-24 md:pb-32"
         id="prediction-results"
       >
         <motion.div variants={itemVariants}>
@@ -63,6 +64,16 @@ export function PredictionResult({ result, carFeatures, onUpdate, predictionId }
               result={result}
               carFeatures={carFeatures}
               predictionId={predictionId}
+              shareActions={
+                <Suspense fallback={<Skeleton className="h-10 w-48 mx-auto rounded-lg" />}>
+                  <ShareExportMenu
+                    result={result}
+                    carFeatures={carFeatures}
+                    showPdfExport
+                    variant="embedded"
+                  />
+                </Suspense>
+              }
             />
           </Suspense>
         </motion.div>

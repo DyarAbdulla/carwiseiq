@@ -101,25 +101,12 @@ function BrandLogoButton({
   const [imgFailed, setImgFailed] = useState(false)
   const url = getLogoUrl(make)
   const showLetter = !url || imgFailed
-  const isMonogramAsset =
-    make === 'Lexus' ||
-    make === 'Dodge' ||
-    make === 'Genesis' ||
-    make === 'Buick' ||
-    make === 'Gmc' ||
-    make === 'Lincoln' ||
-    make === 'Byd' ||
-    make === 'Chery' ||
-    make === 'Geely' ||
-    make === 'Haval' ||
-    make === 'Jetour' ||
-    make === 'Changan'
 
   return (
     <button
       type="button"
       onClick={() => onSelect(make)}
-      className={`flex flex-col items-center gap-1 p-2 rounded-xl border min-w-[68px] flex-shrink-0
+      className={`flex flex-col items-center gap-1 p-2 rounded-xl border min-w-[72px] max-w-[92px] flex-shrink-0
         transition-all duration-200 cursor-pointer
         ${
           selected
@@ -135,15 +122,13 @@ function BrandLogoButton({
         <img
           src={url}
           alt=""
-          className={
-            isMonogramAsset
-              ? 'w-9 h-9 object-contain opacity-95'
-              : 'w-9 h-9 object-contain brightness-0 invert opacity-90'
-          }
+          className="w-9 h-9 object-contain brightness-0 invert opacity-90"
           onError={() => setImgFailed(true)}
         />
       )}
-      <span className="text-[10px] text-white/60 whitespace-nowrap text-center leading-tight">{make}</span>
+      <span className="text-[10px] text-white/60 text-center leading-tight line-clamp-2 break-words w-full px-0.5">
+        {make}
+      </span>
     </button>
   )
 }

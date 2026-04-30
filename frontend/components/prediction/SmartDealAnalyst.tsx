@@ -79,6 +79,22 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
     return t('dealLabelFair')
   }, [result.deal_score?.label, dealStatus, t])
 
+  const gaugeExplanation = useMemo(() => {
+    if (pd != null && Number.isFinite(pd)) {
+      const rounded = Math.min(999, Math.round(Math.abs(pd)))
+      if (pd >= 5) {
+        return t('gaugeExplainAbovePct', { pct: rounded })
+      }
+      if (pd <= -5) {
+        return t('gaugeExplainBelowPct', { pct: rounded })
+      }
+      return t('gaugeExplainFair')
+    }
+    if (dealStatus === 'great') return t('gaugeExplainGreatNoPct')
+    if (dealStatus === 'above') return t('gaugeExplainAboveGeneric')
+    return t('gaugeExplainFair')
+  }, [pd, dealStatus, t])
+
   const proTipText = useMemo(() => {
     if (dealStatus === 'above' && pd != null) {
       return t('proTipAbove', {
@@ -226,7 +242,7 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
               <span className="text-xs sm:text-sm text-sky-400 font-medium">{gaugeLabels.mid}</span>
               <span className="text-xs sm:text-sm text-amber-400 font-medium">{gaugeLabels.right}</span>
             </div>
-            <div className="mt-4 text-center">
+            <div className="mt-4 text-center space-y-2">
               <span
                 className={cn(
                   'inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium',
@@ -240,6 +256,9 @@ export function SmartDealAnalyst({ result }: SmartDealAnalystProps) {
                 {dealStatus === 'above' && '⚠ '}
                 {badgeLabel}
               </span>
+              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-md mx-auto px-1">
+                {gaugeExplanation}
+              </p>
             </div>
           </div>
         </div>

@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { apiClient } from '@/lib/api'
-import { CAR_MAKES } from '@/lib/constants'
+import { CAR_MAKES, PREDICT_YEAR_MAX, PREDICT_YEAR_MIN } from '@/lib/constants'
 
 interface DetailedFeedbackModalProps {
   open: boolean
@@ -59,7 +59,7 @@ export function DetailedFeedbackModal({
   onClose,
   onSubmit,
   carFeatures,
-  predictedPrice
+  predictedPrice,
 }: DetailedFeedbackModalProps) {
   const t = useTranslations('feedback.detailed')
   const [selectedReasons, setSelectedReasons] = useState<string[]>([])
@@ -67,7 +67,7 @@ export function DetailedFeedbackModal({
   const [correctMake, setCorrectMake] = useState('')
   const [correctModel, setCorrectModel] = useState('')
   const [correctYear, setCorrectYear] = useState<number | undefined>()
-  const [correctPrice, setCorrectPrice] = useState<number | undefined>()
+  const [realMarketPriceText, setRealMarketPriceText] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Load makes and models for dropdowns
@@ -144,31 +144,18 @@ export function DetailedFeedbackModal({
   const handleSubmit = () => {
     const newErrors: Record<string, string> = {}
 
-    // Validate at least one reason is selected
     if (selectedReasons.length === 0) {
       newErrors.reasons = t('errors.selectReason')
     }
 
-    // Validate "Other" details if "Other" is selected
     if (selectedReasons.includes('other')) {
-      if (!otherDetails || otherDetails.length < 50) {
+      if (!otherDetails || otherDetails.length < 10) {
         newErrors.otherDetails = t('errors.otherDetailsMin')
       } else if (otherDetails.length > 500) {
         newErrors.otherDetails = t('errors.otherDetailsMax')
       }
     }
 
-    // Validate "What should it have been?" - required when any reason is selected
-    if (selectedReasons.length > 0) {
-      if (!correctMake.trim()) {
-        newErrors.correctMake = t('errors.correctMakeRequired')
-      }
-      if (!correctModel.trim()) {
-        newErrors.correctModel = t('errors.correctModelRequired')
-      }
-    }
-
-    // Additional validation for specific reasons
     if (selectedReasons.includes('wrong_make') && !correctMake.trim()) {
       newErrors.correctMake = t('errors.correctMakeRequired')
     }
@@ -176,32 +163,51 @@ export function DetailedFeedbackModal({
       newErrors.correctModel = t('errors.correctModelRequired')
     }
 
+    let parsedReal: number | undefined
+    const rawKnown = realMarketPriceText.trim().replace(/[$,]/g, '')
+    if (rawKnown !== '') {
+      const n = parseFloat(rawKnown)
+      if (!Number.isFinite(n) || n <= 0) {
+        newErrors.realMarketPrice = t('errors.invalidPrice')
+      } else {
+        parsedReal = n
+      }
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       return
     }
+
+    const mergedPrice = parsedReal
 
     onSubmit({
       feedback_reasons: selectedReasons,
       correct_make: correctMake.trim() || undefined,
       correct_model: correctModel.trim() || undefined,
       correct_year: correctYear,
-      correct_price: correctPrice,
-      other_details: otherDetails.trim() || undefined
+      correct_price: mergedPrice,
+      other_details: otherDetails.trim() || undefined,
     })
 
-    // Reset form
     setSelectedReasons([])
     setOtherDetails('')
     setCorrectMake('')
     setCorrectModel('')
     setCorrectYear(undefined)
-    setCorrectPrice(undefined)
+    setRealMarketPriceText('')
     setErrors({})
   }
 
+  const showMakeModelCorrection =
+    selectedReasons.includes('wrong_make') || selectedReasons.includes('wrong_model')
+
+  const handleDialogOpenChange = (next: boolean) => {
+    if (!next) onClose()
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#1a1d29] border-[#2a2d3a] text-white">
         <DialogHeader>
           <DialogTitle className="text-xl">{t('title')}</DialogTitle>
@@ -240,20 +246,48 @@ export function DetailedFeedbackModal({
             )}
           </div>
 
-          {/* What should it have been? - Always shown when any reason is selected */}
-          {selectedReasons.length > 0 && (
-            <div className="space-y-4 p-4 bg-[#2a2d3a] rounded-lg border border-[#3a3d4a]">
-              <Label className="text-base font-medium text-white">
-                {t('whatShouldItHaveBeen')} <span className="text-red-500">*</span>
-              </Label>
-              <p className="text-sm text-[#94a3b8] mb-4">
-                {t('whatShouldItHaveBeenDesc')}
+          <div className="space-y-2">
+            <Label htmlFor="real_market_price" className="text-sm font-medium text-white">
+              {t('realMarketPriceLabel')}
+            </Label>
+            <Input
+              id="real_market_price"
+              type="text"
+              inputMode="decimal"
+              value={realMarketPriceText}
+              onChange={(e) => {
+                setRealMarketPriceText(e.target.value)
+                if (errors.realMarketPrice) {
+                  setErrors((prev) => ({ ...prev, realMarketPrice: '' }))
+                }
+              }}
+              placeholder={t('realMarketPricePlaceholder')}
+              className="bg-[#1a1d29] border-[#2a2d3a] text-white"
+              autoComplete="off"
+            />
+            {errors.realMarketPrice ? (
+              <p className="text-sm text-red-500 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {errors.realMarketPrice}
               </p>
+            ) : (
+              <p className="text-xs text-[#94a3b8]">{t('realMarketPriceHint')}</p>
+            )}
+          </div>
 
-              {/* Correct Make - Dropdown */}
+          {selectedReasons.length > 0 && showMakeModelCorrection ? (
+            <div className="space-y-4 p-4 bg-[#2a2d3a] rounded-lg border border-[#3a3d4a]">
+              <Label className="text-base font-medium text-white">{t('whatShouldItHaveBeen')}</Label>
+              <p className="text-sm text-[#94a3b8]">{t('whatShouldItHaveBeenDesc')}</p>
+
               <div className="space-y-2">
                 <Label htmlFor="correct_make" className="text-sm font-medium">
-                  {t('correctMake')} <span className="text-red-500">*</span>
+                  {t('correctMake')}{' '}
+                  {selectedReasons.includes('wrong_make') ? (
+                    <span className="text-red-500">*</span>
+                  ) : (
+                    <span className="text-[#94a3b8] text-xs">(optional)</span>
+                  )}
                 </Label>
                 {loadingMakes ? (
                   <div className="text-sm text-[#94a3b8]">Loading makes...</div>
@@ -262,9 +296,9 @@ export function DetailedFeedbackModal({
                     value={correctMake || undefined}
                     onValueChange={(value) => {
                       setCorrectMake(value)
-                      setCorrectModel('') // Clear model when make changes
+                      setCorrectModel('')
                       if (errors.correctMake) {
-                        setErrors(prev => ({ ...prev, correctMake: '' }))
+                        setErrors((prev) => ({ ...prev, correctMake: '' }))
                       }
                     }}
                   >
@@ -273,7 +307,7 @@ export function DetailedFeedbackModal({
                     </SelectTrigger>
                     <SelectContent className="max-h-[60vh] overflow-y-auto bg-[#1a1d29] border-[#2a2d3a] z-[1200]">
                       {makes.length > 0 ? (
-                        (makes || []).map((make) => (
+                        makes.map((make) => (
                           <SelectItem
                             key={make}
                             value={make}
@@ -288,19 +322,23 @@ export function DetailedFeedbackModal({
                     </SelectContent>
                   </Select>
                 )}
-                {errors.correctMake && (
+                {errors.correctMake ? (
                   <p className="text-sm text-red-500 flex items-center gap-1">
                     <AlertCircle className="h-4 w-4" />
                     {errors.correctMake}
                   </p>
-                )}
+                ) : null}
               </div>
 
-              {/* Correct Model - Dropdown (only shown when make is selected) */}
-              {correctMake && (
+              {correctMake ? (
                 <div className="space-y-2">
                   <Label htmlFor="correct_model" className="text-sm font-medium">
-                    {t('correctModel')} <span className="text-red-500">*</span>
+                    {t('correctModel')}{' '}
+                    {selectedReasons.includes('wrong_model') ? (
+                      <span className="text-red-500">*</span>
+                    ) : (
+                      <span className="text-[#94a3b8] text-xs">(optional)</span>
+                    )}
                   </Label>
                   {availableModels.length > 0 ? (
                     <Select
@@ -308,7 +346,7 @@ export function DetailedFeedbackModal({
                       onValueChange={(value) => {
                         setCorrectModel(value)
                         if (errors.correctModel) {
-                          setErrors(prev => ({ ...prev, correctModel: '' }))
+                          setErrors((prev) => ({ ...prev, correctModel: '' }))
                         }
                       }}
                     >
@@ -334,24 +372,23 @@ export function DetailedFeedbackModal({
                       onChange={(e) => {
                         setCorrectModel(e.target.value)
                         if (errors.correctModel) {
-                          setErrors(prev => ({ ...prev, correctModel: '' }))
+                          setErrors((prev) => ({ ...prev, correctModel: '' }))
                         }
                       }}
                       placeholder={`Enter model (current: ${carFeatures.model})`}
                       className="bg-[#1a1d29] border-[#2a2d3a] text-white"
                     />
                   )}
-                  {errors.correctModel && (
+                  {errors.correctModel ? (
                     <p className="text-sm text-red-500 flex items-center gap-1">
                       <AlertCircle className="h-4 w-4" />
                       {errors.correctModel}
                     </p>
-                  )}
+                  ) : null}
                 </div>
-              )}
+              ) : null}
 
-              {/* Optional: Correct Year */}
-              {selectedReasons.includes('wrong_year') && (
+              {selectedReasons.includes('wrong_year') ? (
                 <div className="space-y-2">
                   <Label htmlFor="correct_year" className="text-sm font-medium">
                     {t('correctYear')} <span className="text-[#94a3b8] text-xs">(optional)</span>
@@ -360,36 +397,18 @@ export function DetailedFeedbackModal({
                     id="correct_year"
                     type="number"
                     value={correctYear || ''}
-                    onChange={(e) => setCorrectYear(e.target.value ? parseInt(e.target.value) : undefined)}
+                    onChange={(e) =>
+                      setCorrectYear(e.target.value ? parseInt(e.target.value, 10) : undefined)
+                    }
                     placeholder={`Enter year (current: ${carFeatures.year})`}
-                    min="1900"
-                    max="2025"
+                    min={PREDICT_YEAR_MIN}
+                    max={PREDICT_YEAR_MAX}
                     className="bg-[#1a1d29] border-[#2a2d3a] text-white"
                   />
                 </div>
-              )}
-
-              {/* Optional: Correct Price */}
-              {(selectedReasons.includes('price_too_high') ||
-                selectedReasons.includes('price_too_low')) && (
-                  <div className="space-y-2">
-                    <Label htmlFor="correct_price" className="text-sm font-medium">
-                      {t('correctPrice')} <span className="text-[#94a3b8] text-xs">(optional)</span>
-                    </Label>
-                    <Input
-                      id="correct_price"
-                      type="number"
-                      value={correctPrice || ''}
-                      onChange={(e) => setCorrectPrice(e.target.value ? parseFloat(e.target.value) : undefined)}
-                      placeholder={`Enter price (predicted: ${predictedPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })})`}
-                      min="0"
-                      step="100"
-                      className="bg-[#1a1d29] border-[#2a2d3a] text-white"
-                    />
-                  </div>
-                )}
+              ) : null}
             </div>
-          )}
+          ) : null}
 
           {/* Other Details */}
           {selectedReasons.includes('other') && (

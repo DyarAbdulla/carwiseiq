@@ -150,7 +150,7 @@ export function InsightsTabs({ result, carFeatures, onUpdate }: InsightsTabsProp
           <Card className="border-[#2a2d3a] bg-[#1a1d29] p-6">
             <h3 className="text-lg font-semibold text-white mb-4">{t('exportShareOptions')}</h3>
             <Suspense fallback={<Skeleton className="h-10 w-full" />}>
-              <ShareExportMenu result={result} carFeatures={carFeatures} showPdfExport={false} />
+              <ShareExportMenu result={result} carFeatures={carFeatures} showPdfExport />
             </Suspense>
             <p className="text-sm text-[#94a3b8] mt-4">{t('exportDescription')}</p>
             <p className="text-xs text-violet-300/80 mt-2">{t('exportHintBar')}</p>
