@@ -38,7 +38,7 @@ export function popularMarketModelImagePath(make: string, model: string): string
   const map: Record<string, string> = {
     'toyota|camry': '/images/cars/popular/toyota_camry.jpg',
     'toyota|corolla': '/images/cars/popular/toyota_corolla.webp',
-    'hyundai|sonata': '/images/cars/popular/hyundai_sonata.jpg',
+    'hyundai|sonata': '/images/cars/popular/hyundai_sonata_v2.jpg',
     'hyundai|elantra': '/images/cars/popular/hyundai_elantra.webp',
     'kia|optima': '/images/cars/popular/kia_optima.jpg',
     'kia|cerato': '/images/cars/popular/kia_cerato.jpg',
