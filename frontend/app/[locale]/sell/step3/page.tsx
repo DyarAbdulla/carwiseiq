@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { Input } from "@/components/ui/input"
@@ -41,6 +41,8 @@ import { useSellWizard } from "@/context/SellWizardContext"
 import type { WizardCarDetails } from "@/context/SellWizardContext"
 import { suggestMakes, suggestModels } from "@/lib/carMakeModelHints"
 import { SellWizardFooter } from "@/components/sell/SellWizardFooter"
+import BrandLogoGrid from "@/components/ui/BrandLogoGrid"
+import { apiClient } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 const IQD_PER_USD = 1320
@@ -172,10 +174,27 @@ export default function SellStep3Page() {
 
   const [form, setForm] = useState<WizardCarDetails>(() => normalizeCarDetails(null))
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [datasetMakes, setDatasetMakes] = useState<string[]>([])
 
   useEffect(() => {
     if (carDetails) setForm(normalizeCarDetails(carDetails))
   }, [carDetails])
+
+  useEffect(() => {
+    void apiClient
+      .getMakes()
+      .then((list) => setDatasetMakes(Array.isArray(list) ? list : []))
+      .catch(() => {})
+  }, [])
+
+  const clearError = useCallback((field: string) => {
+    setErrors((e) => {
+      if (!(field in e)) return e
+      const next = { ...e }
+      delete next[field]
+      return next
+    })
+  }, [])
 
   const makeHints = useMemo(() => suggestMakes(form.make, 12), [form.make])
   const modelHints = useMemo(() => suggestModels(form.make, form.model, 14), [form.make, form.model])
@@ -250,6 +269,15 @@ export default function SellStep3Page() {
 
         <form onSubmit={(e) => { e.preventDefault(); handleContinue() }} className="space-y-6">
           <Section title={t("sectionVehicleIdentity")} icon={Car}>
+            <BrandLogoGrid
+              selectedMake={form.make || ""}
+              allMakes={datasetMakes}
+              onSelectMake={(make) => {
+                update({ make, model: "" })
+                clearError("make")
+                clearError("model")
+              }}
+            />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
