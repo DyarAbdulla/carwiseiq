@@ -38,12 +38,12 @@ export function popularMarketModelImagePath(make: string, model: string): string
   const map: Record<string, string> = {
     'toyota|camry': '/images/cars/popular/toyota_camry.jpg',
     'toyota|corolla': '/images/cars/popular/toyota_corolla.webp',
-    'hyundai|sonata': '/images/cars/popular/hyundai_sonata_v2.jpg',
+    'hyundai|sonata': '/images/cars/popular/hyundai_sonata_v3.jpg',
     'hyundai|elantra': '/images/cars/popular/hyundai_elantra.webp',
-    'kia|optima': '/images/cars/popular/kia_optima.jpg',
-    'kia|cerato': '/images/cars/popular/kia_cerato.jpg',
-    'chevrolet|malibu': '/images/cars/popular/chevrolet_malibu.jpg',
-    'nissan|altima': '/images/cars/popular/nissan_altima.jpg',
+    'kia|optima': '/images/cars/popular/kia_optima.webp',
+    'kia|cerato': '/images/cars/popular/kia_cerato.webp',
+    'chevrolet|malibu': '/images/cars/popular/chevrolet_malibu.webp',
+    'nissan|altima': '/images/cars/popular/nissan_altima.webp',
   }
   return map[key] ?? '/images/cars/default-car.svg'
 }

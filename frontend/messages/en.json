@@ -602,7 +602,8 @@
       "title": "Popular models in our data",
       "subtitle": "Typical used-car asking-price bands from our listing dataset.",
       "usdNote": "Prices in USD (training data). Local IQD offers may differ.",
-      "cta": "Get estimate"
+      "cta": "Get estimate",
+      "scrollHint": "Scroll sideways with your mouse wheel, trackpad, or the scrollbar to see more models."
     },
     "testimonials": {
       "title": "What Our Users Say",
