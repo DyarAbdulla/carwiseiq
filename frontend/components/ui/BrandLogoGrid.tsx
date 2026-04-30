@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 function getLogoUrl(make: string): string {
   const map: Record<string, string> = {
@@ -101,6 +101,19 @@ function BrandLogoButton({
   const [imgFailed, setImgFailed] = useState(false)
   const url = getLogoUrl(make)
   const showLetter = !url || imgFailed
+  const isMonogramAsset =
+    make === 'Lexus' ||
+    make === 'Dodge' ||
+    make === 'Genesis' ||
+    make === 'Buick' ||
+    make === 'Gmc' ||
+    make === 'Lincoln' ||
+    make === 'Byd' ||
+    make === 'Chery' ||
+    make === 'Geely' ||
+    make === 'Haval' ||
+    make === 'Jetour' ||
+    make === 'Changan'
 
   return (
     <button
@@ -122,7 +135,11 @@ function BrandLogoButton({
         <img
           src={url}
           alt=""
-          className="w-9 h-9 object-contain"
+          className={
+            isMonogramAsset
+              ? 'w-9 h-9 object-contain opacity-95'
+              : 'w-9 h-9 object-contain brightness-0 invert opacity-90'
+          }
           onError={() => setImgFailed(true)}
         />
       )}
@@ -139,6 +156,20 @@ export default function BrandLogoGrid({ selectedMake, onSelectMake, allMakes }: 
     [onSelectMake]
   )
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
+      el.scrollLeft += e.deltaY
+      e.preventDefault()
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
+
   const displayMakes = [
     ...TOP_MAKES.filter((m) => allMakes.includes(m)),
     ...allMakes.filter((m) => !TOP_MAKES.includes(m) && getLogoUrl(m)),
@@ -147,15 +178,21 @@ export default function BrandLogoGrid({ selectedMake, onSelectMake, allMakes }: 
   if (displayMakes.length === 0) return null
 
   return (
-    <div className="mb-4">
+    <div className="mb-4 min-w-0 w-full max-w-full">
       <p className="text-xs text-white/50 mb-2">Quick select brand</p>
       <div
-        className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide cursor-grab active:cursor-grabbing"
+        ref={scrollRef}
+        role="region"
+        aria-label="Brand logos, scroll horizontally"
+        tabIndex={0}
+        className="brand-logo-strip min-w-0 w-full max-w-full overflow-x-auto overflow-y-hidden pb-2 touch-pan-x overscroll-x-contain outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 rounded-lg"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        {displayMakes.map((make) => (
-          <BrandLogoButton key={make} make={make} selected={selectedMake === make} onSelect={onSelect} />
-        ))}
+        <div className="flex w-max gap-2 px-0.5">
+          {displayMakes.map((make) => (
+            <BrandLogoButton key={make} make={make} selected={selectedMake === make} onSelect={onSelect} />
+          ))}
+        </div>
       </div>
     </div>
   )

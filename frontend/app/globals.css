@@ -542,6 +542,24 @@ img[width][height],
   display: none;
 }
 
+.brand-logo-strip {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(167, 139, 250, 0.55) transparent;
+}
+
+.brand-logo-strip::-webkit-scrollbar {
+  height: 6px;
+}
+
+.brand-logo-strip::-webkit-scrollbar-thumb {
+  background: rgba(167, 139, 250, 0.45);
+  border-radius: 9999px;
+}
+
+.brand-logo-strip::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 /* Accessibility improvements */
 .sr-only {
   position: absolute;
