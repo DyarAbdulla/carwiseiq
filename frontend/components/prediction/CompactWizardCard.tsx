@@ -22,6 +22,7 @@ import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FieldTooltip, FIELD_TOOLTIPS } from './FieldTooltip'
 import { cn } from '@/lib/utils'
+import BrandLogoGrid from '@/components/ui/BrandLogoGrid'
 
 function buildEngineOptions(sizes: readonly number[]): Array<{ size: number; display: string }> {
   return sizes.map((size) => ({
@@ -706,6 +707,16 @@ export function CompactWizardCard({
                 transition={{ duration: 0.3 }}
                 className="space-y-3"
               >
+                <BrandLogoGrid
+                  selectedMake={form.watch('make') || ''}
+                  allMakes={makes}
+                  onSelectMake={(make) => {
+                    form.setValue('make', make, { shouldValidate: true, shouldDirty: true })
+                    form.clearErrors('make')
+                    setSelectedMake(make)
+                    updateModelsForMake(make, { resetModel: true })
+                  }}
+                />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <FieldTooltip content={FIELD_TOOLTIPS.make}>

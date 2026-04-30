@@ -2,8 +2,6 @@
 
 import { useCallback, useState } from 'react'
 
-const ICONS_CDN_BASE = 'https://raw.githubusercontent.com/nicktaras/car-makes-icons/main/dist/icons'
-
 function getLogoUrl(make: string): string {
   const map: Record<string, string> = {
     Toyota: 'toyota',
@@ -58,8 +56,7 @@ function getLogoUrl(make: string): string {
     Jetour: 'jetour',
   }
   const slug = map[make]
-  if (!slug) return ''
-  return `${ICONS_CDN_BASE}/${slug}.svg`
+  return slug ? `/logos/${slug}.svg` : ''
 }
 
 // Top makes for Iraq/Kurdistan market shown first

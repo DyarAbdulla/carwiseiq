@@ -40,7 +40,6 @@ const nextConfig = {
       { protocol: 'https', hostname: '*.carwiseiq.com', pathname: '/**' },
       { protocol: 'https', hostname: '*.koyeb.app', pathname: '/**' },
       { protocol: 'https', hostname: '*.railway.app', pathname: '/**' },
-      { protocol: 'https', hostname: 'raw.githubusercontent.com', pathname: '/**' },
     ],
   },
 
