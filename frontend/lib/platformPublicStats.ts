@@ -32,18 +32,18 @@ export const POPULAR_MARKET_MODELS: PopularMarketModel[] = [
   { make: 'Nissan', model: 'Altima', priceRangeUsd: '$13,000 – $18,500' },
 ]
 
-/** Illustrations in /public/images/cars (SVG). Fallback for models without a dedicated asset. */
+/** Illustrations in /public/images/cars/popular (JPEG). Stock photos, model-accurate where possible. */
 export function popularMarketModelImagePath(make: string, model: string): string {
   const key = `${make.toLowerCase().trim()}|${model.toLowerCase().trim()}`
   const map: Record<string, string> = {
-    'toyota|camry': '/images/cars/toyota_camry_2025.svg',
-    'toyota|corolla': '/images/cars/toyota_corolla_2025.svg',
-    'hyundai|sonata': '/images/cars/hyundai_sonata_2025.svg',
-    'hyundai|elantra': '/images/cars/hyundai_elantra_2025.svg',
-    'kia|optima': '/images/cars/hyundai_sonata_2025.svg',
-    'kia|cerato': '/images/cars/toyota_corolla_2025.svg',
-    'chevrolet|malibu': '/images/cars/honda_accord_2025.svg',
-    'nissan|altima': '/images/cars/toyota_camry_2025.svg',
+    'toyota|camry': '/images/cars/popular/toyota_camry.jpg',
+    'toyota|corolla': '/images/cars/popular/toyota_corolla.jpg',
+    'hyundai|sonata': '/images/cars/popular/hyundai_sonata.jpg',
+    'hyundai|elantra': '/images/cars/popular/hyundai_elantra.jpg',
+    'kia|optima': '/images/cars/popular/kia_optima.jpg',
+    'kia|cerato': '/images/cars/popular/kia_cerato.jpg',
+    'chevrolet|malibu': '/images/cars/popular/chevrolet_malibu.jpg',
+    'nissan|altima': '/images/cars/popular/nissan_altima.jpg',
   }
   return map[key] ?? '/images/cars/default-car.svg'
 }
