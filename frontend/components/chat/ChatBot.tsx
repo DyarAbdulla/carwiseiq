@@ -7,6 +7,7 @@ import { inter, notoSansArabic } from '@/lib/fonts';
 import { cn } from '@/lib/utils';
 import { useAuthContext } from '@/context/AuthContext';
 import { getPublicApiOrigin } from '@/lib/api';
+import HappyToast from '@/components/HappyToast';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -75,6 +76,7 @@ export default function ChatBot() {
   const [limitTick, setLimitTick] = useState(0);
   const [banUntil, setBanUntil] = useState<string | null>(null);
   const [banTick, setBanTick] = useState(0);
+  const [chatHappyToastTrigger, setChatHappyToastTrigger] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isRateLimited =
@@ -334,6 +336,7 @@ export default function ChatBot() {
           }
           return prev;
         });
+        setChatHappyToastTrigger((n) => n + 1);
         setIsLoading(false);
         return;
       }
@@ -370,6 +373,7 @@ export default function ChatBot() {
         setBanUntil(data.ban_ends_at);
       }
 
+      setChatHappyToastTrigger((n) => n + 1);
       setIsLoading(false);
     } catch (error) {
       clearTimeout(timeout);
@@ -392,6 +396,7 @@ export default function ChatBot() {
 
   return (
     <>
+      <HappyToast context="chat" trigger={chatHappyToastTrigger} />
       {!isOpen && (
         <div className="hidden md:flex fixed bottom-6 right-6 z-[60]">
           <button

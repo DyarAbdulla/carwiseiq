@@ -36,6 +36,7 @@ import { parseCompareUrl } from '@/lib/shareUtils'
 import { activityHelpers } from '@/lib/activityLogger'
 import { markCompareEngaged } from '@/lib/push/engagement'
 import { VoucherApplyModal } from '@/components/vouchers/VoucherApplyModal'
+import HappyToast from '@/components/HappyToast'
 
 interface CarCard {
   id: string
@@ -105,6 +106,7 @@ function ComparePageContent() {
   const [locations, setLocations] = useState<string[]>([])
   const [dailyUsage, setDailyUsage] = useState<DailyUsageStatus | null>(null)
   const [voucherOpen, setVoucherOpen] = useState(false)
+  const [compareHappyToastTrigger, setCompareHappyToastTrigger] = useState(0)
 
   const MAX_CARS = 4
 
@@ -230,6 +232,7 @@ function ComparePageContent() {
           validListings.map(l => l.id),
           validListings.length
         )
+        setCompareHappyToastTrigger((n) => n + 1)
       }
     } catch (error: any) {
       console.error('Error loading listings:', error)
@@ -617,6 +620,7 @@ function ComparePageContent() {
           description: `Car ${id}: Predicted ${formatCurrency(result.predicted_price)}`,
         })
       }
+      setCompareHappyToastTrigger((n) => n + 1)
       markCompareEngaged()
       void refreshDailyUsage()
     } catch (error: any) {
@@ -762,6 +766,7 @@ function ComparePageContent() {
 
         if (successCount > 0) {
           markCompareEngaged()
+          setCompareHappyToastTrigger((n) => n + 1)
           if (toast?.toast) {
             toast.toast({
               title: tCommon?.('success') || 'Success',
@@ -1575,6 +1580,7 @@ function ComparePageContent() {
         onOpenChange={setVoucherOpen}
         onApplied={() => void refreshDailyUsage()}
       />
+      <HappyToast context="compare" trigger={compareHappyToastTrigger} />
     </div>
   )
 }

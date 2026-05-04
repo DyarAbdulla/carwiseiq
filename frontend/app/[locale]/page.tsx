@@ -37,6 +37,7 @@ import { PopularCars } from '@/components/PopularCars'
 import { BlogSection } from '@/components/BlogSection'
 import dynamic from 'next/dynamic'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import HappyToast from '@/components/HappyToast'
 
 // Lazy-load background video so it doesn't block initial render or main bundle
 const BackgroundVideo = dynamic(
@@ -1002,11 +1003,18 @@ const BentoGridSection = memo(function BentoGridSection({ t, locale }: { t: (k: 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false)
   const [learnMoreOpen, setLearnMoreOpen] = useState(false)
+  const [homeHappyToastTrigger, setHomeHappyToastTrigger] = useState(0)
 
   // Ensure component only renders on client
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    const t = window.setTimeout(() => setHomeHappyToastTrigger((n) => n + 1), 2000)
+    return () => window.clearTimeout(t)
+  }, [mounted])
 
   // Hooks must be called unconditionally - handle errors in render
   const t = useTranslations('home')
@@ -1075,6 +1083,7 @@ export default function HomePage() {
             <LearnMoreModal open={learnMoreOpen} onOpenChange={setLearnMoreOpen} />
           </ErrorBoundary>
 
+          <HappyToast context="general" trigger={homeHappyToastTrigger} duration={5000} />
         </div>
       </div>
     </ErrorBoundary>

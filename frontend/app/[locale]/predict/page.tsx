@@ -33,6 +33,7 @@ import { activityHelpers } from '@/lib/activityLogger'
 import { safeText, sanitizeCarFeaturesFromUnknown } from '@/lib/safeDisplay'
 import { VoucherApplyModal } from '@/components/vouchers/VoucherApplyModal'
 import { CONDITIONS } from '@/lib/constants'
+import HappyToast from '@/components/HappyToast'
 
 // Image upload constants (kept for image analysis functionality)
 const MAX_IMAGES = 10
@@ -100,6 +101,7 @@ function PredictPageContent() {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
   const [dailyUsage, setDailyUsage] = useState<DailyUsageStatus | null>(null)
   const [voucherOpen, setVoucherOpen] = useState(false)
+  const [happyToastTrigger, setHappyToastTrigger] = useState(0)
   /** Direct open from a shared /en/predict?...&price=... link — hide the wizard, show result only */
   const [hydratedFromShare, setHydratedFromShare] = useState(false)
 
@@ -405,6 +407,7 @@ function PredictPageContent() {
 
       setPrediction(result)
       markPredictEngaged()
+      setHappyToastTrigger((n) => n + 1)
 
       try {
         router.replace(`${pathname}?${buildPredictShareQuery(features, result.predicted_price)}`, { scroll: false })
@@ -814,6 +817,7 @@ function PredictPageContent() {
         onOpenChange={setVoucherOpen}
         onApplied={() => void refreshDailyUsage()}
       />
+      <HappyToast context="predict" trigger={happyToastTrigger} />
     </main>
   )
 }

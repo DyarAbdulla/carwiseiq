@@ -9,6 +9,7 @@ import { CheckCircle2, Eye, Share2, Plus, List, MapPin } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useToast } from "@/hooks/use-toast"
 import { buySellListingHref } from "@/lib/marketplaceLinks"
+import HappyToast from "@/components/HappyToast"
 
 function firstImage(images: unknown): string | null {
   if (!images || !Array.isArray(images)) return null
@@ -26,6 +27,13 @@ export default function SellSuccessPage() {
   const listingId = searchParams?.get("id") ?? ""
 
   const [listing, setListing] = useState<{ title?: string; price?: number; location?: string; make?: string; model?: string; year?: number; images?: unknown } | null>(null)
+  const [sellHappyToastTrigger, setSellHappyToastTrigger] = useState(0)
+
+  useEffect(() => {
+    if (!listingId) return
+    const tid = window.setTimeout(() => setSellHappyToastTrigger((n) => n + 1), 600)
+    return () => window.clearTimeout(tid)
+  }, [listingId])
 
   useEffect(() => {
     if (!listingId) return
@@ -73,6 +81,7 @@ export default function SellSuccessPage() {
 
   return (
     <div className="relative z-10 flex flex-col items-center justify-center px-4 py-12 min-h-[70vh]">
+      <HappyToast context="sell" trigger={sellHappyToastTrigger} />
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="inline-flex p-4 rounded-full bg-emerald-500/20 mb-4">
