@@ -1,6 +1,6 @@
 "use client"
 
-import { formatCurrency } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 
 export interface SpecRow {
   label: string
@@ -23,13 +23,18 @@ function isAllNA(row: SpecRow): boolean {
   return row.values.every((v) => v == null || v === 'N/A' || v === '')
 }
 
+const headCell =
+  'border-b border-white/[0.06] bg-[rgba(20,20,20,0.78)] backdrop-blur-xl supports-[backdrop-filter]:bg-[rgba(20,20,20,0.55)]'
+const cornerHead = `${headCell} sticky top-0 left-0 z-30 min-w-[7.5rem] shadow-[1px_0_0_rgba(255,255,255,0.05)]`
+const colHead = `${headCell} sticky top-0 z-20 min-w-[8.75rem] max-w-[10rem]`
+
 export function SpecificationTable({
   columnLabels,
   rows,
   bestDealIndex,
   mostExpensiveIndex,
   highlightBestInRow,
-  showIcons,
+  showIcons: _showIcons,
 }: SpecificationTableProps) {
   if (!rows?.length || !columnLabels?.length) return null
 
@@ -47,51 +52,64 @@ export function SpecificationTable({
   }
 
   return (
-    <div className="overflow-x-auto relative">
-      {/* Green Glow behind Best Value Column */}
-      {bestDealIndex !== undefined && (
-        <div 
-          className="absolute inset-0 -z-10 pointer-events-none"
-          style={{
-            background: `linear-gradient(to right, transparent ${bestDealIndex * (100 / columnLabels.length)}%, rgba(34, 197, 94, 0.1) ${bestDealIndex * (100 / columnLabels.length)}%, rgba(34, 197, 94, 0.1) ${(bestDealIndex + 1) * (100 / columnLabels.length)}%, transparent ${(bestDealIndex + 1) * (100 / columnLabels.length)}%)`,
-          }}
-        />
-      )}
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto relative rounded-xl">
+      <table className="w-full border-collapse text-sm bg-transparent">
         <thead>
-          <tr className="border-b border-white/5">
-            <th className="text-left py-3 pr-4 text-xs uppercase tracking-wider text-gray-400 font-semibold">Spec</th>
+          <tr>
+            <th
+              className={cn(
+                cornerHead,
+                'py-3 pe-4 ps-1 text-start text-xs font-semibold uppercase tracking-wider text-gray-400'
+              )}
+            >
+              Spec
+            </th>
             {columnLabels.map((l, i) => (
-              <th 
-                key={i} 
-                className={`text-left py-3 px-2 text-white font-semibold max-w-[140px] truncate relative ${
-                  i === bestDealIndex ? 'text-green-400' : ''
-                }`}
-              >
-                {l}
-                {i === bestDealIndex && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <th
+                key={i}
+                className={cn(
+                  colHead,
+                  'px-2 py-3 text-start font-semibold text-white max-w-[10rem] truncate',
+                  i === bestDealIndex && 'text-emerald-300 shadow-[inset_0_-1px_0_rgba(52,211,153,0.35)]'
                 )}
+              >
+                <span className="relative inline-block max-w-full truncate align-bottom">
+                  {l}
+                  {i === bestDealIndex && (
+                    <span
+                      className="pointer-events-none absolute -inset-1 -z-10 rounded-lg opacity-90 shadow-[0_0_28px_rgba(34,197,94,0.35)] ring-1 ring-emerald-400/30"
+                      aria-hidden
+                    />
+                  )}
+                </span>
               </th>
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="bg-transparent">
           {visibleRows.map((row, ri) => (
-            <tr 
-              key={ri} 
-              className="border-b border-white/5 hover:bg-white/5 transition-colors group"
-            >
-              <td className="py-3 pr-4 text-gray-400 font-medium">{row.label}</td>
+            <tr key={ri} className="border-b border-white/[0.05] transition-colors hover:bg-violet-500/[0.06]">
+              <td
+                className={cn(
+                  'sticky left-0 z-10 bg-[rgba(5,5,5,0.45)] py-3 pe-4 ps-1 text-start font-medium text-gray-400 backdrop-blur-md supports-[backdrop-filter]:bg-[rgba(5,5,5,0.25)]',
+                  'shadow-[1px_0_0_rgba(255,255,255,0.04)]'
+                )}
+              >
+                {row.label}
+              </td>
               {row.values.map((v, ci) => {
                 const isBest = highlightBestInRow && bestDealIndex === ci
                 const isHigh = highlightBestInRow && mostExpensiveIndex === ci
                 return (
                   <td
                     key={ci}
-                    className={`py-3 px-2 max-w-[140px] truncate ${
-                      isBest ? 'text-green-400 font-semibold' : isHigh ? 'text-amber-400' : 'text-white'
-                    }`}
+                    className={cn(
+                      'max-w-[10rem] truncate bg-transparent px-2 py-3 text-start',
+                      isBest &&
+                        'font-semibold text-emerald-300 shadow-[inset_0_0_48px_rgba(34,197,94,0.06)] ring-1 ring-emerald-500/20',
+                      isHigh && !isBest && 'text-amber-300/95',
+                      !isBest && !isHigh && 'text-white'
+                    )}
                   >
                     {format(row, v)}
                   </td>

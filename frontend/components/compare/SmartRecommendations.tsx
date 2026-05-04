@@ -90,7 +90,7 @@ export function SmartRecommendations({
   }
 
   return (
-    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 mb-6">
+    <div className="predict-glass rounded-2xl p-6 mb-6">
       <h3 className="text-lg font-semibold text-white mb-3">Smart Recommendations</h3>
       <p className="text-gray-300 text-sm leading-relaxed">
         Best value:{' '}

@@ -1,16 +1,16 @@
 "use client"
-import { useState, useMemo, useEffect, useCallback, Suspense } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PredictionForm } from '@/components/prediction/PredictionForm'
 import { apiClient, type DailyUsageStatus } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
-import { X, Plus, Download, Share2, Save, Trophy, TrendingDown, TrendingUp, Sparkles, Check, X as XIcon, Gauge, Fuel, Cog, Calendar, Shield, Loader2, Car } from 'lucide-react'
+import { X, Plus, Download, Trophy, Sparkles, Gauge, Fuel, Cog, Calendar, Shield, Loader2, Car } from 'lucide-react'
 import type { CarFeatures, PredictionResponse } from '@/lib/types'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
+  cn,
   formatCurrency,
   formatFuelEconomy,
   formatFuelEconomyL100km,
@@ -37,6 +37,10 @@ import { activityHelpers } from '@/lib/activityLogger'
 import { markCompareEngaged } from '@/lib/push/engagement'
 import { VoucherApplyModal } from '@/components/vouchers/VoucherApplyModal'
 import HappyToast from '@/components/HappyToast'
+
+/** Violet → indigo → blue primary actions (Compare stealth toolbar) */
+const COMPARE_STEALTH_PRIMARY =
+  'bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 font-semibold text-white border-0 shadow-lg shadow-violet-500/30 hover:from-violet-500 hover:via-indigo-500 hover:to-blue-500 hover:shadow-violet-500/45 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none'
 
 interface CarCard {
   id: string
@@ -82,10 +86,13 @@ function getCompareConfidencePercent(prediction: PredictionResponse | null | und
 
 function ComparePageBackground() {
   return (
-    <div className="compare-page-bg-layers" aria-hidden>
-      <div className="compare-page-bg-image" />
-      <div className="compare-page-bg-overlay-dark" />
-      <div className="compare-page-bg-overlay-vignette" />
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
+      <div
+        className="absolute inset-0 scale-[1.07] bg-cover bg-center opacity-20 grayscale blur-sm"
+        style={{ backgroundImage: 'url(/images/comparebackground.jpeg)' }}
+      />
+      <div className="absolute inset-0 bg-black/35" />
+      <div className="pointer-events-none fixed -top-24 right-0 z-0 h-[min(90vw,520px)] w-[min(90vw,520px)] translate-x-1/4 rounded-full bg-blue-900/20 blur-3xl" />
     </div>
   )
 }
@@ -107,6 +114,7 @@ function ComparePageContent() {
   const [dailyUsage, setDailyUsage] = useState<DailyUsageStatus | null>(null)
   const [voucherOpen, setVoucherOpen] = useState(false)
   const [compareHappyToastTrigger, setCompareHappyToastTrigger] = useState(0)
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const MAX_CARS = 4
 
@@ -130,6 +138,13 @@ function ComparePageContent() {
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    document.body.classList.add('compare-stealth-body')
+    return () => {
+      document.body.classList.remove('compare-stealth-body')
+    }
   }, [])
 
   useEffect(() => {
@@ -401,16 +416,23 @@ function ComparePageContent() {
 
   // Handle step changes (memoized to prevent infinite loops)
   const handleStepChange = useCallback((carId: string, step: number) => {
+    let indexToScroll: number | null = null
     setCars(prevCars => {
       // Only update if step actually changed for this car
       const car = prevCars.find(c => c.id === carId)
       if (car && car.currentStep !== step) {
+        indexToScroll = prevCars.findIndex(c => c.id === carId)
         return prevCars.map(c =>
           c.id === carId ? { ...c, currentStep: step } : c
         )
       }
       return prevCars
     })
+    if (indexToScroll !== null && indexToScroll >= 0) {
+      setTimeout(() => {
+        cardRefs.current[indexToScroll!]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 50)
+    }
   }, [])
 
   // Update car features when form changes (so Predict All can access them)
@@ -966,7 +988,7 @@ function ComparePageContent() {
 
   if (!mounted) {
     return (
-      <div className="compare-page-root">
+      <div className="compare-page-root bg-[#050505]">
         <ComparePageBackground />
         <div className="relative z-[1] flex min-h-[50vh] items-center justify-center text-gray-300">
           Loading…
@@ -976,7 +998,7 @@ function ComparePageContent() {
   }
 
   return (
-    <div className="compare-page-root">
+    <div className="compare-page-root bg-[#050505]">
       <ComparePageBackground />
       <div className="relative z-[1] min-h-screen">
         <motion.div
@@ -1052,8 +1074,8 @@ function ComparePageContent() {
                     />
                     {listingChartData.length > 0 && <ComparisonChart data={listingChartData} />}
                     {listingSpecRows.length > 0 && (
-                      <div className="mb-6">
-                        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                      <div className="mb-6 predict-glass rounded-2xl p-4 md:p-6 overflow-hidden">
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                           <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                             Specifications & Comparison
                             {loadingSpecs && (
@@ -1063,7 +1085,13 @@ function ComparePageContent() {
                               </span>
                             )}
                           </h3>
-                          <div className="flex items-center gap-2">
+                          <div
+                            className={cn(
+                              'flex items-center gap-2 rounded-xl px-3 py-2 transition-all',
+                              highlightDifferencesOnly &&
+                                'bg-violet-500/10 shadow-[0_0_22px_rgba(139,92,246,0.35)] ring-2 ring-violet-500/45'
+                            )}
+                          >
                             <Switch id="mk-hl-diff" checked={highlightDifferencesOnly} onCheckedChange={v => setHighlightDifferencesOnly(!!v)} />
                             <Label htmlFor="mk-hl-diff" className="text-sm text-[#94a3b8] cursor-pointer">Highlight differences only</Label>
                           </div>
@@ -1096,36 +1124,36 @@ function ComparePageContent() {
                   </>
                 )}
                 {/* Action Buttons - marketplace - Glass Toolbar */}
-                <div className="flex flex-wrap gap-2 justify-end bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-3">
+                <div className="predict-glass flex flex-wrap gap-2 justify-end rounded-xl p-3">
                   {marketplaceMetrics && listings.length >= 2 && (
                     <>
                       <ExportPDF
                         data={exportData}
                         onSuccess={() => toast?.toast?.({ title: 'Exported', description: 'PDF saved.' })}
                         onError={(e) => toast?.toast?.({ title: 'Export failed', description: e.message, variant: 'destructive' })}
-                        variant="outline"
-                        className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                        variant="default"
+                        className={COMPARE_STEALTH_PRIMARY}
                       />
                       <ShareComparison
                         mode="marketplace"
                         ids={listings.map(l => l.id)}
                         onCopy={() => toast?.toast?.({ title: 'Link copied', description: 'Comparison link copied to clipboard.' })}
-                        variant="outline"
-                        className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                        variant="default"
+                        className={COMPARE_STEALTH_PRIMARY}
                       />
                       <CompareSaveAndHistory
                         canSave={listings.length >= 2}
                         onSave={handleSaveCompare}
                         onLoad={handleLoadCompare}
-                        variant="outline"
-                        className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                        variant="default"
+                        className={COMPARE_STEALTH_PRIMARY}
                       />
                     </>
                   )}
                   <Button
                     onClick={() => { if (typeof window !== 'undefined') window.print() }}
-                    variant="outline"
-                    className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                    variant="default"
+                    className={COMPARE_STEALTH_PRIMARY}
                   >
                     <Download className="me-2 h-4 w-4" />
                     Print
@@ -1144,7 +1172,7 @@ function ComparePageContent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="mb-8 flex flex-wrap gap-3 justify-between items-center bg-gradient-to-r from-white/5 via-white/5 to-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-xl shadow-indigo-500/10"
+              className="mb-8 flex flex-wrap gap-3 justify-between items-center predict-glass rounded-2xl p-5 shadow-xl shadow-black/25"
             >
               <div className="flex flex-col items-start gap-2">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -1156,7 +1184,7 @@ function ComparePageContent() {
                         console.error('Error adding car:', error)
                       }
                     }}
-                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all duration-300"
+                    className={cn(COMPARE_STEALTH_PRIMARY, 'transition-all duration-300')}
                   >
                     <Plus className="mr-2 h-4 w-4" />
                     {(t && typeof t === 'function' ? t('addCar') : null) || 'Add Car'}
@@ -1198,7 +1226,7 @@ function ComparePageContent() {
                         console.error('❌ [Compare] predictAll error:', err)
                       })
                     }}
-                    className="bg-gradient-to-r from-[#5B7FFF] via-indigo-500 to-purple-600 hover:from-[#5B7FFF]/90 hover:via-indigo-400 hover:to-purple-500 text-white border-0 shadow-lg shadow-[#5B7FFF]/40 hover:shadow-[#5B7FFF]/60 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    className={cn(COMPARE_STEALTH_PRIMARY, 'transition-all duration-300 disabled:cursor-not-allowed disabled:hover:scale-100')}
                     disabled={
                       predictingAll ||
                       cars.length === 0 ||
@@ -1226,22 +1254,22 @@ function ComparePageContent() {
                       data={exportData}
                       onSuccess={() => toast?.toast?.({ title: 'Exported', description: 'PDF saved.' })}
                       onError={(e) => toast?.toast?.({ title: 'Export failed', description: e.message, variant: 'destructive' })}
-                      variant="outline"
-                      className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                      variant="default"
+                      className={COMPARE_STEALTH_PRIMARY}
                     />
                     <ShareComparison
                       mode="prediction"
                       predictionState={{ cars: cars.map(c => ({ features: c.features, prediction: c.prediction })) }}
                       onCopy={() => toast?.toast?.({ title: 'Link copied', description: 'Comparison link copied to clipboard.' })}
-                      variant="outline"
-                      className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                      variant="default"
+                      className={COMPARE_STEALTH_PRIMARY}
                     />
                     <CompareSaveAndHistory
                       canSave={allCarsHavePredictions && hasMultipleCars}
                       onSave={handleSaveCompare}
                       onLoad={handleLoadCompare}
-                      variant="outline"
-                      className="border-white/10 bg-white/5 hover:bg-white/10 text-white"
+                      variant="default"
+                      className={COMPARE_STEALTH_PRIMARY}
                     />
                   </>
                 )}
@@ -1301,8 +1329,8 @@ function ComparePageContent() {
             <AnimatePresence>
               {allCarsHavePredictions && hasMultipleCars && comparisonMetrics && specRows.length > 0 && (
                 <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mb-6 space-y-6">
-                  <div className="mb-6">
-                    <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+                  <div className="mb-6 predict-glass rounded-2xl p-4 md:p-6 overflow-hidden">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                       <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                         Specifications & Comparison
                         {loadingSpecs && (
@@ -1312,7 +1340,13 @@ function ComparePageContent() {
                           </span>
                         )}
                       </h3>
-                      <div className="flex items-center gap-2">
+                      <div
+                        className={cn(
+                          'flex items-center gap-2 rounded-xl px-3 py-2 transition-all',
+                          highlightDifferencesOnly &&
+                            'bg-violet-500/10 shadow-[0_0_22px_rgba(139,92,246,0.35)] ring-2 ring-violet-500/45'
+                        )}
+                      >
                         <Switch id="highlight-diff" checked={highlightDifferencesOnly} onCheckedChange={v => setHighlightDifferencesOnly(!!v)} />
                         <Label htmlFor="highlight-diff" className="text-sm text-[#94a3b8] cursor-pointer">Highlight differences only</Label>
                       </div>
@@ -1371,6 +1405,9 @@ function ComparePageContent() {
                   return (
                     <motion.div
                       key={car.id}
+                      ref={(el) => {
+                        cardRefs.current[index] = el
+                      }}
                       layout
                       initial={{ opacity: 0, scale: 0.9, y: 20 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1380,24 +1417,18 @@ function ComparePageContent() {
                       className="group"
                     >
                       <div
-                        className={`compare-glass relative border-2 rounded-2xl p-6 transition-all duration-500 overflow-visible shadow-lg shadow-black/25 ${isBestDeal && allCarsHavePredictions
-                          ? 'border-green-500/60 shadow-2xl shadow-green-500/30'
-                          : isMostExpensive && allCarsHavePredictions
-                            ? 'border-red-500/50 shadow-xl shadow-red-500/20'
-                            : 'border-white/15 hover:border-indigo-500/50 hover:shadow-2xl hover:shadow-indigo-500/25'
-                          }`}
-                      >
-                        {/* Animated Gradient Border */}
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 -z-10 blur-xl" />
-
-                        {/* Green Glow for Best Deal */}
-                        {isBestDeal && allCarsHavePredictions && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="absolute inset-0 -z-10 bg-gradient-radial from-green-500/30 via-green-500/15 to-transparent blur-3xl rounded-2xl"
-                          />
+                        className={cn(
+                          'predict-glass relative rounded-2xl p-6 transition-all duration-500 overflow-visible shadow-lg shadow-black/30',
+                          isBestDeal && allCarsHavePredictions &&
+                            'shadow-[0_0_48px_rgba(34,197,94,0.28)] ring-1 ring-emerald-500/40',
+                          isMostExpensive && allCarsHavePredictions &&
+                            'shadow-[0_0_32px_rgba(248,113,113,0.18)] ring-1 ring-red-500/35',
+                          !(isBestDeal && allCarsHavePredictions) &&
+                            !(isMostExpensive && allCarsHavePredictions) &&
+                            'hover:shadow-[0_0_40px_rgba(99,102,241,0.18)] hover:ring-1 hover:ring-indigo-500/30'
                         )}
+                      >
+                        <div className="absolute inset-0 rounded-[inherit] bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100 -z-10" />
 
                         <div className="pb-3 mb-4">
                           <div className="flex items-center justify-between mb-3">
@@ -1422,7 +1453,7 @@ function ComparePageContent() {
                                 <motion.span
                                   initial={{ scale: 0 }}
                                   animate={{ scale: 1 }}
-                                  className="px-3 py-1 bg-gradient-to-r from-green-500/30 to-emerald-500/30 text-green-300 text-xs font-semibold rounded-full flex items-center gap-1.5 shadow-lg shadow-green-500/30 border border-green-500/30"
+                                  className="flex items-center gap-1.5 rounded-full border border-emerald-400/35 bg-transparent px-3 py-1 text-xs font-semibold text-emerald-300 shadow-[0_0_22px_rgba(34,197,94,0.5)] ring-1 ring-emerald-500/25"
                                 >
                                   <Trophy className="h-3 w-3" />
                                   Best Deal
@@ -1547,7 +1578,7 @@ function ComparePageContent() {
                                 )}
                               </div>
                               {car.prediction.deal_analysis && (
-                                <div className="p-3 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
+                                <div className="rounded-xl border border-white/[0.08] bg-[rgba(10,10,12,0.55)] p-3 backdrop-blur-md">
                                   <p className="text-sm capitalize flex items-center gap-2">
                                     <span className="font-semibold text-white">Deal Rating:</span>
                                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${car.prediction.deal_analysis.toLowerCase() === 'good' || car.prediction.deal_analysis.toLowerCase() === 'excellent'
@@ -1589,7 +1620,7 @@ export default function ComparePage() {
   return (
     <Suspense
       fallback={
-        <div className="compare-page-root">
+        <div className="compare-page-root bg-[#050505]">
           <ComparePageBackground />
           <div className="relative z-[1] min-h-[60vh] flex items-center justify-center">
             <CompareSkeleton />

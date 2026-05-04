@@ -1490,7 +1490,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
                       ? 'bg-gradient-to-r from-indigo-400 to-purple-500 shadow-lg shadow-indigo-500/50 ring-1 ring-white/20'
                       : step < currentStep
                         ? 'bg-emerald-400 shadow-md shadow-emerald-500/35 ring-1 ring-emerald-400/30'
-                        : 'bg-white/15 ring-1 ring-white/10'
+                        : 'bg-[rgba(255,255,255,0.08)] ring-1 ring-white/10'
                     : step === currentStep
                       ? 'bg-indigo-500'
                       : step < currentStep
@@ -1501,7 +1501,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
             ))}
           </div>
         </div>
-        <div className={cn('h-1 rounded-full overflow-hidden', compareVisualTuning ? 'bg-white/15 ring-1 ring-white/10' : 'bg-white/10')}>
+        <div className={cn('h-1 rounded-full overflow-hidden', compareVisualTuning ? 'bg-[rgba(255,255,255,0.08)] ring-1 ring-white/10' : 'bg-white/10')}>
           <div
             className={cn(
               'h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-300',
@@ -1714,7 +1714,7 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
         >
           <div className="space-y-1">
             <h3 className="text-xl font-semibold text-white">Engine & Usage</h3>
-            <p className="text-sm text-slate-400">Tell us a bit more about the car's specs.</p>
+            <p className="text-sm text-slate-400">{"Tell us a bit more about the car's specs."}</p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1730,7 +1730,12 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
               <Input
                 id={`${formId || 'form'}-mileage`}
                 type="number"
-                className={`border-white/20 md:border-white/10 bg-white/5 ${form.formState.errors.mileage ? 'border-red-500' : ''}`}
+                className={cn(
+                  form.formState.errors.mileage ? 'border-red-500' : '',
+                  compareVisualTuning
+                    ? 'compare-field-surface border-white/15'
+                    : 'border-white/20 md:border-white/10 bg-white/5'
+                )}
                 {...form.register('mileage', { valueAsNumber: true })}
               />
               {form.formState.errors.mileage && (
@@ -1982,7 +1987,12 @@ export function PredictionForm({ onSubmit, loading = false, prefillData = null, 
           variant="outline"
           onClick={handleBack}
           disabled={currentStep === 1}
-          className="border-white/20 md:border-white/10 bg-white/5 hover:bg-white/10 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          className={cn(
+            'disabled:cursor-not-allowed disabled:opacity-50',
+            compareVisualTuning
+              ? 'border-white/20 bg-[rgba(8,8,12,0.55)] text-white hover:bg-[rgba(14,14,20,0.78)]'
+              : 'border-white/20 bg-white/5 text-white hover:bg-white/10 md:border-white/10'
+          )}
         >
           <ChevronLeft className="w-4 h-4 mr-2" />
           Back

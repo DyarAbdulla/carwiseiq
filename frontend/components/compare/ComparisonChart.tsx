@@ -24,7 +24,7 @@ export function ComparisonChart({ data }: ComparisonChartProps) {
         {data.map((d, i) => (
           <div
             key={i}
-            className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3 min-w-[120px] hover:bg-white/10 transition-colors"
+            className="predict-glass rounded-xl px-4 py-3 min-w-[120px] transition-colors hover:ring-1 hover:ring-violet-500/25"
           >
             <p className="text-xs uppercase tracking-wider text-gray-400 mb-1 truncate">{d.name}</p>
             <p className="text-white text-lg font-semibold">${d.price?.toLocaleString() ?? '—'}</p>
